@@ -7,6 +7,25 @@ import { useAuth } from "~/hooks/useAuth";
 import { client } from "~/lib/api-client";
 import type { Post } from "~/types/post";
 
+function flattenReplies(replies: Post[]): Post[] {
+  const result: Post[] = [];
+  for (const reply of replies) {
+    result.push(reply);
+    if (reply.replies?.length) {
+      result.push(...flattenReplies(reply.replies));
+    }
+  }
+  return result;
+}
+
+function countTotalReplies(replies: Post[]): number {
+  let count = replies.length;
+  for (const reply of replies) {
+    count += countTotalReplies(reply.replies || []);
+  }
+  return count;
+}
+
 export default function PostDetail() {
   const { username, post_id } = useParams();
   const navigate = useNavigate();
@@ -283,39 +302,47 @@ export default function PostDetail() {
 
           {/* Replies section */}
           <div className="mt-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">
-              답글 ({post.replies?.length || 0})
-            </h3>
+            {(() => {
+              const allReplies = flattenReplies(post.replies || []);
+              const totalCount = countTotalReplies(post.replies || []);
+              return (
+                <>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
+                    답글 ({totalCount})
+                  </h3>
 
-            {!post.replies || post.replies.length === 0 ? (
-              <div className="bg-card rounded-2xl shadow-sm border border-border p-8 text-center">
-                <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageCircle className="h-8 w-8 text-gray-400" />
-                </div>
-                <h4 className="text-lg font-semibold text-foreground mb-2">
-                  아직 답글이 없습니다
-                </h4>
-                <p className="text-muted-foreground">
-                  첫 번째 답글을 작성해보세요!
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {post.replies.map((reply) => (
-                  <PostCard
-                    key={reply.id}
-                    post={{
-                      ...reply,
-                      replies: [],
-                    }}
-                    currentProfileId={currentProfile?.id}
-                    onDelete={handleRefresh}
-                    onRefresh={handleRefresh}
-                    isCommunityOwner={isCommunityOwner}
-                  />
-                ))}
-              </div>
-            )}
+                  {allReplies.length === 0 ? (
+                    <div className="bg-card rounded-2xl shadow-sm border border-border p-8 text-center">
+                      <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto mb-4">
+                        <MessageCircle className="h-8 w-8 text-gray-400" />
+                      </div>
+                      <h4 className="text-lg font-semibold text-foreground mb-2">
+                        아직 답글이 없습니다
+                      </h4>
+                      <p className="text-muted-foreground">
+                        첫 번째 답글을 작성해보세요!
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {allReplies.map((reply) => (
+                        <PostCard
+                          key={reply.id}
+                          post={{
+                            ...reply,
+                            replies: [],
+                          }}
+                          currentProfileId={currentProfile?.id}
+                          onDelete={handleRefresh}
+                          onRefresh={handleRefresh}
+                          isCommunityOwner={isCommunityOwner}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
       </main>

@@ -1893,7 +1893,7 @@ export async function getPost(
   const repliesMap = await buildThreadedRepliesForMultiplePosts(
     [post.id],
     communityId,
-    10,
+    post.depth + 100,
     profileId,
   );
   const replies = repliesMap.get(post.id) || [];
