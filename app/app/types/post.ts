@@ -67,6 +67,7 @@ export interface PostCardProps {
   isModerator?: boolean;
   hideBorder?: boolean;
   isProfileView?: boolean;
+  displayDepth?: number;
 }
 
 export interface PostListRef {

@@ -36,6 +36,7 @@ export const PostCard = memo(function PostCard({
   isModerator = false,
   hideBorder = false,
   isProfileView = false,
+  displayDepth,
 }: PostCardProps) {
   const { currentProfile } = useAuth();
   const [showReplyForm, setShowReplyForm] = useState(false);
@@ -257,14 +258,14 @@ export const PostCard = memo(function PostCard({
 
   // Calculate styling based on depth - memoize to avoid recalculation
   const { depth, isReply, cardSize, padding } = useMemo(() => {
-    const depth = post.depth || 0;
+    const depth = displayDepth ?? (post.depth || 0);
     const isReply = depth > 0;
     const cardSize = isReply ? "text-xs" : "text-sm";
     const hasReplies = post.replies && post.replies.length > 0;
     // Only add bottom padding to deepest replies (those without children)
     const padding = isReply ? (hasReplies ? "pt-2 pl-2" : "py-2 pl-2") : "p-4";
     return { depth, isReply, cardSize, padding };
-  }, [post.depth, post.replies]);
+  }, [displayDepth, post.depth, post.replies]);
 
   return (
     <div
@@ -449,18 +450,26 @@ export const PostCard = memo(function PostCard({
                 )}
                 {/* Always show replies (filtered when collapsed, all when expanded) */}
                 <div>
-                  {repliesToShow.map((reply) => (
-                    <PostCard
-                      key={reply.id}
-                      post={reply}
-                      currentProfileId={currentProfileId}
-                      onDelete={onDelete}
-                      onRefresh={onRefresh}
-                      isCommunityOwner={isCommunityOwner}
-                      isModerator={isModerator}
-                      isProfileView={isProfileView}
-                    />
-                  ))}
+                  {repliesToShow.map((reply) => {
+                    // Only increase depth when branching (parent has multiple children)
+                    const childDisplayDepth =
+                      post.replies.length === 1 && depth > 0
+                        ? depth
+                        : depth + 1;
+                    return (
+                      <PostCard
+                        key={reply.id}
+                        post={reply}
+                        displayDepth={childDisplayDepth}
+                        currentProfileId={currentProfileId}
+                        onDelete={onDelete}
+                        onRefresh={onRefresh}
+                        isCommunityOwner={isCommunityOwner}
+                        isModerator={isModerator}
+                        isProfileView={isProfileView}
+                      />
+                    );
+                  })}
                 </div>
                 {post.has_more_replies && (
                   <Link

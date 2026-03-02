@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, CornerDownRight, MessageCircle } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { PostCard } from "~/components/post-card";
 import { Spinner } from "~/components/ui/spinner";
@@ -125,8 +125,38 @@ export default function PostDetail() {
   const allReplies = repliesData?.pages.flatMap((page) => page.data) ?? [];
   const totalReplyCount = repliesData?.pages[0]?.pagination.total_count ?? 0;
 
-  // Compute the depth offset from the main post so replies render relative
-  const mainPostDepth = post?.depth ?? 0;
+  // Compute display depths: only indent when a parent branches (has multiple children)
+  const displayDepthMap = useMemo(() => {
+    const map = new Map<string, number>();
+    if (allReplies.length === 0 || !post_id) return map;
+
+    // Count children per parent
+    const childCount = new Map<string, number>();
+    for (const reply of allReplies) {
+      const parentId = reply.in_reply_to_id;
+      if (parentId) {
+        childCount.set(parentId, (childCount.get(parentId) ?? 0) + 1);
+      }
+    }
+
+    // Process in order (sort_path guarantees parents before children)
+    for (const reply of allReplies) {
+      const parentId = reply.in_reply_to_id;
+      if (parentId === post_id) {
+        // Direct reply to main post — always depth 1
+        map.set(reply.id, 1);
+      } else {
+        const parentDisplayDepth = map.get(parentId ?? "") ?? 1;
+        const siblings = childCount.get(parentId ?? "") ?? 1;
+        // Only increase depth if parent has multiple children (branching)
+        map.set(
+          reply.id,
+          siblings > 1 ? parentDisplayDepth + 1 : parentDisplayDepth,
+        );
+      }
+    }
+    return map;
+  }, [allReplies, post_id]);
 
   const handleMainPostDelete = () => {
     navigate("/", { state: { refetch: true } });
@@ -332,12 +362,10 @@ export default function PostDetail() {
                       images: reply.images || [],
                       is_bookmarked: reply.is_bookmarked || false,
                       reactions: reply.reactions || [],
-                      depth: Math.max(
-                        0,
-                        (reply.depth || 0) - mainPostDepth - 1,
-                      ),
+                      depth: 0,
                       replies: [],
                     }}
+                    displayDepth={displayDepthMap.get(reply.id) ?? 1}
                     currentProfileId={currentProfile?.id}
                     onDelete={handleRefresh}
                     onRefresh={handleRefresh}
