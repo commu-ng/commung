@@ -464,7 +464,10 @@ export async function getAnnouncements(
       }));
 
     const reactions = reactionsByPostId.get(post.id) || [];
-    const replies = repliesMap.get(post.id) || [];
+    const replyResult = repliesMap.get(post.id) || {
+      replies: [],
+      totalCount: 0,
+    };
     const is_bookmarked = bookmarkedPostIds.has(post.id);
 
     result.push({
@@ -494,7 +497,7 @@ export async function getAnnouncements(
           name: reaction.profile.name,
         },
       })),
-      replies,
+      replies: replyResult.replies,
     });
   }
 
@@ -1068,6 +1071,7 @@ export async function getPosts(
     communityId,
     10,
     profileId,
+    5,
   );
 
   // Build result using pre-loaded data
@@ -1094,7 +1098,10 @@ export async function getPosts(
       }));
 
     // Get threaded replies from batched data (no additional query!)
-    const threaded_replies = repliesMap.get(post.id) || [];
+    const replyResult = repliesMap.get(post.id) || {
+      replies: [],
+      totalCount: 0,
+    };
 
     // Check if post is bookmarked using pre-loaded data
     const is_bookmarked = bookmarkedPostIds.has(post.id);
@@ -1120,7 +1127,9 @@ export async function getPosts(
       depth: 0, // Root posts have depth 0
       root_post_id: null, // Root posts are the root
       is_bookmarked,
-      replies: threaded_replies,
+      replies: replyResult.replies,
+      reply_count: replyResult.totalCount,
+      has_more_replies: replyResult.totalCount > replyResult.replies.length,
       reactions: reactions.map((reaction) => ({
         emoji: reaction.emoji,
         user: {
@@ -1314,7 +1323,10 @@ export async function searchPosts(
         filename: pi.image.filename,
       }));
 
-    const threaded_replies = repliesMap.get(post.id) || [];
+    const replyResult = repliesMap.get(post.id) || {
+      replies: [],
+      totalCount: 0,
+    };
     const is_bookmarked = bookmarkedPostIds.has(post.id);
     const reactions = reactionsByPostId.get(post.id) || [];
 
@@ -1336,7 +1348,7 @@ export async function searchPosts(
       depth: 0,
       root_post_id: null,
       is_bookmarked,
-      replies: threaded_replies,
+      replies: replyResult.replies,
       reactions: reactions.map((reaction) => ({
         emoji: reaction.emoji,
         user: {
@@ -1404,12 +1416,19 @@ async function buildThreadedRepliesForMultiplePosts(
   communityId: string,
   depthLimit: number = 10,
   profileId?: string,
-): Promise<Map<string, ReplyData[]>> {
+  replyLimit?: number,
+): Promise<Map<string, { replies: ReplyData[]; totalCount: number }>> {
   if (rootPostIds.length === 0) {
     return new Map();
   }
 
   // Use PostgreSQL's recursive CTE to get all replies for multiple root posts
+  const replyLimitClause = replyLimit
+    ? sql`SELECT *, ROW_NUMBER() OVER (PARTITION BY original_root_id ORDER BY sort_path) as rn, COUNT(*) OVER (PARTITION BY original_root_id) as total_count FROM thread_replies`
+    : sql`SELECT *, NULL::bigint as rn, NULL::bigint as total_count FROM thread_replies`;
+
+  const outerWhereClause = replyLimit ? sql`WHERE rn <= ${replyLimit}` : sql``;
+
   const result = await db.execute(sql`
     WITH RECURSIVE thread_replies AS (
         -- Base case: direct replies to any of the root posts
@@ -1442,8 +1461,11 @@ async function buildThreadedRepliesForMultiplePosts(
         AND p.community_id = ${communityId}
         AND a.community_id = ${communityId}
         AND p.depth <= ${depthLimit}
+    ), numbered AS (
+        ${replyLimitClause}
     )
-    SELECT * FROM thread_replies
+    SELECT * FROM numbered
+    ${outerWhereClause}
     ORDER BY original_root_id, sort_path
   `);
 
@@ -1461,15 +1483,31 @@ async function buildThreadedRepliesForMultiplePosts(
     root_post_id: string | null;
     sort_path: string[];
     original_root_id: string;
+    rn: string | null;
+    total_count: string | null;
   }[];
 
   if (rows.length === 0) {
     // Return empty map with all root post IDs as keys
-    const emptyMap = new Map();
+    const emptyMap = new Map<
+      string,
+      { replies: ReplyData[]; totalCount: number }
+    >();
     for (const rootId of rootPostIds) {
-      emptyMap.set(rootId, []);
+      emptyMap.set(rootId, { replies: [], totalCount: 0 });
     }
     return emptyMap;
+  }
+
+  // Collect total counts per root post from window function
+  const totalCountByRoot = new Map<string, number>();
+  for (const row of rows) {
+    if (
+      row.total_count != null &&
+      !totalCountByRoot.has(row.original_root_id)
+    ) {
+      totalCountByRoot.set(row.original_root_id, Number(row.total_count));
+    }
   }
 
   // Collect all IDs for batch loading
@@ -1599,7 +1637,10 @@ async function buildThreadedRepliesForMultiplePosts(
   }
 
   // Build nested tree structure for each root post
-  const nestedRepliesMap = new Map<string, ReplyData[]>();
+  const nestedRepliesMap = new Map<
+    string,
+    { replies: ReplyData[]; totalCount: number }
+  >();
 
   for (const [rootId, flatReplies] of repliesByRootPost) {
     // Create a map of all replies by ID for quick lookup
@@ -1623,10 +1664,278 @@ async function buildThreadedRepliesForMultiplePosts(
       }
     }
 
-    nestedRepliesMap.set(rootId, topLevelReplies);
+    const totalCount = totalCountByRoot.get(rootId) ?? flatReplies.length;
+    nestedRepliesMap.set(rootId, { replies: topLevelReplies, totalCount });
   }
 
   return nestedRepliesMap;
+}
+
+type FlatReplyData = Omit<ReplyData, "replies">;
+
+/**
+ * Get paginated flat replies for a single post using sort_path cursor
+ */
+export async function getPostReplies(
+  postId: string,
+  communityId: string,
+  limit: number = 20,
+  cursor?: string,
+  profileId?: string,
+) {
+  // Validate post belongs to this community
+  const hasAccess = await validatePostCommunityAccess(postId, communityId);
+  if (!hasAccess) {
+    throw new AppException(
+      404,
+      GENERAL_ERROR_CODE,
+      "게시물을 찾을 수 없습니다",
+    );
+  }
+
+  // Get the post's depth for the CTE depth limit
+  const targetPost = await db.query.post.findFirst({
+    where: and(eq(postTable.id, postId), isNull(postTable.deletedAt)),
+    columns: { depth: true },
+  });
+
+  const depthLimit = (targetPost?.depth ?? 0) + 100;
+
+  // Decode cursor (Base64-encoded JSON of sort_path array)
+  let decodedCursor: string[] | null = null;
+  if (cursor) {
+    try {
+      decodedCursor = JSON.parse(
+        Buffer.from(cursor, "base64url").toString("utf-8"),
+      );
+    } catch {
+      decodedCursor = null;
+    }
+  }
+
+  // Build cursor condition
+  const cursorCondition = decodedCursor
+    ? sql`AND sort_path > ${sql.raw(`ARRAY[${decodedCursor.map((v) => `'${v}'::timestamptz`).join(",")}]`)}`
+    : sql``;
+
+  // Run count and data queries in parallel
+  const [dataResult, countResult] = await Promise.all([
+    db.execute(sql`
+      WITH RECURSIVE thread_replies AS (
+          SELECT
+              p.id, p.content, p.created_at, p.updated_at, p.deleted_at, p.announcement, p.content_warning,
+              p.author_id, p.in_reply_to_id, p.depth, p.root_post_id,
+              ARRAY[p.created_at] as sort_path
+          FROM post p
+          JOIN profile a ON p.author_id = a.id
+          WHERE p.in_reply_to_id = ${postId}
+          AND p.deleted_at IS NULL
+          AND p.published_at IS NOT NULL
+          AND p.community_id = ${communityId}
+          AND a.community_id = ${communityId}
+
+          UNION ALL
+
+          SELECT
+              p.id, p.content, p.created_at, p.updated_at, p.deleted_at, p.announcement, p.content_warning,
+              p.author_id, p.in_reply_to_id, p.depth, p.root_post_id,
+              tr.sort_path || p.created_at
+          FROM post p
+          JOIN profile a ON p.author_id = a.id
+          JOIN thread_replies tr ON p.in_reply_to_id = tr.id
+          WHERE p.deleted_at IS NULL
+          AND p.published_at IS NOT NULL
+          AND p.community_id = ${communityId}
+          AND a.community_id = ${communityId}
+          AND p.depth <= ${depthLimit}
+      )
+      SELECT * FROM thread_replies
+      WHERE 1=1 ${cursorCondition}
+      ORDER BY sort_path
+      LIMIT ${limit + 1}
+    `),
+    db.execute(sql`
+      WITH RECURSIVE thread_replies AS (
+          SELECT p.id, p.in_reply_to_id
+          FROM post p
+          JOIN profile a ON p.author_id = a.id
+          WHERE p.in_reply_to_id = ${postId}
+          AND p.deleted_at IS NULL
+          AND p.published_at IS NOT NULL
+          AND p.community_id = ${communityId}
+          AND a.community_id = ${communityId}
+
+          UNION ALL
+
+          SELECT p.id, p.in_reply_to_id
+          FROM post p
+          JOIN profile a ON p.author_id = a.id
+          JOIN thread_replies tr ON p.in_reply_to_id = tr.id
+          WHERE p.deleted_at IS NULL
+          AND p.published_at IS NOT NULL
+          AND p.community_id = ${communityId}
+          AND a.community_id = ${communityId}
+      )
+      SELECT COUNT(*) as total_count FROM thread_replies
+    `),
+  ]);
+
+  const totalCount = Number(
+    (countResult.rows[0] as { total_count: string })?.total_count ?? 0,
+  );
+
+  const rows = dataResult.rows as {
+    id: string;
+    content: string;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+    announcement: boolean;
+    content_warning: string | null;
+    author_id: string;
+    in_reply_to_id: string | null;
+    depth: number;
+    root_post_id: string | null;
+    sort_path: string[];
+  }[];
+
+  if (rows.length === 0) {
+    return {
+      data: [] as FlatReplyData[],
+      pagination: {
+        next_cursor: null,
+        has_more: false,
+        total_count: totalCount,
+      },
+    };
+  }
+
+  const hasMore = rows.length > limit;
+  const rowsToReturn = hasMore ? rows.slice(0, limit) : rows;
+
+  // Encode next cursor from the last row's sort_path
+  const nextCursor =
+    hasMore && rowsToReturn.length > 0
+      ? Buffer.from(
+          JSON.stringify(rowsToReturn[rowsToReturn.length - 1]?.sort_path),
+        ).toString("base64url")
+      : null;
+
+  // Collect IDs for batch loading
+  const profileIds = new Set<string>();
+  const postIds: string[] = [];
+
+  for (const row of rowsToReturn) {
+    profileIds.add(row.author_id);
+    postIds.push(row.id);
+  }
+
+  // Batch load all related data
+  const [
+    profiles,
+    profilePictureMap,
+    allPostImages,
+    allBookmarks,
+    allReactions,
+  ] = await Promise.all([
+    db.query.profile.findMany({
+      where: inArray(profileTable.id, Array.from(profileIds)),
+    }),
+    batchLoadProfilePictures(Array.from(profileIds)),
+    db.query.postImage.findMany({
+      where: inArray(postImageTable.postId, postIds),
+      with: { image: true },
+    }),
+    profileId
+      ? db.query.postBookmark.findMany({
+          where: and(
+            eq(postBookmarkTable.profileId, profileId),
+            inArray(postBookmarkTable.postId, postIds),
+          ),
+        })
+      : Promise.resolve([]),
+    db.query.postReaction.findMany({
+      where: inArray(postReactionTable.postId, postIds),
+      with: { profile: true },
+    }),
+  ]);
+
+  // Create lookup maps
+  const profileMap = new Map(profiles.map((p) => [p.id, p]));
+  const imagesByPostId = new Map<string, typeof allPostImages>();
+  const bookmarkedPostIds = new Set(allBookmarks.map((b) => b.postId));
+  const reactionsByPostId = new Map<string, typeof allReactions>();
+
+  for (const pi of allPostImages) {
+    if (!imagesByPostId.has(pi.postId)) {
+      imagesByPostId.set(pi.postId, []);
+    }
+    imagesByPostId.get(pi.postId)?.push(pi);
+  }
+
+  for (const reaction of allReactions) {
+    if (!reactionsByPostId.has(reaction.postId)) {
+      reactionsByPostId.set(reaction.postId, []);
+    }
+    reactionsByPostId.get(reaction.postId)?.push(reaction);
+  }
+
+  // Build flat reply data
+  const data: FlatReplyData[] = [];
+  for (const row of rowsToReturn) {
+    const profile = profileMap.get(row.author_id);
+    if (!profile) continue;
+
+    const postImages = imagesByPostId.get(row.id) || [];
+    const replyImages = postImages
+      .filter((pi) => pi.image && !pi.image.deletedAt)
+      .map((pi) => ({
+        id: pi.image.id,
+        url: addImageUrl(pi.image).url,
+        width: pi.image.width,
+        height: pi.image.height,
+        filename: pi.image.filename,
+      }));
+
+    const reactions = reactionsByPostId.get(row.id) || [];
+
+    data.push({
+      id: row.id,
+      content: row.content,
+      created_at: formatISODate(row.created_at),
+      updated_at: formatISODate(row.updated_at),
+      announcement: row.announcement,
+      content_warning: row.content_warning,
+      author: {
+        id: profile.id,
+        name: profile.name,
+        username: profile.username,
+        profile_picture_url: profilePictureMap.get(profile.id) || null,
+      },
+      images: replyImages,
+      in_reply_to_id: row.in_reply_to_id,
+      depth: row.depth,
+      root_post_id: row.root_post_id,
+      is_bookmarked: bookmarkedPostIds.has(row.id),
+      reactions: reactions.map((reaction) => ({
+        emoji: reaction.emoji,
+        user: {
+          id: reaction.profile.id,
+          username: reaction.profile.username,
+          name: reaction.profile.name,
+        },
+      })),
+    });
+  }
+
+  return {
+    data,
+    pagination: {
+      next_cursor: nextCursor,
+      has_more: hasMore,
+      total_count: totalCount,
+    },
+  };
 }
 
 /**
@@ -1896,7 +2205,8 @@ export async function getPost(
     post.depth + 100,
     profileId,
   );
-  const replies = repliesMap.get(post.id) || [];
+  const replyResult = repliesMap.get(post.id) || { replies: [], totalCount: 0 };
+  const replies = replyResult.replies;
 
   // Get parent thread if this is a reply
   const parent_thread = post.inReplyToId

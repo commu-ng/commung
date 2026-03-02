@@ -14,6 +14,7 @@ import {
   postQuerySchema,
   postReactionCreateSchema,
   postReactionDeleteSchema,
+  postRepliesQuerySchema,
   postReportRequestSchema,
   postSearchQuerySchema,
   postUpdateRequestSchema,
@@ -297,6 +298,33 @@ export const postsRouter = new Hono<{ Variables: AuthVariables }>()
 
       const post = await postService.getPost(postId, community.id, profileId);
       return c.json({ data: post });
+    },
+  )
+
+  .get(
+    "/posts/:post_id/replies",
+    optionalAppAuthMiddleware,
+    communityMiddleware,
+    zValidator("param", postIdParamSchema),
+    zValidator("query", postRepliesQuerySchema),
+    async (c) => {
+      const { post_id: postId } = c.req.valid("param");
+      const community = c.get("community");
+      const {
+        limit = 20,
+        cursor,
+        profile_id: profileId,
+      } = c.req.valid("query");
+
+      const result = await postService.getPostReplies(
+        postId,
+        community.id,
+        limit,
+        cursor,
+        profileId,
+      );
+
+      return c.json(result);
     },
   )
 

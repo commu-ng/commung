@@ -1,3 +1,4 @@
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, CornerDownRight, MessageCircle } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
@@ -7,28 +8,12 @@ import { useAuth } from "~/hooks/useAuth";
 import { client } from "~/lib/api-client";
 import type { Post } from "~/types/post";
 
-function flattenReplies(replies: Post[]): Post[] {
-  const result: Post[] = [];
-  for (const reply of replies) {
-    result.push(reply);
-    if (reply.replies?.length) {
-      result.push(...flattenReplies(reply.replies));
-    }
-  }
-  return result;
-}
-
-function countTotalReplies(replies: Post[]): number {
-  let count = replies.length;
-  for (const reply of replies) {
-    count += countTotalReplies(reply.replies || []);
-  }
-  return count;
-}
+const REPLIES_PER_PAGE = 20;
 
 export default function PostDetail() {
   const { username, post_id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, currentProfile } = useAuth();
 
   const [post, setPost] = useState<Post | null>(null);
@@ -40,7 +25,7 @@ export default function PostDetail() {
   const isCommunityOwner =
     user?.instances?.some((instance) => instance.role === "owner") ?? false;
 
-  // Fetch post information
+  // Fetch post information (without replies — those come from the separate query)
   const fetchPost = useCallback(async () => {
     if (!post_id) return;
 
@@ -64,36 +49,6 @@ export default function PostDetail() {
           return;
         }
 
-        // Convert API response format to match PostCard expectations
-        // Normalize depths: main post becomes depth 0, replies adjust accordingly
-        const mainPostDepth = postData.depth || 0;
-
-        // Recursive function to adjust depths in nested replies
-        const adjustReplyDepths = (
-          replies: Post[],
-          depthOffset: number,
-        ): Post[] => {
-          return (
-            replies?.map(
-              (reply): Post => ({
-                ...reply,
-                author: {
-                  ...reply.author,
-                  profile_picture_url: reply.author.profile_picture_url || null,
-                },
-                content_warning: reply.content_warning || null,
-                in_reply_to_id: reply.in_reply_to_id || null,
-                root_post_id: reply.root_post_id || null,
-                images: reply.images || [],
-                is_bookmarked: reply.is_bookmarked || false,
-                reactions: reply.reactions || [],
-                depth: Math.max(0, (reply.depth || 0) - depthOffset), // Adjust reply depths
-                replies: adjustReplyDepths(reply.replies || [], depthOffset), // Recursive adjustment
-              }),
-            ) || []
-          );
-        };
-
         const convertedPost = {
           ...postData,
           author: {
@@ -105,8 +60,8 @@ export default function PostDetail() {
           root_post_id: postData.root_post_id || null,
           images: postData.images || [],
           reactions: postData.reactions || [],
-          depth: 0, // Main post always has depth 0 on detail page
-          replies: adjustReplyDepths(postData.replies || [], mainPostDepth),
+          depth: 0,
+          replies: [],
         };
         setPost(convertedPost);
 
@@ -121,8 +76,8 @@ export default function PostDetail() {
       } else {
         setError("게시물을 불러오는 데 실패했습니다");
       }
-    } catch (error) {
-      console.error("Failed to fetch post:", error);
+    } catch (_err) {
+      console.error("Failed to fetch post:", _err);
       setError("게시물을 불러오는 데 실패했습니다");
     } finally {
       setIsLoading(false);
@@ -135,15 +90,52 @@ export default function PostDetail() {
     }
   }, [post_id, fetchPost]);
 
+  // Paginated replies via useInfiniteQuery
+  const {
+    data: repliesData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isRepliesLoading,
+  } = useInfiniteQuery({
+    queryKey: ["postReplies", post_id, currentProfile?.id],
+    queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
+      const response = await client.app.posts[":post_id"].replies.$get({
+        param: { post_id: post_id ?? "" },
+        query: {
+          limit: REPLIES_PER_PAGE.toString(),
+          ...(pageParam && { cursor: pageParam }),
+          ...(currentProfile?.id && { profile_id: currentProfile.id }),
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch replies: ${response.status}`);
+      }
+      return response.json();
+    },
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.has_more
+        ? lastPage.pagination.next_cursor
+        : undefined;
+    },
+    initialPageParam: undefined as string | undefined,
+    enabled: !!post_id && !isLoading && !error,
+  });
+
+  const allReplies = repliesData?.pages.flatMap((page) => page.data) ?? [];
+  const totalReplyCount = repliesData?.pages[0]?.pagination.total_count ?? 0;
+
+  // Compute the depth offset from the main post so replies render relative
+  const mainPostDepth = post?.depth ?? 0;
+
   const handleMainPostDelete = () => {
-    // Navigate back to home after main post is deleted, with state to trigger refresh
     navigate("/", { state: { refetch: true } });
   };
 
   const handleRefresh = useCallback(() => {
-    // Refresh the post data to show new replies or after reply deletion
     fetchPost();
-  }, [fetchPost]);
+    queryClient.invalidateQueries({ queryKey: ["postReplies", post_id] });
+  }, [fetchPost, queryClient, post_id]);
 
   if (isLoading) {
     return (
@@ -192,7 +184,7 @@ export default function PostDetail() {
             >
               <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </button>
-            <div className="h-4 w-px bg-gray-300"></div>
+            <div className="h-4 w-px bg-gray-300" />
             <div>
               <h1 className="text-xl font-bold text-foreground">게시물</h1>
               <p className="text-sm text-muted-foreground">
@@ -280,7 +272,7 @@ export default function PostDetail() {
                             {users.length}명이 반응했습니다
                           </div>
                           <div className="flex flex-wrap gap-2">
-                            {users.map((user, _index) => (
+                            {users.map((user) => (
                               <button
                                 key={user.id}
                                 type="button"
@@ -302,47 +294,75 @@ export default function PostDetail() {
 
           {/* Replies section */}
           <div className="mt-6">
-            {(() => {
-              const allReplies = flattenReplies(post.replies || []);
-              const totalCount = countTotalReplies(post.replies || []);
-              return (
-                <>
-                  <h3 className="text-lg font-semibold text-foreground mb-4">
-                    답글 ({totalCount})
-                  </h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">
+              답글 ({totalReplyCount})
+            </h3>
 
-                  {allReplies.length === 0 ? (
-                    <div className="bg-card rounded-2xl shadow-sm border border-border p-8 text-center">
-                      <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto mb-4">
-                        <MessageCircle className="h-8 w-8 text-gray-400" />
-                      </div>
-                      <h4 className="text-lg font-semibold text-foreground mb-2">
-                        아직 답글이 없습니다
-                      </h4>
-                      <p className="text-muted-foreground">
-                        첫 번째 답글을 작성해보세요!
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {allReplies.map((reply) => (
-                        <PostCard
-                          key={reply.id}
-                          post={{
-                            ...reply,
-                            replies: [],
-                          }}
-                          currentProfileId={currentProfile?.id}
-                          onDelete={handleRefresh}
-                          onRefresh={handleRefresh}
-                          isCommunityOwner={isCommunityOwner}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </>
-              );
-            })()}
+            {isRepliesLoading ? (
+              <div className="flex justify-center py-8">
+                <Spinner className="h-6 w-6" />
+              </div>
+            ) : allReplies.length === 0 ? (
+              <div className="bg-card rounded-2xl shadow-sm border border-border p-8 text-center">
+                <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MessageCircle className="h-8 w-8 text-gray-400" />
+                </div>
+                <h4 className="text-lg font-semibold text-foreground mb-2">
+                  아직 답글이 없습니다
+                </h4>
+                <p className="text-muted-foreground">
+                  첫 번째 답글을 작성해보세요!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {allReplies.map((reply) => (
+                  <PostCard
+                    key={reply.id}
+                    post={{
+                      ...reply,
+                      author: {
+                        ...reply.author,
+                        profile_picture_url:
+                          reply.author.profile_picture_url || null,
+                      },
+                      content_warning: reply.content_warning || null,
+                      in_reply_to_id: reply.in_reply_to_id || null,
+                      root_post_id: reply.root_post_id || null,
+                      images: reply.images || [],
+                      is_bookmarked: reply.is_bookmarked || false,
+                      reactions: reply.reactions || [],
+                      depth: Math.max(
+                        0,
+                        (reply.depth || 0) - mainPostDepth - 1,
+                      ),
+                      replies: [],
+                    }}
+                    currentProfileId={currentProfile?.id}
+                    onDelete={handleRefresh}
+                    onRefresh={handleRefresh}
+                    isCommunityOwner={isCommunityOwner}
+                  />
+                ))}
+
+                {hasNextPage && (
+                  <div className="flex justify-center py-4">
+                    <button
+                      type="button"
+                      onClick={() => fetchNextPage()}
+                      disabled={isFetchingNextPage}
+                      className="px-6 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors disabled:opacity-50"
+                    >
+                      {isFetchingNextPage ? (
+                        <Spinner className="h-4 w-4" />
+                      ) : (
+                        "더 보기"
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </main>

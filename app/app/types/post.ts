@@ -45,6 +45,8 @@ export interface Post {
   root_post_id: string | null;
   is_bookmarked: boolean;
   replies: Post[];
+  reply_count?: number;
+  has_more_replies?: boolean;
   reactions?: Array<{
     emoji: string;
     user: {

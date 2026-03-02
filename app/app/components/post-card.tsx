@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
+import { Link } from "react-router";
 import { toast } from "sonner";
 import { DirectMessageModal } from "~/components/DirectMessageModal";
 import { ReportDialog } from "~/components/ReportDialog";
@@ -356,7 +357,9 @@ export const PostCard = memo(function PostCard({
             >
               <PostCardActions
                 postId={post.id}
-                replyCount={countTotalReplies(post.replies || [])}
+                replyCount={
+                  post.reply_count ?? countTotalReplies(post.replies || [])
+                }
                 isBookmarked={post.is_bookmarked || false}
                 isPinned={!!post.pinned_at}
                 isOwnPost={post.author.id === currentProfileId}
@@ -421,6 +424,8 @@ export const PostCard = memo(function PostCard({
             const hasHiddenReplies =
               filteredReplies.length < post.replies.length;
 
+            const totalReplyCount = post.reply_count ?? post.replies.length;
+
             return (
               <div className="mt-3 pt-3 border-t border-border">
                 {/* Show toggle button only if there are hidden replies */}
@@ -432,8 +437,8 @@ export const PostCard = memo(function PostCard({
                   >
                     <span className="text-xs text-muted-foreground font-medium">
                       {isThreadCollapsed
-                        ? `답글 ${filteredReplies.length}/${post.replies.length}개`
-                        : `답글 ${post.replies.length}개`}
+                        ? `답글 ${filteredReplies.length}/${totalReplyCount}개`
+                        : `답글 ${totalReplyCount}개`}
                     </span>
                     {isThreadCollapsed ? (
                       <ChevronDown className="w-3 h-3 text-muted-foreground" />
@@ -457,6 +462,14 @@ export const PostCard = memo(function PostCard({
                     />
                   ))}
                 </div>
+                {post.has_more_replies && (
+                  <Link
+                    to={`/@${post.author.username}/${post.root_post_id ?? post.id}`}
+                    className="block mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                  >
+                    답글 {totalReplyCount}개 모두 보기
+                  </Link>
+                )}
               </div>
             );
           })()}
