@@ -37,6 +37,7 @@ export const PostCard = memo(function PostCard({
   hideBorder = false,
   isProfileView = false,
   displayDepth,
+  isContinuation = false,
 }: PostCardProps) {
   const { currentProfile } = useAuth();
   const [showReplyForm, setShowReplyForm] = useState(false);
@@ -276,7 +277,7 @@ export const PostCard = memo(function PostCard({
             ? "bg-background"
             : `bg-card ${!hideBorder ? "border-b border-border" : ""}`
       } ${isReply ? "" : ""} ${!hideBorder && !isReply ? "" : ""} overflow-hidden ${
-        isReply
+        isReply && !isContinuation
           ? `border-l-4 ${
               depth === 1
                 ? "border-l-blue-300 dark:border-l-blue-600"
@@ -428,7 +429,9 @@ export const PostCard = memo(function PostCard({
             const totalReplyCount = post.reply_count ?? post.replies.length;
 
             return (
-              <div className="mt-3 pt-3 border-t border-border">
+              <div
+                className={`mt-3 pt-3 border-t border-border ${isReply ? "-ml-2" : ""}`}
+              >
                 {/* Show toggle button only if there are hidden replies */}
                 {hasHiddenReplies && (
                   <button
@@ -461,6 +464,7 @@ export const PostCard = memo(function PostCard({
                         key={reply.id}
                         post={reply}
                         displayDepth={childDisplayDepth}
+                        isContinuation={childDisplayDepth <= depth}
                         currentProfileId={currentProfileId}
                         onDelete={onDelete}
                         onRefresh={onRefresh}
