@@ -1423,51 +1423,100 @@ async function buildThreadedRepliesForMultiplePosts(
   }
 
   // Use PostgreSQL's recursive CTE to get all replies for multiple root posts
+  const rootIdsArray = sql.raw(
+    `ARRAY[${rootPostIds.map((id) => `'${id}'`).join(",")}]::uuid[]`,
+  );
+
   const replyLimitClause = replyLimit
-    ? sql`SELECT *, ROW_NUMBER() OVER (PARTITION BY original_root_id ORDER BY sort_path) as rn, COUNT(*) OVER (PARTITION BY original_root_id) as total_count FROM thread_replies`
-    : sql`SELECT *, NULL::bigint as rn, NULL::bigint as total_count FROM thread_replies`;
+    ? sql`SELECT *, ROW_NUMBER() OVER (PARTITION BY original_root_id ORDER BY sort_path) as rn FROM thread_replies`
+    : sql`SELECT * FROM thread_replies`;
 
   const outerWhereClause = replyLimit ? sql`WHERE rn <= ${replyLimit}` : sql``;
 
-  const result = await db.execute(sql`
-    WITH RECURSIVE thread_replies AS (
-        -- Base case: direct replies to any of the root posts
-        SELECT
-            p.id, p.content, p.created_at, p.updated_at, p.deleted_at, p.announcement, p.content_warning,
-            p.author_id, p.in_reply_to_id, p.depth, p.root_post_id,
-            ARRAY[p.created_at] as sort_path,
-            p.in_reply_to_id as original_root_id
-        FROM post p
-        JOIN profile a ON p.author_id = a.id
-        WHERE p.in_reply_to_id = ANY(${sql.raw(`ARRAY[${rootPostIds.map((id) => `'${id}'`).join(",")}]::uuid[]`)})
-        AND p.deleted_at IS NULL
-        AND p.published_at IS NOT NULL
-        AND p.community_id = ${communityId}
-        AND a.community_id = ${communityId}
+  // When replyLimit is provided, run a separate count query without depth limit
+  const countQueryPromise = replyLimit
+    ? db.execute(sql`
+        WITH RECURSIVE all_replies AS (
+            SELECT p.id, p.in_reply_to_id as original_root_id
+            FROM post p
+            JOIN profile a ON p.author_id = a.id
+            WHERE p.in_reply_to_id = ANY(${rootIdsArray})
+            AND p.deleted_at IS NULL
+            AND p.published_at IS NOT NULL
+            AND p.community_id = ${communityId}
+            AND a.community_id = ${communityId}
 
-        UNION ALL
+            UNION ALL
 
-        -- Recursive case: replies to replies
-        SELECT
-            p.id, p.content, p.created_at, p.updated_at, p.deleted_at, p.announcement, p.content_warning,
-            p.author_id, p.in_reply_to_id, p.depth, p.root_post_id,
-            tr.sort_path || p.created_at,
-            tr.original_root_id
-        FROM post p
-        JOIN profile a ON p.author_id = a.id
-        JOIN thread_replies tr ON p.in_reply_to_id = tr.id
-        WHERE p.deleted_at IS NULL
-        AND p.published_at IS NOT NULL
-        AND p.community_id = ${communityId}
-        AND a.community_id = ${communityId}
-        AND p.depth <= ${depthLimit}
-    ), numbered AS (
-        ${replyLimitClause}
-    )
-    SELECT * FROM numbered
-    ${outerWhereClause}
-    ORDER BY original_root_id, sort_path
-  `);
+            SELECT p.id, ar.original_root_id
+            FROM post p
+            JOIN profile a ON p.author_id = a.id
+            JOIN all_replies ar ON p.in_reply_to_id = ar.id
+            WHERE p.deleted_at IS NULL
+            AND p.published_at IS NOT NULL
+            AND p.community_id = ${communityId}
+            AND a.community_id = ${communityId}
+        )
+        SELECT original_root_id, COUNT(*) as total_count
+        FROM all_replies
+        GROUP BY original_root_id
+      `)
+    : null;
+
+  const [result, countResult] = await Promise.all([
+    db.execute(sql`
+      WITH RECURSIVE thread_replies AS (
+          -- Base case: direct replies to any of the root posts
+          SELECT
+              p.id, p.content, p.created_at, p.updated_at, p.deleted_at, p.announcement, p.content_warning,
+              p.author_id, p.in_reply_to_id, p.depth, p.root_post_id,
+              ARRAY[p.created_at] as sort_path,
+              p.in_reply_to_id as original_root_id
+          FROM post p
+          JOIN profile a ON p.author_id = a.id
+          WHERE p.in_reply_to_id = ANY(${rootIdsArray})
+          AND p.deleted_at IS NULL
+          AND p.published_at IS NOT NULL
+          AND p.community_id = ${communityId}
+          AND a.community_id = ${communityId}
+
+          UNION ALL
+
+          -- Recursive case: replies to replies
+          SELECT
+              p.id, p.content, p.created_at, p.updated_at, p.deleted_at, p.announcement, p.content_warning,
+              p.author_id, p.in_reply_to_id, p.depth, p.root_post_id,
+              tr.sort_path || p.created_at,
+              tr.original_root_id
+          FROM post p
+          JOIN profile a ON p.author_id = a.id
+          JOIN thread_replies tr ON p.in_reply_to_id = tr.id
+          WHERE p.deleted_at IS NULL
+          AND p.published_at IS NOT NULL
+          AND p.community_id = ${communityId}
+          AND a.community_id = ${communityId}
+          AND p.depth <= ${depthLimit}
+      ), numbered AS (
+          ${replyLimitClause}
+      )
+      SELECT * FROM numbered
+      ${outerWhereClause}
+      ORDER BY original_root_id, sort_path
+    `),
+    countQueryPromise,
+  ]);
+
+  // Build total count map from the separate count query
+  const totalCountByRoot = new Map<string, number>();
+  if (countResult) {
+    const countRows = countResult.rows as {
+      original_root_id: string;
+      total_count: string;
+    }[];
+    for (const row of countRows) {
+      totalCountByRoot.set(row.original_root_id, Number(row.total_count));
+    }
+  }
 
   const rows = result.rows as {
     id: string;
@@ -1483,8 +1532,6 @@ async function buildThreadedRepliesForMultiplePosts(
     root_post_id: string | null;
     sort_path: string[];
     original_root_id: string;
-    rn: string | null;
-    total_count: string | null;
   }[];
 
   if (rows.length === 0) {
@@ -1494,20 +1541,12 @@ async function buildThreadedRepliesForMultiplePosts(
       { replies: ReplyData[]; totalCount: number }
     >();
     for (const rootId of rootPostIds) {
-      emptyMap.set(rootId, { replies: [], totalCount: 0 });
+      emptyMap.set(rootId, {
+        replies: [],
+        totalCount: totalCountByRoot.get(rootId) ?? 0,
+      });
     }
     return emptyMap;
-  }
-
-  // Collect total counts per root post from window function
-  const totalCountByRoot = new Map<string, number>();
-  for (const row of rows) {
-    if (
-      row.total_count != null &&
-      !totalCountByRoot.has(row.original_root_id)
-    ) {
-      totalCountByRoot.set(row.original_root_id, Number(row.total_count));
-    }
   }
 
   // Collect all IDs for batch loading
