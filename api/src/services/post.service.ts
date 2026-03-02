@@ -1744,9 +1744,12 @@ export async function getPostReplies(
   let decodedCursor: string[] | null = null;
   if (cursor) {
     try {
-      decodedCursor = JSON.parse(
+      const parsed = JSON.parse(
         Buffer.from(cursor, "base64url").toString("utf-8"),
       );
+      if (Array.isArray(parsed)) {
+        decodedCursor = parsed;
+      }
     } catch {
       decodedCursor = null;
     }
@@ -1788,7 +1791,7 @@ export async function getPostReplies(
           AND a.community_id = ${communityId}
           AND p.depth <= ${depthLimit}
       )
-      SELECT * FROM thread_replies
+      SELECT *, array_to_json(sort_path)::text as sort_path_json FROM thread_replies
       WHERE 1=1 ${cursorCondition}
       ORDER BY sort_path
       LIMIT ${limit + 1}
@@ -1836,6 +1839,7 @@ export async function getPostReplies(
     depth: number;
     root_post_id: string | null;
     sort_path: string[];
+    sort_path_json: string;
   }[];
 
   if (rows.length === 0) {
@@ -1852,11 +1856,11 @@ export async function getPostReplies(
   const hasMore = rows.length > limit;
   const rowsToReturn = hasMore ? rows.slice(0, limit) : rows;
 
-  // Encode next cursor from the last row's sort_path
+  // Encode next cursor from the last row's sort_path (already JSON from array_to_json)
   const nextCursor =
     hasMore && rowsToReturn.length > 0
       ? Buffer.from(
-          JSON.stringify(rowsToReturn[rowsToReturn.length - 1]?.sort_path),
+          String(rowsToReturn[rowsToReturn.length - 1]?.sort_path_json),
         ).toString("base64url")
       : null;
 
