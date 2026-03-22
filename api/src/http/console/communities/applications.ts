@@ -371,23 +371,10 @@ export const applicationsRouter = new Hono()
       const isApplicant = application.userId === user.id;
 
       if (!isApplicant) {
-        try {
-          await membershipService.validateMembershipRole(
-            user.id,
-            community.id,
-            ["owner", "moderator"],
-          );
-        } catch (_error) {
-          return c.json(
-            {
-              error: {
-                code: GeneralErrorCode.FORBIDDEN,
-                message: "이 지원서를 볼 수 있는 권한이 없습니다",
-              },
-            },
-            403,
-          );
-        }
+        await membershipService.validateMembershipRole(user.id, community.id, [
+          "owner",
+          "moderator",
+        ]);
       }
 
       // Batch fetch profile IDs for applicant and reviewer

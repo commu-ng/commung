@@ -698,19 +698,12 @@ botApiRouter
       );
     }
 
-    try {
-      const post = await postService.getPost(
-        postId,
-        communityId,
-        botResult.profileId,
-      );
-      return c.json({ data: post }, 200);
-    } catch {
-      return c.json(
-        { error: { code: "NOT_FOUND", message: "Post not found" } },
-        404,
-      );
-    }
+    const post = await postService.getPost(
+      postId,
+      communityId,
+      botResult.profileId,
+    );
+    return c.json({ data: post }, 200);
   })
 
   // Create post
@@ -842,32 +835,14 @@ botApiRouter
 
     const { emoji } = c.req.valid("json");
 
-    try {
-      const result = await postService.createReaction(
-        botResult.profileId,
-        postId,
-        communityId,
-        emoji,
-        botResult.profileName,
-      );
-      return c.json({ data: result }, 201);
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message.includes("이미 존재")) {
-          return c.json(
-            { error: { code: "BAD_REQUEST", message: error.message } },
-            400,
-          );
-        }
-        if (error.message.includes("찾을 수 없")) {
-          return c.json(
-            { error: { code: "NOT_FOUND", message: error.message } },
-            404,
-          );
-        }
-      }
-      throw error;
-    }
+    const result = await postService.createReaction(
+      botResult.profileId,
+      postId,
+      communityId,
+      emoji,
+      botResult.profileName,
+    );
+    return c.json({ data: result }, 201);
   })
 
   // Remove reaction
@@ -924,23 +899,13 @@ botApiRouter
       );
     }
 
-    try {
-      await postService.deleteReaction(
-        botResult.profileId,
-        postId,
-        communityId,
-        decodeURIComponent(emoji),
-      );
-      return c.json({ message: "Reaction removed successfully" }, 200);
-    } catch (error) {
-      if (error instanceof Error && error.message.includes("찾을 수 없")) {
-        return c.json(
-          { error: { code: "NOT_FOUND", message: error.message } },
-          404,
-        );
-      }
-      throw error;
-    }
+    await postService.deleteReaction(
+      botResult.profileId,
+      postId,
+      communityId,
+      decodeURIComponent(emoji),
+    );
+    return c.json({ message: "Reaction removed successfully" }, 200);
   })
 
   // Update post
@@ -999,36 +964,18 @@ botApiRouter
 
     const { content, content_warning } = c.req.valid("json");
 
-    try {
-      const result = await postService.updatePost(
-        botResult.createdByUserId,
-        botResult.profileId,
-        postId,
-        communityId,
-        content,
-        undefined, // No image updates for bots
-        content_warning,
-        undefined, // Bots cannot change announcement status
-        "member", // Bot has member role (cannot set announcements)
-      );
-      return c.json({ data: result }, 200);
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message.includes("본인의 게시물만")) {
-          return c.json(
-            { error: { code: "FORBIDDEN", message: error.message } },
-            403,
-          );
-        }
-        if (error.message.includes("찾을 수 없")) {
-          return c.json(
-            { error: { code: "NOT_FOUND", message: error.message } },
-            404,
-          );
-        }
-      }
-      throw error;
-    }
+    const result = await postService.updatePost(
+      botResult.createdByUserId,
+      botResult.profileId,
+      postId,
+      communityId,
+      content,
+      undefined, // No image updates for bots
+      content_warning,
+      undefined, // Bots cannot change announcement status
+      "member", // Bot has member role (cannot set announcements)
+    );
+    return c.json({ data: result }, 200);
   })
 
   // Delete post
@@ -1085,36 +1032,13 @@ botApiRouter
       );
     }
 
-    try {
-      await postService.deletePost(
-        botResult.createdByUserId,
-        botResult.profileId,
-        postId,
-        communityId,
-      );
-      return c.json({ message: "Post deleted successfully" }, 200);
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message.includes("Only the post author")) {
-          return c.json(
-            {
-              error: {
-                code: "FORBIDDEN",
-                message: "Cannot delete posts created by others",
-              },
-            },
-            403,
-          );
-        }
-        if (error.message.includes("찾을 수 없")) {
-          return c.json(
-            { error: { code: "NOT_FOUND", message: error.message } },
-            404,
-          );
-        }
-      }
-      throw error;
-    }
+    await postService.deletePost(
+      botResult.createdByUserId,
+      botResult.profileId,
+      postId,
+      communityId,
+    );
+    return c.json({ message: "Post deleted successfully" }, 200);
   });
 
 // OpenAPI documentation endpoint - registered separately
