@@ -99,7 +99,7 @@ export default function Login() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center bg-background">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <LoadingState message="인증 정보를 확인하는 중..." />
       </div>
     );
@@ -110,7 +110,7 @@ export default function Login() {
   }
 
   return (
-    <div className="flex items-center justify-center bg-background">
+    <div className="flex items-center justify-center min-h-screen bg-background">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">로그인</CardTitle>
