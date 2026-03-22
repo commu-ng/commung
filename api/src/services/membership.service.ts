@@ -871,6 +871,7 @@ export async function approveMembershipApplication(
           type: "application_approved",
           community_slug: community.slug,
           community_url: communityUrl,
+          url: communityUrl,
         },
       });
     }
@@ -1256,6 +1257,7 @@ export async function createApplication(
               data: {
                 type: "application",
                 community_slug: community.slug,
+                url: `https://${process.env.BASE_DOMAIN || "commu.ng"}/communities/${community.slug}/applications`,
               },
             });
           }

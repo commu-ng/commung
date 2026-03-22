@@ -211,6 +211,7 @@ export async function sendDirectMessage(
             message_id: message.id,
             sender_id: senderProfileId,
             community_url: communityUrl,
+            url: `${communityUrl}/messages/${senderProfile.username}`,
           },
         },
       );
@@ -1423,6 +1424,7 @@ export async function sendGroupChatMessage(
               group_chat_id: groupChatId,
               sender_id: profileId,
               community_url: communityUrl,
+              url: `${communityUrl}/group-chats/${groupChatId}`,
             },
           });
         }

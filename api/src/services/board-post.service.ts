@@ -1096,6 +1096,7 @@ export async function createBoardPostReply(
         board_post_id: boardPostId,
         reply_id: newReply.id,
         board_slug: post.board.slug || post.board.id,
+        url: `https://${process.env.BASE_DOMAIN || "commu.ng"}/boards/${post.board.slug || post.board.id}/posts/${boardPostId}`,
       },
     });
   }
@@ -1119,6 +1120,7 @@ export async function createBoardPostReply(
           board_post_id: boardPostId,
           reply_id: newReply.id,
           board_slug: post.board.slug || post.board.id,
+          url: `https://${process.env.BASE_DOMAIN || "commu.ng"}/boards/${post.board.slug || post.board.id}/posts/${boardPostId}`,
         },
       });
     }

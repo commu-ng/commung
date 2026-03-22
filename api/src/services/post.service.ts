@@ -848,6 +848,7 @@ export async function createReaction(
           type: "reaction",
           post_id: post.id,
           community_url: communityUrl,
+          url: `https://${community.slug}.${baseDomain}/${post.profile.username}/${post.id}`,
         },
       });
     }
@@ -2569,6 +2570,7 @@ export async function createPost(
             type: "reply",
             post_id: newPost.id,
             community_url: communityUrl,
+            url: `https://${community.slug}.${baseDomain}/${profile?.username}/${newPost.id}`,
           },
         });
       }
@@ -2651,6 +2653,7 @@ export async function createPost(
               type: "mention",
               post_id: newPost.id,
               community_url: communityUrl,
+              url: communityUrl,
             },
           });
         }
