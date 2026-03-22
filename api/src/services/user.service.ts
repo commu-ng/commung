@@ -2,6 +2,8 @@ import * as bcrypt from "bcrypt";
 import { and, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { SESSION_CONFIG } from "../config/session.config";
 import { db } from "../db";
+import { AppException } from "../exception";
+import { GeneralErrorCode } from "../types/api-responses";
 import {
   community as communityTable,
   exchangeToken as exchangeTokenTable,
@@ -268,61 +270,96 @@ export async function updateUserProfile(
   });
 
   if (!profile) {
-    throw new Error("Profile not found");
+    throw new AppException(
+      404,
+      GeneralErrorCode.PROFILE_NOT_FOUND,
+      "프로필을 찾을 수 없습니다",
+    );
   }
 
   // Update the profile in a transaction
-  const updatedProfile = await db.transaction(async (tx) => {
-    // Update the profile's name, username, and bio
-    const updatedProfileResult = await tx
-      .update(profileTable)
-      .set({
-        name,
-        username,
-        bio,
-      })
-      .where(eq(profileTable.id, profileId))
-      .returning();
+  let updatedProfile: Awaited<
+    ReturnType<typeof db.transaction<(typeof profileTable)["$inferSelect"]>>
+  >;
+  try {
+    updatedProfile = await db.transaction(async (tx) => {
+      // Update the profile's name, username, and bio
+      const updatedProfileResult = await tx
+        .update(profileTable)
+        .set({
+          name,
+          username,
+          bio,
+        })
+        .where(eq(profileTable.id, profileId))
+        .returning();
 
-    const updated = updatedProfileResult[0];
-    if (!updated) {
-      throw new Error("Failed to update profile");
-    }
-
-    // Handle profile picture update
-    if (profilePictureId) {
-      // Validate image exists
-      const image = await tx.query.image.findFirst({
-        where: and(
-          eq(imageTable.id, profilePictureId),
-          isNull(imageTable.deletedAt),
-        ),
-      });
-
-      if (!image) {
-        throw new Error("Invalid profile picture ID");
+      const updated = updatedProfileResult[0];
+      if (!updated) {
+        throw new Error("Failed to update profile");
       }
 
-      // Soft delete all existing profile pictures
-      await tx
-        .update(profilePictureTable)
-        .set({ deletedAt: sql`NOW()` })
-        .where(
-          and(
-            eq(profilePictureTable.profileId, profile.id),
-            isNull(profilePictureTable.deletedAt),
+      // Handle profile picture update
+      if (profilePictureId) {
+        // Validate image exists
+        const image = await tx.query.image.findFirst({
+          where: and(
+            eq(imageTable.id, profilePictureId),
+            isNull(imageTable.deletedAt),
           ),
-        );
+        });
 
-      // Create new profile picture record
-      await tx.insert(profilePictureTable).values({
-        profileId: profile.id,
-        imageId: profilePictureId,
-      });
+        if (!image) {
+          throw new AppException(
+            400,
+            GeneralErrorCode.INVALID_PROFILE_PICTURE,
+            "잘못된 프로필 사진 ID입니다",
+          );
+        }
+
+        // Soft delete all existing profile pictures
+        await tx
+          .update(profilePictureTable)
+          .set({ deletedAt: sql`NOW()` })
+          .where(
+            and(
+              eq(profilePictureTable.profileId, profile.id),
+              isNull(profilePictureTable.deletedAt),
+            ),
+          );
+
+        // Create new profile picture record
+        await tx.insert(profilePictureTable).values({
+          profileId: profile.id,
+          imageId: profilePictureId,
+        });
+      }
+
+      return updated;
+    });
+  } catch (error) {
+    if (error instanceof AppException) {
+      throw error;
     }
-
-    return updated;
-  });
+    const causeMessage =
+      error instanceof Error && (error as Error & { cause?: Error }).cause
+        ? (error as Error & { cause: Error }).cause.message
+        : "";
+    if (
+      error instanceof Error &&
+      (error.message.includes("unique_username_community") ||
+        error.message.includes("duplicate key value") ||
+        causeMessage.includes("unique_username_community") ||
+        causeMessage.includes("duplicate key value"))
+    ) {
+      throw new AppException(
+        409,
+        GeneralErrorCode.USERNAME_TAKEN,
+        "이 커뮤에서 이미 사용 중인 사용자명입니다",
+      );
+    }
+    throw error;
+  }
 
   // Get current profile picture
   const currentProfilePicture = await db.query.profilePicture.findFirst({

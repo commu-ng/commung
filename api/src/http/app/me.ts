@@ -63,66 +63,15 @@ export const meRouter = new Hono<{ Variables: AuthVariables }>()
         );
       }
 
-      try {
-        const result = await userService.updateUserProfile(
-          profileId,
-          community.id,
-          name,
-          username,
-          bio,
-          profile_picture_id,
-        );
-        return c.json({ data: result });
-      } catch (error: unknown) {
-        // Check for unique constraint violation on username
-        const causeMessage =
-          error instanceof Error && (error as Error & { cause?: Error }).cause
-            ? (error as Error & { cause: Error }).cause.message
-            : "";
-        if (
-          error instanceof Error &&
-          (error.message.includes("unique_username_community") ||
-            error.message.includes("duplicate key value") ||
-            causeMessage.includes("unique_username_community") ||
-            causeMessage.includes("duplicate key value"))
-        ) {
-          return c.json(
-            {
-              error: {
-                code: GeneralErrorCode.USERNAME_TAKEN,
-                message: "이 커뮤에서 이미 사용 중인 사용자명입니다",
-              },
-            },
-            409,
-          );
-        }
-        if (
-          error instanceof Error &&
-          error.message === "Invalid profile picture ID"
-        ) {
-          return c.json(
-            {
-              error: {
-                code: GeneralErrorCode.INVALID_PROFILE_PICTURE,
-                message: "잘못된 프로필 사진 ID입니다",
-              },
-            },
-            400,
-          );
-        }
-        if (error instanceof Error && error.message === "Profile not found") {
-          return c.json(
-            {
-              error: {
-                code: GeneralErrorCode.PROFILE_NOT_FOUND,
-                message: "프로필을 찾을 수 없습니다",
-              },
-            },
-            404,
-          );
-        }
-        throw error;
-      }
+      const result = await userService.updateUserProfile(
+        profileId,
+        community.id,
+        name,
+        username,
+        bio,
+        profile_picture_id,
+      );
+      return c.json({ data: result });
     },
   )
   .get(

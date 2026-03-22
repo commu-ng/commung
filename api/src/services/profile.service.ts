@@ -19,7 +19,7 @@ import {
   profile as profileTable,
 } from "../drizzle/schema";
 import { AppException } from "../exception";
-import { GENERAL_ERROR_CODE } from "../types/api-responses";
+import { GENERAL_ERROR_CODE, GeneralErrorCode } from "../types/api-responses";
 import {
   addUserToProfile,
   canManageProfile,
@@ -298,73 +298,98 @@ export async function createProfile(
   }
 
   // Create profile in a transaction
-  const newProfile = await db.transaction(async (tx) => {
-    // If is_primary is true, unset primary on user's other profiles
-    if (isPrimary) {
-      // Get user's owned profiles in this community
-      const userProfiles = await getUserProfiles(userId);
-      const userProfileIds = userProfiles
-        .filter(
-          (
-            ownership,
-          ): ownership is typeof ownership & {
-            profile: NonNullable<typeof ownership.profile>;
-          } =>
-            ownership.profile !== null &&
-            ownership.profile !== undefined &&
-            !ownership.profile.deletedAt &&
-            ownership.profile.communityId === communityId,
-        )
-        .map((ownership) => ownership.profile.id);
+  let newProfile: (typeof profileTable)["$inferSelect"];
+  try {
+    newProfile = await db.transaction(async (tx) => {
+      // If is_primary is true, unset primary on user's other profiles
+      if (isPrimary) {
+        // Get user's owned profiles in this community
+        const userProfiles = await getUserProfiles(userId);
+        const userProfileIds = userProfiles
+          .filter(
+            (
+              ownership,
+            ): ownership is typeof ownership & {
+              profile: NonNullable<typeof ownership.profile>;
+            } =>
+              ownership.profile !== null &&
+              ownership.profile !== undefined &&
+              !ownership.profile.deletedAt &&
+              ownership.profile.communityId === communityId,
+          )
+          .map((ownership) => ownership.profile.id);
 
-      if (userProfileIds.length > 0) {
-        await tx
-          .update(profileTable)
-          .set({ isPrimary: false })
-          .where(
-            and(
-              inArray(profileTable.id, userProfileIds),
-              eq(profileTable.communityId, communityId),
-            ),
-          );
+        if (userProfileIds.length > 0) {
+          await tx
+            .update(profileTable)
+            .set({ isPrimary: false })
+            .where(
+              and(
+                inArray(profileTable.id, userProfileIds),
+                eq(profileTable.communityId, communityId),
+              ),
+            );
+        }
       }
-    }
 
-    const newProfileResult = await tx
-      .insert(profileTable)
-      .values({
-        name,
-        username,
-        bio: bio ?? undefined,
-        isPrimary: isPrimary ?? undefined,
-        communityId: communityId,
-        activatedAt: sql`NOW()`, // New profiles are immediately active
-      })
-      .returning();
+      const newProfileResult = await tx
+        .insert(profileTable)
+        .values({
+          name,
+          username,
+          bio: bio ?? undefined,
+          isPrimary: isPrimary ?? undefined,
+          communityId: communityId,
+          activatedAt: sql`NOW()`, // New profiles are immediately active
+        })
+        .returning();
 
-    const profile = newProfileResult[0];
-    if (!profile) {
-      throw new Error("Failed to create profile");
-    }
+      const profile = newProfileResult[0];
+      if (!profile) {
+        throw new Error("Failed to create profile");
+      }
 
-    // Create ownership record for the new profile
-    await tx.insert(profileOwnershipTable).values({
-      profileId: profile.id,
-      userId: userId,
-      role: "owner",
-      createdBy: userId,
-    });
-
-    // Create profile picture if provided
-    if (profilePictureId) {
-      await tx.insert(profilePictureTable).values({
+      // Create ownership record for the new profile
+      await tx.insert(profileOwnershipTable).values({
         profileId: profile.id,
-        imageId: profilePictureId,
+        userId: userId,
+        role: "owner",
+        createdBy: userId,
       });
-    }
 
-    return profile;
-  });
+      // Create profile picture if provided
+      if (profilePictureId) {
+        await tx.insert(profilePictureTable).values({
+          profileId: profile.id,
+          imageId: profilePictureId,
+        });
+      }
+
+      return profile;
+    });
+  } catch (error) {
+    if (error instanceof AppException) {
+      throw error;
+    }
+    const causeMessage =
+      error instanceof Error && (error as Error & { cause?: Error }).cause
+        ? (error as Error & { cause: Error }).cause.message
+        : "";
+    if (
+      error instanceof Error &&
+      (error.message.includes("unique_username_community") ||
+        error.message.includes("duplicate key value") ||
+        causeMessage.includes("unique_username_community") ||
+        causeMessage.includes("duplicate key value"))
+    ) {
+      throw new AppException(
+        409,
+        GeneralErrorCode.USERNAME_TAKEN,
+        "이 커뮤에서 이미 사용 중인 사용자명입니다",
+      );
+    }
+    throw error;
+  }
 
   // Get profile picture for response
   const profile_picture_url = await getProfilePictureUrlById(newProfile.id);
@@ -1129,7 +1154,27 @@ export async function shareProfileWithUser(
   }
 
   // Add user to profile
-  await addUserToProfile(profileId, targetUser.id, role, userId);
+  try {
+    await addUserToProfile(profileId, targetUser.id, role, userId);
+  } catch (error) {
+    if (error instanceof AppException) {
+      throw error;
+    }
+    type DatabaseError = Error & { cause?: { constraint?: string } };
+    if (
+      error instanceof Error &&
+      (error.message.includes("unique_profile_user_ownership") ||
+        (error as DatabaseError).cause?.constraint ===
+          "unique_profile_user_ownership")
+    ) {
+      throw new AppException(
+        409,
+        GeneralErrorCode.DUPLICATE_ENTRY,
+        "사용자가 이미 이 프로필에 액세스 권한을 가지고 있습니다",
+      );
+    }
+    throw error;
+  }
 
   // Get primary profile ID for the target user in this community
   const primaryProfileId = await getPrimaryProfileIdForUserInCommunity(

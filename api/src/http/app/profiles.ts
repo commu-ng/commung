@@ -130,43 +130,17 @@ export const profilesRouter = new Hono<{ Variables: AuthVariables }>()
       const { name, username, bio, is_primary, profile_picture_id } =
         c.req.valid("json");
 
-      try {
-        const result = await profileService.createProfile(
-          user.id,
-          community.id,
-          name,
-          username,
-          bio,
-          is_primary,
-          profile_picture_id,
-        );
+      const result = await profileService.createProfile(
+        user.id,
+        community.id,
+        name,
+        username,
+        bio,
+        is_primary,
+        profile_picture_id,
+      );
 
-        return c.json({ data: result }, 201);
-      } catch (error: unknown) {
-        // Check for unique constraint violation on username
-        const causeMessage =
-          error instanceof Error && (error as Error & { cause?: Error }).cause
-            ? (error as Error & { cause: Error }).cause.message
-            : "";
-        if (
-          error instanceof Error &&
-          (error.message.includes("unique_username_community") ||
-            error.message.includes("duplicate key value") ||
-            causeMessage.includes("unique_username_community") ||
-            causeMessage.includes("duplicate key value"))
-        ) {
-          return c.json(
-            {
-              error: {
-                code: GeneralErrorCode.USERNAME_TAKEN,
-                message: "이 커뮤에서 이미 사용 중인 사용자명입니다",
-              },
-            },
-            409,
-          );
-        }
-        throw error;
-      }
+      return c.json({ data: result }, 201);
     },
   )
   .get(
@@ -352,37 +326,14 @@ export const profilesRouter = new Hono<{ Variables: AuthVariables }>()
       const { profile_id: profileId } = c.req.valid("param");
       const { username, role } = c.req.valid("json");
 
-      try {
-        const result = await profileService.shareProfileWithUser(
-          user.id,
-          profileId,
-          community.id,
-          username,
-          role,
-        );
-        return c.json(result);
-      } catch (error) {
-        // Handle duplicate constraint error
-        type DatabaseError = Error & { cause?: { constraint?: string } };
-        if (
-          error instanceof Error &&
-          (error.message.includes("unique_profile_user_ownership") ||
-            (error as DatabaseError).cause?.constraint ===
-              "unique_profile_user_ownership")
-        ) {
-          return c.json(
-            {
-              error: {
-                code: GeneralErrorCode.DUPLICATE_ENTRY,
-                message:
-                  "사용자가 이미 이 프로필에 액세스 권한을 가지고 있습니다",
-              },
-            },
-            409,
-          );
-        }
-        throw error;
-      }
+      const result = await profileService.shareProfileWithUser(
+        user.id,
+        profileId,
+        community.id,
+        username,
+        role,
+      );
+      return c.json(result);
     },
   )
   .delete(
