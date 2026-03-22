@@ -220,9 +220,9 @@ export async function validateBotBelongsToCommunity(
 
   if (!botRecord) {
     throw new AppException(
+      404,
       GeneralErrorCode.NOT_FOUND,
       "봇을 찾을 수 없습니다",
-      404,
     );
   }
 

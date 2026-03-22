@@ -117,7 +117,7 @@ export default function BoardPostDetail() {
 
       if (response.ok) {
         const result = await response.json();
-        setReplies(result.data as Reply[]);
+        setReplies(result.data as unknown as Reply[]);
       }
     } catch (err) {
       console.error("Failed to fetch replies:", err);

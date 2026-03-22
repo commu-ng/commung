@@ -44,10 +44,10 @@ interface Community {
   banner_image_url?: string | null;
   banner_image_width?: number | null;
   banner_image_height?: number | null;
-  has_applied: boolean;
+  has_applied?: boolean;
   application_id?: string | null;
   application_status?: string | null;
-  is_member: boolean;
+  is_member?: boolean;
   role?: string | null;
   hashtags?: { id: string; tag: string }[];
   pending_application_count?: number;
@@ -55,18 +55,27 @@ interface Community {
 
 async function fetchRecruitingCommunities(): Promise<Community[]> {
   const res = await api.console.communities.recruiting.$get();
+  if (!res.ok) {
+    throw new Error("Failed to fetch recruiting communities");
+  }
   const result = await res.json();
   return result.data;
 }
 
 async function fetchOngoingCommunities(): Promise<Community[]> {
   const res = await api.console.communities.ongoing.$get();
+  if (!res.ok) {
+    throw new Error("Failed to fetch ongoing communities");
+  }
   const result = await res.json();
   return result.data;
 }
 
 async function fetchMyCommunities(): Promise<Community[]> {
   const res = await api.console.communities.mine.$get();
+  if (!res.ok) {
+    throw new Error("Failed to fetch communities");
+  }
   const result = await res.json();
   return result.data;
 }

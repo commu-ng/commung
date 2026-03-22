@@ -75,6 +75,9 @@ interface ApplicationWithCommunity {
 
 async function fetchMyApplications() {
   const res = await api.console["my-applications"].$get();
+  if (!res.ok) {
+    throw new Error("Failed to fetch applications");
+  }
   const result = await res.json();
 
   if (!result.data || !Array.isArray(result.data)) {

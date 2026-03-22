@@ -69,6 +69,9 @@ interface Board {
 
 async function fetchBoards(): Promise<Board[]> {
   const res = await api.console.boards.$get();
+  if (!res.ok) {
+    throw new Error("Failed to fetch boards");
+  }
   const json = await res.json();
   return json.data;
 }

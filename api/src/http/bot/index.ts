@@ -15,7 +15,6 @@ const AuthorSchema = z.object({
   name: z.string(),
   username: z.string(),
   profile_picture_url: z.string().nullable(),
-  is_muted: z.boolean(),
 });
 
 const ImageSchema = z.object({
@@ -23,6 +22,16 @@ const ImageSchema = z.object({
   url: z.string(),
   width: z.number(),
   height: z.number(),
+  filename: z.string(),
+});
+
+const ReactionUserSchema = z.object({
+  emoji: z.string(),
+  user: z.object({
+    id: z.string().uuid(),
+    username: z.string(),
+    name: z.string(),
+  }),
 });
 
 const PostSchema = z.object({
@@ -30,33 +39,49 @@ const PostSchema = z.object({
   content: z.string(),
   author: AuthorSchema,
   images: z.array(ImageSchema),
-  reactions: z.array(
-    z.object({
-      emoji: z.string(),
-      count: z.number(),
-    }),
-  ),
+  reactions: z.array(ReactionUserSchema),
   reply_count: z.number(),
   depth: z.number(),
   in_reply_to_id: z.string().uuid().nullable(),
   root_post_id: z.string().uuid().nullable(),
   announcement: z.boolean(),
   content_warning: z.string().nullable(),
-  created_at: z.string(),
-  updated_at: z.string(),
-  pinned_at: z.string().nullable(),
+  created_at: z.string().nullable(),
+  updated_at: z.string().nullable(),
   is_bookmarked: z.boolean(),
-  user_reactions: z.array(z.string()),
-  history_count: z.number(),
+  replies: z.array(z.unknown()),
+  has_more_replies: z.boolean(),
 });
 
 const PostsResponseSchema = z.object({
   data: z.array(PostSchema),
-  next_cursor: z.string().nullable(),
+  pagination: z.object({
+    next_cursor: z.string().nullable(),
+    has_more: z.boolean(),
+    total_count: z.number(),
+  }),
+});
+
+const SinglePostSchema = z.object({
+  id: z.string().uuid(),
+  content: z.string(),
+  author: AuthorSchema,
+  images: z.array(ImageSchema),
+  reactions: z.array(ReactionUserSchema),
+  depth: z.number(),
+  in_reply_to_id: z.string().uuid().nullable(),
+  root_post_id: z.string().uuid().nullable(),
+  announcement: z.boolean(),
+  content_warning: z.string().nullable(),
+  created_at: z.string().nullable(),
+  updated_at: z.string().nullable(),
+  is_bookmarked: z.boolean(),
+  replies: z.array(z.unknown()),
+  parent_thread: z.array(z.unknown()),
 });
 
 const SinglePostResponseSchema = z.object({
-  data: PostSchema,
+  data: SinglePostSchema,
 });
 
 const PostCreateSchema = z.object({
@@ -76,18 +101,23 @@ const PostCreateSchema = z.object({
     .openapi({ description: "Content warning text" }),
 });
 
-const PostCreatedResponseSchema = z.object({
+const PostMutationResponseSchema = z.object({
   data: z.object({
-    id: z.string().uuid(),
-    content: z.string(),
-    author_id: z.string().uuid(),
-    community_id: z.string().uuid(),
-    in_reply_to_id: z.string().uuid().nullable(),
-    depth: z.number(),
-    root_post_id: z.string().uuid().nullable(),
-    announcement: z.boolean(),
-    content_warning: z.string().nullable(),
-    created_at: z.string(),
+    id: z.string().uuid().optional(),
+    content: z.string().optional(),
+    created_at: z.string().nullable(),
+    updated_at: z.string().nullable(),
+    announcement: z.boolean().optional(),
+    content_warning: z.string().nullable().optional(),
+    in_reply_to_id: z.string().uuid().nullable().optional(),
+    depth: z.number().optional(),
+    author: AuthorSchema.extend({
+      id: z.string().uuid().optional(),
+      name: z.string().optional(),
+      username: z.string().optional(),
+    }),
+    images: z.array(ImageSchema),
+    reactions: z.array(ReactionUserSchema),
   }),
 });
 
@@ -175,6 +205,14 @@ const getPostsRoute = createRoute({
         },
       },
     },
+    404: {
+      description: "Community not found",
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+    },
   },
 });
 
@@ -202,6 +240,14 @@ const getPostRoute = createRoute({
     },
     401: {
       description: "Unauthorized",
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+    },
+    403: {
+      description: "Forbidden",
       content: {
         "application/json": {
           schema: ErrorSchema,
@@ -244,7 +290,7 @@ const createPostRoute = createRoute({
       description: "Post created successfully",
       content: {
         "application/json": {
-          schema: PostCreatedResponseSchema,
+          schema: PostMutationResponseSchema,
         },
       },
     },
@@ -266,6 +312,14 @@ const createPostRoute = createRoute({
     },
     403: {
       description: "Forbidden",
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+    },
+    404: {
+      description: "Community not found",
       content: {
         "application/json": {
           schema: ErrorSchema,
@@ -321,6 +375,14 @@ const addReactionRoute = createRoute({
         },
       },
     },
+    403: {
+      description: "Forbidden",
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+    },
     404: {
       description: "Post not found",
       content: {
@@ -358,6 +420,14 @@ const removeReactionRoute = createRoute({
     },
     401: {
       description: "Unauthorized",
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+    },
+    403: {
+      description: "Forbidden",
       content: {
         "application/json": {
           schema: ErrorSchema,
@@ -402,7 +472,7 @@ const updatePostRoute = createRoute({
       description: "Post updated successfully",
       content: {
         "application/json": {
-          schema: PostCreatedResponseSchema,
+          schema: PostMutationResponseSchema,
         },
       },
     },

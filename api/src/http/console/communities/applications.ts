@@ -1,5 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
+import { AppException } from "../../../exception";
 import { authMiddleware } from "../../../middleware/auth";
 import * as communityService from "../../../services/community.service";
 import * as membershipService from "../../../services/membership.service";
@@ -122,6 +123,10 @@ export const applicationsRouter = new Hono()
           attachmentIds: attachment_ids,
         },
       );
+
+      if (!updatedApplication) {
+        throw new AppException(404, "NOT_FOUND", "지원서를 찾을 수 없습니다");
+      }
 
       return c.json({
         data: {

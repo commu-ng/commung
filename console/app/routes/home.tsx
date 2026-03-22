@@ -48,6 +48,9 @@ interface Community {
 
 async function fetchMyCommunities(): Promise<Community[]> {
   const res = await api.console.communities.mine.$get();
+  if (!res.ok) {
+    throw new Error("Failed to fetch communities");
+  }
   const json = await res.json();
   return json.data;
 }

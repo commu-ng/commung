@@ -18,6 +18,9 @@ interface MasqueradeStatus {
 
 async function fetchMasqueradeStatus(): Promise<MasqueradeStatus> {
   const res = await api.console.admin.masquerade.status.$get();
+  if (!res.ok) {
+    throw new Error("Failed to fetch masquerade status");
+  }
   const result = await res.json();
   return result.data;
 }

@@ -272,6 +272,18 @@ export const botsRouter = new Hono()
         expires_at || null,
       );
 
+      if (!token) {
+        return c.json(
+          {
+            error: {
+              code: GeneralErrorCode.INTERNAL_SERVER_ERROR,
+              message: "토큰 생성에 실패했습니다",
+            },
+          },
+          500,
+        );
+      }
+
       // Return the full token (only shown once)
       return c.json(
         {

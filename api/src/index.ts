@@ -102,4 +102,26 @@ serve({
   port,
 });
 
-export type AppType = typeof app;
+import type { ApplyGlobalResponse } from "hono/client";
+
+type ErrorResponse = {
+  error: {
+    code: string;
+    message: string;
+    details?: Record<string, unknown>;
+  };
+};
+
+type GlobalResponse = {
+  400: { json: ErrorResponse };
+  401: { json: ErrorResponse };
+  403: { json: ErrorResponse };
+  404: { json: ErrorResponse };
+  409: { json: ErrorResponse };
+  422: { json: ErrorResponse };
+  429: { json: ErrorResponse };
+  500: { json: ErrorResponse };
+  503: { json: ErrorResponse };
+};
+
+export type AppType = ApplyGlobalResponse<typeof app, GlobalResponse>;
