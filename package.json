@@ -16,7 +16,7 @@
   "pnpm": {
     "overrides": {
       "typescript": "^5.9.3",
-      "hono": "^4.10.6"
+      "hono": "^4.12.8"
     }
   }
 }
