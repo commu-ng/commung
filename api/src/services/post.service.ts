@@ -473,6 +473,7 @@ export async function getAnnouncements(
     const replyResult = repliesMap.get(post.id) || {
       replies: [],
       totalCount: 0,
+      loadedCount: 0,
     };
     const is_bookmarked = bookmarkedPostIds.has(post.id);
 
@@ -505,7 +506,7 @@ export async function getAnnouncements(
       })),
       replies: replyResult.replies,
       reply_count: replyResult.totalCount,
-      has_more_replies: replyResult.totalCount > replyResult.replies.length,
+      has_more_replies: replyResult.totalCount > replyResult.loadedCount,
     });
   }
 
@@ -1119,6 +1120,7 @@ export async function getPosts(
     const replyResult = repliesMap.get(post.id) || {
       replies: [],
       totalCount: 0,
+      loadedCount: 0,
     };
 
     // Check if post is bookmarked using pre-loaded data
@@ -1148,7 +1150,7 @@ export async function getPosts(
       is_bookmarked,
       replies: replyResult.replies,
       reply_count: replyResult.totalCount,
-      has_more_replies: replyResult.totalCount > replyResult.replies.length,
+      has_more_replies: replyResult.totalCount > replyResult.loadedCount,
       reactions: reactions.map((reaction) => ({
         emoji: reaction.emoji,
         user: {
@@ -1345,6 +1347,7 @@ export async function searchPosts(
     const replyResult = repliesMap.get(post.id) || {
       replies: [],
       totalCount: 0,
+      loadedCount: 0,
     };
     const is_bookmarked = bookmarkedPostIds.has(post.id);
     const reactions = reactionsByPostId.get(post.id) || [];
@@ -1370,7 +1373,7 @@ export async function searchPosts(
       is_bookmarked,
       replies: replyResult.replies,
       reply_count: replyResult.totalCount,
-      has_more_replies: replyResult.totalCount > replyResult.replies.length,
+      has_more_replies: replyResult.totalCount > replyResult.loadedCount,
       reactions: reactions.map((reaction) => ({
         emoji: reaction.emoji,
         user: {
@@ -1442,7 +1445,9 @@ async function buildThreadedRepliesForMultiplePosts(
   depthLimit: number = 10,
   profileId?: string,
   replyLimit?: number,
-): Promise<Map<string, { replies: ReplyData[]; totalCount: number }>> {
+): Promise<
+  Map<string, { replies: ReplyData[]; totalCount: number; loadedCount: number }>
+> {
   if (rootPostIds.length === 0) {
     return new Map();
   }
@@ -1563,12 +1568,13 @@ async function buildThreadedRepliesForMultiplePosts(
     // Return empty map with all root post IDs as keys
     const emptyMap = new Map<
       string,
-      { replies: ReplyData[]; totalCount: number }
+      { replies: ReplyData[]; totalCount: number; loadedCount: number }
     >();
     for (const rootId of rootPostIds) {
       emptyMap.set(rootId, {
         replies: [],
         totalCount: totalCountByRoot.get(rootId) ?? 0,
+        loadedCount: 0,
       });
     }
     return emptyMap;
@@ -1706,7 +1712,7 @@ async function buildThreadedRepliesForMultiplePosts(
   // Build nested tree structure for each root post
   const nestedRepliesMap = new Map<
     string,
-    { replies: ReplyData[]; totalCount: number }
+    { replies: ReplyData[]; totalCount: number; loadedCount: number }
   >();
 
   for (const [rootId, flatReplies] of repliesByRootPost) {
@@ -1732,7 +1738,11 @@ async function buildThreadedRepliesForMultiplePosts(
     }
 
     const totalCount = totalCountByRoot.get(rootId) ?? flatReplies.length;
-    nestedRepliesMap.set(rootId, { replies: topLevelReplies, totalCount });
+    nestedRepliesMap.set(rootId, {
+      replies: topLevelReplies,
+      totalCount,
+      loadedCount: flatReplies.length,
+    });
   }
 
   return nestedRepliesMap;
@@ -2283,7 +2293,11 @@ export async function getPost(
     post.depth + 100,
     profileId,
   );
-  const replyResult = repliesMap.get(post.id) || { replies: [], totalCount: 0 };
+  const replyResult = repliesMap.get(post.id) || {
+    replies: [],
+    totalCount: 0,
+    loadedCount: 0,
+  };
   const replies = replyResult.replies;
 
   // Get parent thread if this is a reply
@@ -2311,7 +2325,7 @@ export async function getPost(
     root_post_id: post.rootPostId,
     replies,
     reply_count: replyResult.totalCount,
-    has_more_replies: replyResult.totalCount > replyResult.replies.length,
+    has_more_replies: replyResult.totalCount > replyResult.loadedCount,
     parent_thread,
     is_bookmarked,
     reactions:
