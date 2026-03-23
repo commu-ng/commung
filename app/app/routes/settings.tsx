@@ -1,31 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
 import { FileText, Settings as SettingsIcon, User, Users } from "lucide-react";
 import { Link } from "react-router";
 import { Spinner } from "~/components/ui/spinner";
 import { useAuth } from "~/hooks/useAuth";
-import { client } from "~/lib/api-client";
+import { useCurrentInstance } from "~/hooks/useCurrentInstance";
 
 export default function Settings() {
   const { user, isLoading: authLoading } = useAuth();
+  const { isModerator, isLoading: instanceLoading } = useCurrentInstance();
 
-  // Get current user's role in this community
-  const { data: instanceData } = useQuery({
-    queryKey: ["instance"],
-    queryFn: async () => {
-      const response = await client.app.me.instance.$get();
-      if (response.ok) {
-        const result = await response.json();
-        return result.data;
-      }
-      return null;
-    },
-    enabled: !!user,
-  });
-
-  const isModeratorOrOwner =
-    instanceData?.role === "owner" || instanceData?.role === "moderator";
-
-  if (authLoading) {
+  if (authLoading || instanceLoading) {
     return (
       <div className="min-h-screen bg-background">
         <div className="max-w-4xl mx-auto px-4 py-8">
@@ -81,7 +64,7 @@ export default function Settings() {
 
   // Filter settings based on user role
   const settingsSections = allSettingsSections.filter(
-    (section) => !section.requiresModeratorOrOwner || isModeratorOrOwner,
+    (section) => !section.requiresModeratorOrOwner || isModerator,
   );
 
   return (
