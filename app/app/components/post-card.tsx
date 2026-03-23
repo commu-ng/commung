@@ -1,4 +1,3 @@
-import { TIMELINE_REPLY_LIMIT } from "@commu-ng/api";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
 import { Link } from "react-router";
@@ -18,6 +17,9 @@ import { PostCardContent } from "./post/PostCardContent";
 import { PostCardHeader } from "./post/PostCardHeader";
 import { PostCardImages } from "./post/PostCardImages";
 import { PostCardReactions } from "./post/PostCardReactions";
+
+/** Must match TIMELINE_REPLY_LIMIT in api/src/services/post.service.ts */
+const TIMELINE_REPLY_LIMIT = 5;
 
 // Helper function to count total replies recursively
 function countTotalReplies(replies: Post[]): number {
