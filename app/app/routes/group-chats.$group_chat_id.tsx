@@ -144,8 +144,14 @@ export default function GroupChatDetail() {
   }, [messages, isLoading, scrollToBottom, isNearBottom]);
 
   // Poll for new messages every 5 seconds
+  const currentProfileId = currentProfile?.id;
   useEffect(() => {
-    if (!isAuthenticated || !instanceSlug || !currentProfile || !group_chat_id)
+    if (
+      !isAuthenticated ||
+      !instanceSlug ||
+      !currentProfileId ||
+      !group_chat_id
+    )
       return;
 
     const interval = setInterval(async () => {
@@ -154,7 +160,7 @@ export default function GroupChatDetail() {
           ":group_chat_id"
         ].messages.$get({
           param: { group_chat_id },
-          query: { profile_id: currentProfile.id },
+          query: { profile_id: currentProfileId },
         });
 
         if (messagesResponse.ok) {
@@ -216,7 +222,7 @@ export default function GroupChatDetail() {
           client.app["group-chats"][":group_chat_id"]["mark-read"]
             .$post({
               param: { group_chat_id },
-              query: { profile_id: currentProfile.id },
+              query: { profile_id: currentProfileId },
             })
             .catch((error) => {
               console.error("Error marking messages as read:", error);
@@ -228,7 +234,7 @@ export default function GroupChatDetail() {
     }, 1000); // 1 second
 
     return () => clearInterval(interval);
-  }, [isAuthenticated, instanceSlug, currentProfile, group_chat_id]);
+  }, [isAuthenticated, instanceSlug, currentProfileId, group_chat_id]);
 
   useEffect(() => {
     if (!isAuthenticated || !instanceSlug || !currentProfile || !group_chat_id)

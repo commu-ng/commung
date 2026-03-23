@@ -52,10 +52,9 @@ export const PostCard = memo(function PostCard({
   const [showReportDialog, setShowReportDialog] = useState(false);
 
   // Check if current user is part of the conversation thread
+  const currentUsername = currentProfile?.username;
   const isUserPartOfThread = useCallback(() => {
-    if (!currentProfileId || !currentProfile) return false;
-
-    const currentUsername = currentProfile.username;
+    if (!currentProfileId || !currentUsername) return false;
 
     // User is part of thread if they authored the root post
     if (post.author.id === currentProfileId) return true;
@@ -75,7 +74,7 @@ export const PostCard = memo(function PostCard({
     return false;
   }, [
     currentProfileId,
-    currentProfile,
+    currentUsername,
     post.author.id,
     post.content,
     post.replies,
@@ -88,11 +87,10 @@ export const PostCard = memo(function PostCard({
 
   // Filter replies to show only relevant ones (for collapsed view)
   const filterRelevantReplies = useCallback(() => {
-    if (!currentProfileId || !currentProfile || !post.replies) {
+    if (!currentProfileId || !currentUsername || !post.replies) {
       return [];
     }
 
-    const currentUsername = currentProfile.username;
     const replies = post.replies;
     const relevantIds = new Set<string>();
 
@@ -122,7 +120,7 @@ export const PostCard = memo(function PostCard({
     }
 
     return replies.filter((r) => withContext.has(r.id));
-  }, [currentProfileId, currentProfile, post.replies]);
+  }, [currentProfileId, currentUsername, post.replies]);
 
   // Use the markdown hook for mention validation and rendering
   // For read-only posts, disable username validation to avoid API calls
@@ -175,13 +173,13 @@ export const PostCard = memo(function PostCard({
 
   const addReaction = useCallback(
     async (emoji: string) => {
-      if (!currentProfile) return;
+      if (!currentProfileId) return;
 
       try {
         const response = await client.app.posts[":post_id"].reactions.$post({
           param: { post_id: post.id },
           json: {
-            profile_id: currentProfile.id,
+            profile_id: currentProfileId,
             emoji: emoji,
           },
         });
@@ -212,18 +210,18 @@ export const PostCard = memo(function PostCard({
         toast.error("반응 추가 중 오류가 발생했습니다");
       }
     },
-    [currentProfile, post.id, onRefresh, onDelete],
+    [currentProfileId, post.id, onRefresh, onDelete],
   );
 
   const removeReaction = useCallback(
     async (emoji: string) => {
-      if (!currentProfile) return;
+      if (!currentProfileId) return;
 
       try {
         const response = await client.app.posts[":post_id"].reactions.$delete({
           param: { post_id: post.id },
           query: {
-            profile_id: currentProfile.id,
+            profile_id: currentProfileId,
             emoji: emoji,
           },
         });
@@ -254,7 +252,7 @@ export const PostCard = memo(function PostCard({
         toast.error("반응 제거 중 오류가 발생했습니다");
       }
     },
-    [currentProfile, post.id, onRefresh, onDelete],
+    [currentProfileId, post.id, onRefresh, onDelete],
   );
 
   // Calculate styling based on depth - memoize to avoid recalculation

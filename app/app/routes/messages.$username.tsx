@@ -130,14 +130,16 @@ export default function MessageConversation() {
     prevMessageCountRef.current = messages.length;
   }, [messages, isLoading, scrollToBottom, isNearBottom]);
 
-  // Poll for new messages every 10 seconds
+  // Poll for new messages
+  const currentProfileId = currentProfile?.id;
+  const otherProfileId = otherProfile?.id;
   useEffect(() => {
     if (
       !isAuthenticated ||
       !instanceSlug ||
       !username ||
-      !currentProfile ||
-      !otherProfile
+      !currentProfileId ||
+      !otherProfileId
     )
       return;
 
@@ -146,8 +148,8 @@ export default function MessageConversation() {
         const messagesResponse = await client.app.conversations[
           ":other_profile_id"
         ].$get({
-          param: { other_profile_id: otherProfile.id },
-          query: { profile_id: currentProfile.id },
+          param: { other_profile_id: otherProfileId },
+          query: { profile_id: currentProfileId },
         });
         if (messagesResponse.ok) {
           const messagesResult = await messagesResponse.json();
@@ -196,8 +198,8 @@ export default function MessageConversation() {
           await client.app.conversations[":other_profile_id"][
             "mark-read"
           ].$post({
-            param: { other_profile_id: otherProfile.id },
-            query: { profile_id: currentProfile.id },
+            param: { other_profile_id: otherProfileId },
+            query: { profile_id: currentProfileId },
           });
           refreshUnreadCounts();
         }
@@ -211,8 +213,8 @@ export default function MessageConversation() {
     isAuthenticated,
     instanceSlug,
     username,
-    currentProfile,
-    otherProfile,
+    currentProfileId,
+    otherProfileId,
     refreshUnreadCounts,
   ]);
 

@@ -172,8 +172,9 @@ export default function Notifications() {
   }, [loadMore]);
 
   // Poll for new notifications every 30 seconds
+  const currentProfileId = currentProfile?.id;
   useEffect(() => {
-    if (!isAuthenticated || !instanceSlug || !currentProfile) return;
+    if (!isAuthenticated || !instanceSlug || !currentProfileId) return;
 
     const interval = setInterval(() => {
       // Refetch notifications to get new ones
@@ -186,7 +187,7 @@ export default function Notifications() {
   }, [
     isAuthenticated,
     instanceSlug,
-    currentProfile,
+    currentProfileId,
     refreshUnreadCounts,
     refetch,
   ]);
