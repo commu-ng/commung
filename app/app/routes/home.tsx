@@ -9,7 +9,6 @@ import {
   type ScheduledPostsListRef,
 } from "~/components/scheduled-posts-list";
 import { EmptyState } from "~/components/shared/EmptyState";
-import { LoadingState } from "~/components/shared/LoadingState";
 import { useUnreadCount } from "~/contexts/UnreadCountContext";
 import { useAuth } from "~/hooks/useAuth";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
@@ -64,17 +63,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [isAuthenticated, belongsToCurrentInstance, isHeaderVisible]);
 
-  if (isLoading) {
-    return (
-      <div className="px-4 py-8">
-        <div className="flex items-center justify-center min-h-64">
-          <LoadingState message="로딩 중..." asCard={false} />
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[80vh]">
         <div className="max-w-md mx-auto px-4">

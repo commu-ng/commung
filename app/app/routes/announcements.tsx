@@ -35,42 +35,29 @@ export default function Announcements() {
     queryClient.invalidateQueries({ queryKey: ["announcements"] });
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Spinner className="h-8 w-8 mx-auto mb-4" />
-          <p className="text-muted-foreground">공지사항을 불러오는 중...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-            <Megaphone className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <h1 className="text-xl font-semibold text-foreground mb-2">
-            {error.message}
-          </h1>
-          <Link
-            to="/"
-            className="text-primary hover:text-primary/90 font-medium"
-          >
-            홈으로 돌아가기
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div>
       <main className="max-w-2xl mx-auto px-4 py-8">
-        {announcements.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center min-h-64">
+            <Spinner className="h-8 w-8" />
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+              <Megaphone className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h1 className="text-xl font-semibold text-foreground mb-2">
+              {error.message}
+            </h1>
+            <Link
+              to="/"
+              className="text-primary hover:text-primary/90 font-medium"
+            >
+              홈으로 돌아가기
+            </Link>
+          </div>
+        ) : announcements.length === 0 ? (
           <div className="bg-card rounded-2xl shadow-sm border border-border p-12 text-center">
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
               <Megaphone className="h-8 w-8 text-muted-foreground" />

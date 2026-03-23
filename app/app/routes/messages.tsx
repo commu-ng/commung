@@ -333,208 +333,141 @@ export default function Messages() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-64">
-            <LoadingState message="대화 목록을 불러오는 중..." asCard={false} />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div>
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-6">
         <div className="max-w-2xl mx-auto">
-          {/* Mark All as Read Button */}
-          {conversations.length > 0 &&
-            conversations.some(
-              (conv) => parseInt(conv.unread_count || "0", 10) > 0,
-            ) && (
-              <div className="mb-4">
-                <button
-                  type="button"
-                  onClick={markAllAsRead}
-                  disabled={isMarkingAllRead}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground text-sm font-medium rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <CheckCheck className="h-3 w-3" />
-                  {isMarkingAllRead ? "처리 중..." : "모든 메시지 읽음 처리"}
-                </button>
-              </div>
-            )}
-
-          {/* All Conversations */}
-          {conversations.length === 0 && groupChats.length === 0 ? (
-            <Empty className="bg-card rounded-2xl shadow-sm border border-border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <MessageCircle />
-                </EmptyMedia>
-                <EmptyTitle>메시지가 없습니다</EmptyTitle>
-                <EmptyDescription>
-                  다른 사용자와 개인 메시지를 시작하거나 그룹 채팅을
-                  만들어보세요.
-                </EmptyDescription>
-              </EmptyHeader>
-              <div className="flex items-center justify-center gap-3">
-                <Link
-                  to="/profiles"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-                >
-                  <Plus className="h-4 w-4" />새 1:1 메시지
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleOpenCreateModal}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors"
-                >
-                  <Plus className="h-4 w-4" />새 그룹 만들기
-                </button>
-              </div>
-            </Empty>
+          {isLoading ? (
+            <div className="flex items-center justify-center min-h-64">
+              <LoadingState
+                message="대화 목록을 불러오는 중..."
+                asCard={false}
+              />
+            </div>
           ) : (
-            <div className="space-y-3">
-              {/* All Messages - sorted by last message date */}
-              {[
-                ...conversations
-                  .filter((conv) => conv.other_profile)
-                  .map((conv) => ({
-                    type: "direct" as const,
-                    data: conv,
-                    lastMessageTime:
-                      conv.last_message?.created_at ||
-                      conv.other_profile?.username ||
-                      "", // fallback for sorting
-                  })),
-                ...groupChats.map((group) => ({
-                  type: "group" as const,
-                  data: group,
-                  lastMessageTime:
-                    group.last_message?.created_at || group.created_at,
-                })),
-              ]
-                .sort(
-                  (a, b) =>
-                    new Date(b.lastMessageTime).getTime() -
-                    new Date(a.lastMessageTime).getTime(),
-                )
-                .map((item) =>
-                  item.type === "direct" && item.data.other_profile ? (
-                    /* Direct Messages */
-                    <Link
-                      key={`direct-${item.data.other_profile.id}`}
-                      to={`/messages/${item.data.other_profile.username}`}
-                      className="block bg-card rounded-xl shadow-sm border border-border p-6 transition-all hover:shadow-md hover:border-border"
+            <>
+              {/* Mark All as Read Button */}
+              {conversations.length > 0 &&
+                conversations.some(
+                  (conv) => parseInt(conv.unread_count || "0", 10) > 0,
+                ) && (
+                  <div className="mb-4">
+                    <button
+                      type="button"
+                      onClick={markAllAsRead}
+                      disabled={isMarkingAllRead}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground text-sm font-medium rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="flex-shrink-0">
-                          <ProfileAvatar
-                            profilePictureUrl={
-                              item.data.other_profile.profile_picture_url ||
-                              undefined
-                            }
-                            name={item.data.other_profile.name}
-                            username={item.data.other_profile.username}
-                            profileId={item.data.other_profile.id}
-                            size="lg"
-                            className="border-2 border-border"
-                            showOnlineStatus={true}
-                          />
-                        </div>
+                      <CheckCheck className="h-3 w-3" />
+                      {isMarkingAllRead
+                        ? "처리 중..."
+                        : "모든 메시지 읽음 처리"}
+                    </button>
+                  </div>
+                )}
 
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-medium text-foreground truncate">
-                                {item.data.other_profile.name}
-                              </h3>
-                              <p className="text-sm text-muted-foreground truncate">
-                                @{item.data.other_profile.username}
-                              </p>
-
-                              {item.data.last_message && (
-                                <div className="mt-2">
-                                  <p className="text-sm text-muted-foreground truncate">
-                                    {item.data.last_message.is_sender && "나: "}
-                                    {item.data.last_message.content}
-                                  </p>
-                                  <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                                    <Clock className="h-3 w-3" />
-                                    <span>
-                                      {formatTime(
-                                        item.data.last_message.created_at,
-                                      )}
-                                    </span>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-2 ml-4">
-                              {parseInt(item.data.unread_count || "0", 10) >
-                                0 && (
-                                <div className="bg-primary text-primary-foreground text-xs font-medium px-2 py-1 rounded-full min-w-[20px] text-center">
-                                  {parseInt(item.data.unread_count || "0", 10) >
-                                  99
-                                    ? "99+"
-                                    : item.data.unread_count}
-                                </div>
-                              )}
-                              <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+              {/* All Conversations */}
+              {conversations.length === 0 && groupChats.length === 0 ? (
+                <Empty className="bg-card rounded-2xl shadow-sm border border-border">
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <MessageCircle />
+                    </EmptyMedia>
+                    <EmptyTitle>메시지가 없습니다</EmptyTitle>
+                    <EmptyDescription>
+                      다른 사용자와 개인 메시지를 시작하거나 그룹 채팅을
+                      만들어보세요.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                  <div className="flex items-center justify-center gap-3">
+                    <Link
+                      to="/profiles"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                    >
+                      <Plus className="h-4 w-4" />새 1:1 메시지
                     </Link>
-                  ) : item.type === "group" ? (
-                    /* Group Chats */
-                    (() => {
-                      const group = item.data;
-                      return (
+                    <button
+                      type="button"
+                      onClick={handleOpenCreateModal}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors"
+                    >
+                      <Plus className="h-4 w-4" />새 그룹 만들기
+                    </button>
+                  </div>
+                </Empty>
+              ) : (
+                <div className="space-y-3">
+                  {/* All Messages - sorted by last message date */}
+                  {[
+                    ...conversations
+                      .filter((conv) => conv.other_profile)
+                      .map((conv) => ({
+                        type: "direct" as const,
+                        data: conv,
+                        lastMessageTime:
+                          conv.last_message?.created_at ||
+                          conv.other_profile?.username ||
+                          "", // fallback for sorting
+                      })),
+                    ...groupChats.map((group) => ({
+                      type: "group" as const,
+                      data: group,
+                      lastMessageTime:
+                        group.last_message?.created_at || group.created_at,
+                    })),
+                  ]
+                    .sort(
+                      (a, b) =>
+                        new Date(b.lastMessageTime).getTime() -
+                        new Date(a.lastMessageTime).getTime(),
+                    )
+                    .map((item) =>
+                      item.type === "direct" && item.data.other_profile ? (
+                        /* Direct Messages */
                         <Link
-                          key={`group-${group.id}`}
-                          to={`/group-chats/${group.id}`}
+                          key={`direct-${item.data.other_profile.id}`}
+                          to={`/messages/${item.data.other_profile.username}`}
                           className="block bg-card rounded-xl shadow-sm border border-border p-6 transition-all hover:shadow-md hover:border-border"
                         >
                           <div className="flex items-center gap-4">
                             <div className="flex-shrink-0">
-                              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-                                <Users className="h-6 w-6 text-primary-foreground" />
-                              </div>
+                              <ProfileAvatar
+                                profilePictureUrl={
+                                  item.data.other_profile.profile_picture_url ||
+                                  undefined
+                                }
+                                name={item.data.other_profile.name}
+                                username={item.data.other_profile.username}
+                                profileId={item.data.other_profile.id}
+                                size="lg"
+                                className="border-2 border-border"
+                                showOnlineStatus={true}
+                              />
                             </div>
 
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between">
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <h3 className="font-medium text-foreground truncate">
-                                      {group.name}
-                                    </h3>
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-secondary text-secondary-foreground">
-                                      그룹
-                                    </span>
-                                  </div>
+                                  <h3 className="font-medium text-foreground truncate">
+                                    {item.data.other_profile.name}
+                                  </h3>
                                   <p className="text-sm text-muted-foreground truncate">
-                                    {group.member_count}명
+                                    @{item.data.other_profile.username}
                                   </p>
 
-                                  {group.last_message && (
+                                  {item.data.last_message && (
                                     <div className="mt-2">
                                       <p className="text-sm text-muted-foreground truncate">
-                                        {group.last_message?.sender?.name}:{" "}
-                                        {group.last_message?.content}
+                                        {item.data.last_message.is_sender &&
+                                          "나: "}
+                                        {item.data.last_message.content}
                                       </p>
                                       <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                                         <Clock className="h-3 w-3" />
                                         <span>
                                           {formatTime(
-                                            group.last_message?.created_at ||
-                                              "",
+                                            item.data.last_message.created_at,
                                           )}
                                         </span>
                                       </div>
@@ -543,43 +476,114 @@ export default function Messages() {
                                 </div>
 
                                 <div className="flex items-center gap-2 ml-4">
-                                  {group.unread_count > 0 && (
+                                  {parseInt(item.data.unread_count || "0", 10) >
+                                    0 && (
                                     <div className="bg-primary text-primary-foreground text-xs font-medium px-2 py-1 rounded-full min-w-[20px] text-center">
-                                      {group.unread_count > 99
+                                      {parseInt(
+                                        item.data.unread_count || "0",
+                                        10,
+                                      ) > 99
                                         ? "99+"
-                                        : group.unread_count}
+                                        : item.data.unread_count}
                                     </div>
                                   )}
-                                  <Users className="h-4 w-4 text-muted-foreground" />
+                                  <MessageCircle className="h-4 w-4 text-muted-foreground" />
                                 </div>
                               </div>
                             </div>
                           </div>
                         </Link>
-                      );
-                    })()
-                  ) : null,
+                      ) : item.type === "group" ? (
+                        /* Group Chats */
+                        (() => {
+                          const group = item.data;
+                          return (
+                            <Link
+                              key={`group-${group.id}`}
+                              to={`/group-chats/${group.id}`}
+                              className="block bg-card rounded-xl shadow-sm border border-border p-6 transition-all hover:shadow-md hover:border-border"
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className="flex-shrink-0">
+                                  <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+                                    <Users className="h-6 w-6 text-primary-foreground" />
+                                  </div>
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <h3 className="font-medium text-foreground truncate">
+                                          {group.name}
+                                        </h3>
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-secondary text-secondary-foreground">
+                                          그룹
+                                        </span>
+                                      </div>
+                                      <p className="text-sm text-muted-foreground truncate">
+                                        {group.member_count}명
+                                      </p>
+
+                                      {group.last_message && (
+                                        <div className="mt-2">
+                                          <p className="text-sm text-muted-foreground truncate">
+                                            {group.last_message?.sender?.name}:{" "}
+                                            {group.last_message?.content}
+                                          </p>
+                                          <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                                            <Clock className="h-3 w-3" />
+                                            <span>
+                                              {formatTime(
+                                                group.last_message
+                                                  ?.created_at || "",
+                                              )}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    <div className="flex items-center gap-2 ml-4">
+                                      {group.unread_count > 0 && (
+                                        <div className="bg-primary text-primary-foreground text-xs font-medium px-2 py-1 rounded-full min-w-[20px] text-center">
+                                          {group.unread_count > 99
+                                            ? "99+"
+                                            : group.unread_count}
+                                        </div>
+                                      )}
+                                      <Users className="h-4 w-4 text-muted-foreground" />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </Link>
+                          );
+                        })()
+                      ) : null,
+                    )}
+                </div>
+              )}
+
+              {/* Loading indicator for infinite scroll */}
+              {(isFetchingNextConversations || isFetchingNextGroupChats) && (
+                <div className="mt-6">
+                  <LoadingState message="더 많은 대화를 불러오는 중..." />
+                </div>
+              )}
+
+              {/* End of content indicator */}
+              {!hasNextConversations &&
+                !hasNextGroupChats &&
+                (conversations.length > 0 || groupChats.length > 0) && (
+                  <div className="bg-background rounded-2xl border border-border p-6 text-center mt-6">
+                    <p className="text-muted-foreground text-sm">
+                      모든 대화를 확인했습니다
+                    </p>
+                  </div>
                 )}
-            </div>
+            </>
           )}
-
-          {/* Loading indicator for infinite scroll */}
-          {(isFetchingNextConversations || isFetchingNextGroupChats) && (
-            <div className="mt-6">
-              <LoadingState message="더 많은 대화를 불러오는 중..." />
-            </div>
-          )}
-
-          {/* End of content indicator */}
-          {!hasNextConversations &&
-            !hasNextGroupChats &&
-            (conversations.length > 0 || groupChats.length > 0) && (
-              <div className="bg-background rounded-2xl border border-border p-6 text-center mt-6">
-                <p className="text-muted-foreground text-sm">
-                  모든 대화를 확인했습니다
-                </p>
-              </div>
-            )}
         </div>
       </main>
 

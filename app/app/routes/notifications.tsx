@@ -301,28 +301,22 @@ export default function Notifications() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-64">
-            <div className="flex items-center gap-3">
-              <Spinner className="h-6 w-6" />
-              <span className="text-muted-foreground">
-                알림을 불러오는 중...
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div>
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-4">
         <div className="max-w-2xl mx-auto">
+          {isLoading && (
+            <div className="flex items-center justify-center min-h-64">
+              <div className="flex items-center gap-3">
+                <Spinner className="h-6 w-6" />
+                <span className="text-muted-foreground">
+                  알림을 불러오는 중...
+                </span>
+              </div>
+            </div>
+          )}
+
           {isError && (
             <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-4">
               <div className="flex items-center gap-2 text-red-700 dark:text-red-300">

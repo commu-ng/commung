@@ -124,17 +124,7 @@ export default function SearchPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [loadMore]);
 
-  if (authLoading) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-64">
-          <LoadingState message="로딩 중..." asCard={false} />
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[80vh]">
         <div className="max-w-md mx-auto px-4">
