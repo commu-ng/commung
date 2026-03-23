@@ -78,7 +78,7 @@ export default function Home() {
     );
   }
 
-  if (!belongsToCurrentInstance) {
+  if (!belongsToCurrentInstance && !isLoading) {
     const applyUrl = currentInstance?.slug
       ? `${consoleUrl}/communities/${currentInstance.slug}/apply`
       : consoleUrl;

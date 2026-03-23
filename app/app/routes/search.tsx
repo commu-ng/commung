@@ -139,7 +139,7 @@ export default function SearchPage() {
     );
   }
 
-  if (!belongsToCurrentInstance) {
+  if (!belongsToCurrentInstance && !authLoading) {
     const applyUrl = currentInstance?.slug
       ? `${consoleUrl}/communities/${currentInstance.slug}/apply`
       : consoleUrl;
