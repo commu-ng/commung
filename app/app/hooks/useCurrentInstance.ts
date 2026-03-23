@@ -12,6 +12,7 @@ interface CurrentInstance {
   banner_image_url: string | null;
   starts_at: string;
   ends_at: string;
+  show_all_replies: boolean;
 }
 
 export function useCurrentInstance() {
@@ -38,6 +39,7 @@ export function useCurrentInstance() {
     isModerator:
       currentInstance?.role === "moderator" ||
       currentInstance?.role === "owner",
+    showAllReplies: currentInstance?.show_all_replies ?? false,
     ...queryResult,
   };
 }

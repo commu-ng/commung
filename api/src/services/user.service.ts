@@ -145,6 +145,7 @@ export async function getCurrentUserInstance(
     ends_at: community.endsAt,
     description: community.description,
     banner_image_url: bannerInfo?.url || null,
+    show_all_replies: community.showAllReplies,
   };
 }
 

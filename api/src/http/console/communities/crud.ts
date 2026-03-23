@@ -34,6 +34,7 @@ export const crudRouter = new Hono()
         profile_name,
         description,
         mute_new_members,
+        show_all_replies,
       } = c.req.valid("json");
 
       const result = await communityService.createCommunity(user.id, {
@@ -51,6 +52,7 @@ export const crudRouter = new Hono()
         profileName: profile_name,
         description,
         muteNewMembers: mute_new_members,
+        showAllReplies: show_all_replies,
       });
 
       return c.json(
@@ -129,6 +131,7 @@ export const crudRouter = new Hono()
         description,
         description_image_ids,
         mute_new_members,
+        show_all_replies,
       } = c.req.valid("json");
 
       // Validate community exists by ID
@@ -153,6 +156,7 @@ export const crudRouter = new Hono()
           description,
           descriptionImageIds: description_image_ids,
           muteNewMembers: mute_new_members,
+          showAllReplies: show_all_replies,
         });
 
       return c.json({

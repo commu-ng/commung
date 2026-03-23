@@ -68,6 +68,7 @@ interface Community {
   hashtags?: { id: string; tag: string }[];
   description?: string | null;
   mute_new_members?: boolean;
+  show_all_replies?: boolean;
 }
 
 // Fetch function
@@ -92,6 +93,7 @@ export default function CommunityManagement() {
     recruiting: false,
     minimum_birth_year: "",
     mute_new_members: false,
+    show_all_replies: false,
   });
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [startDate, setStartDate] = useState<Date>();
@@ -141,6 +143,7 @@ export default function CommunityManagement() {
           ? String(community.minimum_birth_year)
           : "",
         mute_new_members: community.mute_new_members ?? false,
+        show_all_replies: community.show_all_replies ?? false,
       });
 
       if (community.banner_image_url) {
@@ -321,6 +324,7 @@ export default function CommunityManagement() {
         description: description || null,
         description_image_ids: descriptionImageIds,
         mute_new_members: formData.mute_new_members,
+        show_all_replies: formData.show_all_replies,
       };
 
       if (!community?.id) {

@@ -40,6 +40,7 @@ export const PostCard = memo(function PostCard({
   isContinuation = false,
 }: PostCardProps) {
   const { currentProfile } = useAuth();
+  const { currentInstance, showAllReplies } = useCurrentInstance();
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showContentWarningContent, setShowContentWarningContent] =
@@ -80,9 +81,9 @@ export const PostCard = memo(function PostCard({
     post.replies,
   ]);
 
-  // Collapse thread by default if user is not part of it
+  // Collapse thread by default if user is not part of it (unless community shows all replies)
   const [isThreadCollapsed, setIsThreadCollapsed] = useState(
-    !isUserPartOfThread(),
+    showAllReplies ? false : !isUserPartOfThread(),
   );
 
   // Filter replies to show only relevant ones (for collapsed view)
@@ -129,8 +130,7 @@ export const PostCard = memo(function PostCard({
     useUsernameValidation: false,
   });
 
-  // Use shared instance data instead of querying per post
-  const { currentInstance } = useCurrentInstance();
+  // currentInstance fetched above to be available before useState
 
   const now = new Date();
   const communityEnded = currentInstance

@@ -120,6 +120,7 @@ export async function createCommunity(
     profileName: string;
     description?: string | null;
     muteNewMembers?: boolean;
+    showAllReplies?: boolean;
   },
 ) {
   // Validate image if provided
@@ -149,6 +150,7 @@ export async function createCommunity(
           minimumBirthYear: data.minimumBirthYear,
           description: data.description || null,
           muteNewMembers: data.muteNewMembers ?? false,
+          showAllReplies: data.showAllReplies ?? false,
         })
         .returning();
 
@@ -242,6 +244,7 @@ export async function updateCommunity(
     description?: string | null;
     descriptionImageIds?: string[];
     muteNewMembers?: boolean;
+    showAllReplies?: boolean;
   },
 ) {
   // Get existing community
@@ -272,6 +275,7 @@ export async function updateCommunity(
         minimumBirthYear: data.minimumBirthYear,
         description: data.description || null,
         muteNewMembers: data.muteNewMembers,
+        showAllReplies: data.showAllReplies,
       })
       .where(eq(communityTable.id, communityId))
       .returning();
@@ -1809,5 +1813,7 @@ export async function getCommunityDetailWithUserContext(
     user_role: userRole,
     description: community.description,
     owner_profile_id: ownerProfileId,
+    mute_new_members: community.muteNewMembers,
+    show_all_replies: community.showAllReplies,
   };
 }

@@ -17,6 +17,7 @@ export interface CommunityFormData {
   profile_username: string;
   profile_name: string;
   mute_new_members: boolean;
+  show_all_replies: boolean;
 }
 
 interface CommunityFormFieldsProps {
@@ -73,6 +74,7 @@ export function CommunityFormFields({
   const profileNameId = useId();
   const recruitingId = useId();
   const muteNewMembersId = useId();
+  const showAllRepliesId = useId();
 
   const communityCreationYear = existingCommunity
     ? new Date(existingCommunity.starts_at).getFullYear()
@@ -374,6 +376,35 @@ export function CommunityFormFields({
           <FieldDescription>
             새로운 멤버가 자동으로 음소거되며 공개 글을 작성할 수 없습니다. 멤버
             관리 페이지에서 개별적으로 음소거를 해제할 수 있습니다.
+          </FieldDescription>
+        </div>
+      </Field>
+
+      <Separator className="my-6" />
+      <h3 className="text-sm font-medium text-foreground mb-4">타임라인</h3>
+
+      <Field orientation="horizontal">
+        <Checkbox
+          id={showAllRepliesId}
+          name="show_all_replies"
+          checked={formData.show_all_replies}
+          onCheckedChange={(checked) => {
+            const event = {
+              target: {
+                name: "show_all_replies",
+                type: "checkbox",
+                checked: checked === true,
+                value: "",
+              },
+            };
+            onInputChange(event as React.ChangeEvent<HTMLInputElement>);
+          }}
+        />
+        <div className="space-y-1">
+          <FieldLabel htmlFor={showAllRepliesId}>모든 답글 표시</FieldLabel>
+          <FieldDescription>
+            타임라인에서 모든 답글을 펼쳐서 표시합니다. 비활성화하면 사용자가
+            참여하거나 언급된 답글만 기본으로 표시됩니다.
           </FieldDescription>
         </div>
       </Field>
