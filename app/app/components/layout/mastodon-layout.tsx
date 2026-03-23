@@ -4,6 +4,7 @@ import { SidebarNav } from "./sidebar-nav";
 
 interface MastodonLayoutProps {
   children: ReactNode;
+  isAuthenticated: boolean;
   communityName: string;
   consoleUrl: string;
   unreadCount: number;
@@ -12,11 +13,16 @@ interface MastodonLayoutProps {
 
 export function MastodonLayout({
   children,
+  isAuthenticated,
   communityName,
   consoleUrl,
   unreadCount,
   unreadMessageCount,
 }: MastodonLayoutProps) {
+  if (!isAuthenticated) {
+    return <div className="min-h-screen bg-background">{children}</div>;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop Layout: 2-column grid */}

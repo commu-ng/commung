@@ -19,17 +19,18 @@ export function AppLayout({ children }: AppLayoutProps) {
   const headerRef = useRef<HTMLDivElement>(null);
 
   // Fetch unread notification and message counts
+  const profileId = currentProfile?.id;
   const fetchUnreadCounts = useCallback(async () => {
-    if (!isAuthenticated || !currentProfile || !currentProfile.id) return;
+    if (!isAuthenticated || !profileId) return;
 
     try {
       // Fetch both notification and message counts in parallel
       const [notificationResponse, messageResponse] = await Promise.all([
         client.app.notifications["unread-count"].$get({
-          query: { profile_id: currentProfile.id },
+          query: { profile_id: profileId },
         }),
         client.app.messages["unread-count"].$get({
-          query: { profile_id: currentProfile.id },
+          query: { profile_id: profileId },
         }),
       ]);
 
@@ -45,7 +46,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     } catch (err) {
       console.error("Failed to fetch unread counts:", err);
     }
-  }, [isAuthenticated, currentProfile]);
+  }, [isAuthenticated, profileId]);
 
   // Track header visibility using Intersection Observer
   useEffect(() => {
@@ -84,18 +85,15 @@ export function AppLayout({ children }: AppLayoutProps) {
       isHeaderVisible={isHeaderVisible}
     >
       <div ref={headerRef}>
-        {isAuthenticated ? (
-          <MastodonLayout
-            communityName={instanceName}
-            consoleUrl={env.consoleUrl}
-            unreadCount={unreadCount}
-            unreadMessageCount={unreadMessageCount}
-          >
-            {children}
-          </MastodonLayout>
-        ) : (
-          <div className="min-h-screen bg-background">{children}</div>
-        )}
+        <MastodonLayout
+          isAuthenticated={isAuthenticated}
+          communityName={instanceName}
+          consoleUrl={env.consoleUrl}
+          unreadCount={unreadCount}
+          unreadMessageCount={unreadMessageCount}
+        >
+          {children}
+        </MastodonLayout>
       </div>
     </UnreadCountProvider>
   );
