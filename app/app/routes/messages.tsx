@@ -46,7 +46,7 @@ export default function Messages() {
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState("");
 
-  const { isAuthenticated, currentProfile } = useAuth();
+  const { isAuthenticated, currentProfile, isLoading: authLoading } = useAuth();
   const { instanceSlug } = useCurrentInstance();
   const { refreshUnreadCounts } = useUnreadCount();
 
@@ -320,6 +320,10 @@ export default function Messages() {
         : [...prev, profileId],
     );
   };
+
+  if (authLoading) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return (

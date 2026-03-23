@@ -93,7 +93,7 @@ export default function GroupChatDetail() {
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
     null,
   );
-  const { isAuthenticated, currentProfile } = useAuth();
+  const { isAuthenticated, currentProfile, isLoading: authLoading } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
@@ -551,6 +551,10 @@ export default function GroupChatDetail() {
 
     return date.toLocaleDateString("ko-KR");
   };
+
+  if (authLoading) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return (

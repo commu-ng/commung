@@ -65,7 +65,7 @@ interface Notification {
 
 export default function Notifications() {
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
-  const { isAuthenticated, currentProfile } = useAuth();
+  const { isAuthenticated, currentProfile, isLoading: authLoading } = useAuth();
   const { refreshUnreadCounts } = useUnreadCount();
   const { instanceSlug } = useCurrentInstance();
   const NOTIFICATIONS_PER_PAGE = 20;
@@ -274,6 +274,10 @@ export default function Notifications() {
 
     return date.toLocaleDateString("ko-KR");
   };
+
+  if (authLoading) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return (

@@ -756,6 +756,10 @@ export default function MessageConversation() {
     }
   };
 
+  if (authLoading) {
+    return null;
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">

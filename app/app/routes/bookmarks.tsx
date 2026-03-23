@@ -142,6 +142,10 @@ export default function Bookmarks() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [loadMore]);
 
+  if (authLoading) {
+    return null;
+  }
+
   if (!user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
