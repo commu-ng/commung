@@ -14,9 +14,7 @@ export default function AuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [status, setStatus] = useState<"loading" | "success" | "error">(
-    "loading",
-  );
+  const [status, setStatus] = useState<"loading" | "error">("loading");
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
@@ -66,21 +64,15 @@ export default function AuthCallback() {
           localStorage.setItem("session_token", sessionToken);
         }
 
-        // Token exchange successful
-        setStatus("success");
-
         // Invalidate and refetch auth queries to update the app with new session
         await queryClient.invalidateQueries({ queryKey: ["auth"] });
 
         // Get the return path from search params, default to home
         const returnPath = searchParams.get("return_path") || "/";
 
-        // Redirect to return path after a brief delay
-        setTimeout(() => {
-          if (!cancelled) {
-            navigate(returnPath, { replace: true });
-          }
-        }, 1000);
+        if (!cancelled) {
+          navigate(returnPath, { replace: true });
+        }
       } catch (err) {
         if (!cancelled) {
           setStatus("error");
@@ -104,21 +96,6 @@ export default function AuthCallback() {
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
           <p className="text-muted-foreground">로그인 중입니다...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show success state
-  if (status === "success") {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="text-center space-y-4">
-          <div className="text-green-500 text-4xl">✓</div>
-          <p className="text-foreground">로그인이 완료되었습니다!</p>
-          <p className="text-muted-foreground">
-            잠시 후 홈페이지로 이동합니다...
-          </p>
         </div>
       </div>
     );
