@@ -18,7 +18,7 @@ COPY api/package.json ./api/
 RUN pnpm install --frozen-lockfile
 
 # Console build stage
-FROM base AS console
+FROM base AS console-build
 
 # Console environment variables
 ARG VITE_DOMAIN=commu.ng
@@ -46,12 +46,16 @@ COPY console/app/ ./console/app/
 # Build console
 RUN cd console && pnpm run build
 
+# Console production stage (nginx)
+FROM nginx:alpine AS console
+
+COPY --from=console-build /app/console/build/client /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 EXPOSE 3000
-WORKDIR /app/console
-CMD ["pnpm", "start"]
 
 # App build stage
-FROM base AS app
+FROM base AS app-build
 
 # App environment variables
 ARG VITE_CONSOLE_URL=https://commu.ng
@@ -79,9 +83,13 @@ COPY app/app/ ./app/app/
 # Build app
 RUN cd app && pnpm run build
 
+# App production stage (nginx)
+FROM nginx:alpine AS app
+
+COPY --from=app-build /app/app/build/client /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 EXPOSE 3000
-WORKDIR /app/app
-CMD ["pnpm", "start"]
 
 # API build stage
 FROM base AS api
