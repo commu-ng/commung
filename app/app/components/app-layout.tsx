@@ -3,6 +3,7 @@ import { MastodonLayout } from "~/components/layout";
 import { UnreadCountProvider } from "~/contexts/UnreadCountContext";
 import { useAuth } from "~/hooks/useAuth";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
+import { usePrefetchRoutes } from "~/hooks/usePrefetchRoutes";
 import { client } from "~/lib/api-client";
 import { env } from "~/lib/env";
 
@@ -16,6 +17,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const { isAuthenticated, currentProfile } = useAuth();
   const { instanceName } = useCurrentInstance();
+  usePrefetchRoutes();
   const headerRef = useRef<HTMLDivElement>(null);
 
   // Fetch unread notification and message counts
