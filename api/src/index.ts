@@ -125,3 +125,4 @@ type GlobalResponse = {
 };
 
 export type AppType = ApplyGlobalResponse<typeof app, GlobalResponse>;
+export { TIMELINE_REPLY_LIMIT } from "./services/post.service";

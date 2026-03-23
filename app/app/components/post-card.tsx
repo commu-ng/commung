@@ -1,3 +1,4 @@
+import { TIMELINE_REPLY_LIMIT } from "@commu-ng/api";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
 import { Link } from "react-router";
@@ -473,14 +474,16 @@ export const PostCard = memo(function PostCard({
                     );
                   })}
                 </div>
-                {post.has_more_replies && !showAllReplies && (
-                  <Link
-                    to={`/@${post.author.username}/${post.root_post_id ?? post.id}`}
-                    className="block mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                  >
-                    답글 {totalReplyCount}개 모두 보기
-                  </Link>
-                )}
+                {post.has_more_replies &&
+                  !showAllReplies &&
+                  totalReplyCount > TIMELINE_REPLY_LIMIT && (
+                    <Link
+                      to={`/@${post.author.username}/${post.root_post_id ?? post.id}`}
+                      className="block mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                    >
+                      답글 {totalReplyCount}개 모두 보기
+                    </Link>
+                  )}
               </div>
             );
           })()}

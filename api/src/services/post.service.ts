@@ -35,6 +35,9 @@ import { addImageUrl, uploadFileDirect, validateImageFile } from "../utils/r2";
 import * as membershipService from "./membership.service";
 import { pushNotificationService } from "./push-notification.service";
 
+/** Maximum number of replies loaded inline per post in the timeline */
+export const TIMELINE_REPLY_LIMIT = 5;
+
 /**
  * Validate that a post belongs to a specific community
  * This ensures posts from other communities are never accessed
@@ -1086,7 +1089,7 @@ export async function getPosts(
     communityId,
     10,
     profileId,
-    showAllReplies ? undefined : 5,
+    showAllReplies ? undefined : TIMELINE_REPLY_LIMIT,
   );
 
   // Build result using pre-loaded data
