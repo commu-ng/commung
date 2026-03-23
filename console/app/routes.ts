@@ -1,11 +1,6 @@
 import { index, type RouteConfig, route } from "@react-router/dev/routes";
 
 export default [
-  route(
-    ".well-known/apple-app-site-association",
-    "routes/well-known.apple-app-site-association.tsx",
-  ),
-  route(".well-known/assetlinks.json", "routes/well-known.assetlinks.json.tsx"),
   index("routes/home.tsx"),
   route("login", "routes/login.tsx"),
   route("signup", "routes/signup.tsx"),

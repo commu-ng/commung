@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.get_login_creds"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ng.commu",
+      "sha256_cert_fingerprints": [
+        "35:C4:51:56:59:EB:B9:B6:08:30:0F:51:44:29:95:74:4A:2F:3C:1A:23:01:A5:C6:24:C5:0F:2E:DC:2D:72:49"
+      ]
+    }
+  }
+]
