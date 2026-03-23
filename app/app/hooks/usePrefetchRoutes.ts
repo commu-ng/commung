@@ -1,7 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
-import { useLocation } from "react-router";
 import { useAuth } from "~/hooks/useAuth";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
 import { client } from "~/lib/api-client";
@@ -126,14 +125,12 @@ const allPaths = Object.keys(routePrefetchers);
 
 export function usePrefetchRoutes() {
   const queryClient = useQueryClient();
-  const location = useLocation();
   const { isAuthenticated, currentProfile, belongsToCurrentInstance } =
     useAuth();
   const { instanceSlug } = useCurrentInstance();
   const prefetchedForProfile = useRef<string | null>(null);
 
   const profileId = currentProfile?.id;
-  const currentPath = location.pathname;
 
   useEffect(() => {
     if (!isAuthenticated || !instanceSlug || !profileId) return;
@@ -141,30 +138,18 @@ export function usePrefetchRoutes() {
     if (prefetchedForProfile.current === profileId) return;
     prefetchedForProfile.current = profileId;
 
-    // Prefetch the current route immediately (if it's one we know about)
-    const currentPrefetcher = routePrefetchers[currentPath];
-    if (currentPrefetcher) {
-      currentPrefetcher(queryClient, profileId);
-    }
-
-    // Prefetch remaining routes after a short delay
-    const remaining = allPaths.filter((p) => p !== currentPath);
-    const timeoutId = setTimeout(() => {
-      for (const path of remaining) {
-        const prefetcher = routePrefetchers[path];
-        if (prefetcher) {
-          prefetcher(queryClient, profileId);
-        }
+    // Prefetch all routes immediately
+    for (const path of allPaths) {
+      const prefetcher = routePrefetchers[path];
+      if (prefetcher) {
+        prefetcher(queryClient, profileId);
       }
-    }, 2000);
-
-    return () => clearTimeout(timeoutId);
+    }
   }, [
     isAuthenticated,
     instanceSlug,
     profileId,
     belongsToCurrentInstance,
-    currentPath,
     queryClient,
   ]);
 }
