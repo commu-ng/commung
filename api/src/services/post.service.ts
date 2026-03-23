@@ -256,6 +256,7 @@ export async function getScheduledPosts(
       updated_at: formatISODate(post.updatedAt),
       announcement: post.announcement,
       content_warning: post.contentWarning,
+      pinned_at: post.pinnedAt ? formatISODate(post.pinnedAt) : null,
       scheduled_at: formatISODate(post.scheduledAt),
       published_at: formatISODate(post.publishedAt),
       author: {
@@ -270,6 +271,8 @@ export async function getScheduledPosts(
       root_post_id: post.rootPostId,
       is_bookmarked: false, // Scheduled posts can't be bookmarked yet
       replies: [],
+      reply_count: 0,
+      has_more_replies: false,
       reactions: reactions.map((reaction) => ({
         emoji: reaction.emoji,
         user: {
@@ -498,6 +501,8 @@ export async function getAnnouncements(
         },
       })),
       replies: replyResult.replies,
+      reply_count: replyResult.totalCount,
+      has_more_replies: replyResult.totalCount > replyResult.replies.length,
     });
   }
 
@@ -592,6 +597,7 @@ export async function getBookmarks(
         updated_at: formatISODate(post.updatedAt),
         announcement: post.announcement,
         content_warning: post.contentWarning,
+        pinned_at: post.pinnedAt ? formatISODate(post.pinnedAt) : null,
         author: {
           id: author.id,
           name: author.name,
@@ -599,7 +605,14 @@ export async function getBookmarks(
           profile_picture_url: profile_picture_url,
         },
         images: imageTableData,
+        in_reply_to_id: post.inReplyToId,
+        depth: post.depth,
+        root_post_id: post.rootPostId,
+        is_bookmarked: true,
         bookmarked_at: formatISODate(bookmark.createdAt),
+        replies: [],
+        reply_count: 0,
+        has_more_replies: false,
         reactions:
           post.postReactions?.map((reaction) => ({
             emoji: reaction.emoji,
@@ -1117,6 +1130,7 @@ export async function getPosts(
       updated_at: formatISODate(post.updatedAt),
       announcement: post.announcement,
       content_warning: post.contentWarning,
+      pinned_at: post.pinnedAt ? formatISODate(post.pinnedAt) : null,
       author: {
         id: profile.id,
         name: profile.name,
@@ -1338,6 +1352,7 @@ export async function searchPosts(
       updated_at: formatISODate(post.updatedAt),
       announcement: post.announcement,
       content_warning: post.contentWarning,
+      pinned_at: post.pinnedAt ? formatISODate(post.pinnedAt) : null,
       author: {
         id: profile.id,
         name: profile.name,
@@ -1350,6 +1365,8 @@ export async function searchPosts(
       root_post_id: null,
       is_bookmarked,
       replies: replyResult.replies,
+      reply_count: replyResult.totalCount,
+      has_more_replies: replyResult.totalCount > replyResult.replies.length,
       reactions: reactions.map((reaction) => ({
         emoji: reaction.emoji,
         user: {
@@ -1381,6 +1398,7 @@ type ReplyData = {
   updated_at: string | null;
   announcement: boolean;
   content_warning: string | null;
+  pinned_at: string | null;
   author: {
     id: string;
     name: string;
@@ -1399,6 +1417,8 @@ type ReplyData = {
   root_post_id: string | null;
   is_bookmarked: boolean;
   replies: ReplyData[];
+  reply_count: number;
+  has_more_replies: boolean;
   reactions: {
     emoji: string;
     user: {
@@ -1647,6 +1667,7 @@ async function buildThreadedRepliesForMultiplePosts(
       updated_at: formatISODate(row.updated_at),
       announcement: row.announcement,
       content_warning: row.content_warning,
+      pinned_at: null,
       author: {
         id: profile.id,
         name: profile.name,
@@ -1659,6 +1680,8 @@ async function buildThreadedRepliesForMultiplePosts(
       root_post_id: row.root_post_id,
       is_bookmarked: bookmarkedPostIds.has(row.id),
       replies: [],
+      reply_count: 0,
+      has_more_replies: false,
       reactions: reactions.map((reaction) => ({
         emoji: reaction.emoji,
         user: {
@@ -1711,7 +1734,7 @@ async function buildThreadedRepliesForMultiplePosts(
   return nestedRepliesMap;
 }
 
-type FlatReplyData = Omit<ReplyData, "replies">;
+type FlatReplyData = Omit<ReplyData, "replies"> & { replies: never[] };
 
 /**
  * Get paginated flat replies for a single post using sort_path cursor
@@ -1950,6 +1973,7 @@ export async function getPostReplies(
       updated_at: formatISODate(row.updated_at),
       announcement: row.announcement,
       content_warning: row.content_warning,
+      pinned_at: null,
       author: {
         id: profile.id,
         name: profile.name,
@@ -1961,6 +1985,9 @@ export async function getPostReplies(
       depth: row.depth,
       root_post_id: row.root_post_id,
       is_bookmarked: bookmarkedPostIds.has(row.id),
+      replies: [],
+      reply_count: 0,
+      has_more_replies: false,
       reactions: reactions.map((reaction) => ({
         emoji: reaction.emoji,
         user: {
@@ -2130,6 +2157,7 @@ async function getParentThread(
       updated_at: formatISODate(row.updated_at),
       announcement: row.announcement,
       content_warning: row.content_warning,
+      pinned_at: null,
       author: {
         id: profile.id,
         name: profile.name,
@@ -2142,6 +2170,8 @@ async function getParentThread(
       root_post_id: row.root_post_id,
       is_bookmarked: bookmarkedPostIds.has(row.id),
       replies: [],
+      reply_count: 0,
+      has_more_replies: false,
       reactions: reactions.map((reaction) => ({
         emoji: reaction.emoji,
         user: {
@@ -2264,6 +2294,7 @@ export async function getPost(
     updated_at: formatISODate(post.updatedAt),
     announcement: post.announcement,
     content_warning: post.contentWarning,
+    pinned_at: post.pinnedAt ? formatISODate(post.pinnedAt) : null,
     author: {
       id: post.profile.id,
       name: post.profile.name,
@@ -2275,6 +2306,8 @@ export async function getPost(
     depth: post.depth,
     root_post_id: post.rootPostId,
     replies,
+    reply_count: replyResult.totalCount,
+    has_more_replies: replyResult.totalCount > replyResult.replies.length,
     parent_thread,
     is_bookmarked,
     reactions:
@@ -2705,8 +2738,12 @@ export async function createPost(
     updated_at: formatISODate(createdPost?.updatedAt),
     announcement: createdPost?.announcement,
     content_warning: createdPost?.contentWarning,
+    pinned_at: createdPost?.pinnedAt
+      ? formatISODate(createdPost.pinnedAt)
+      : null,
     in_reply_to_id: createdPost?.inReplyToId,
     depth: createdPost?.depth,
+    root_post_id: createdPost?.rootPostId ?? null,
     author: {
       id: createdPost?.profile?.id,
       name: createdPost?.profile?.name,
@@ -2714,6 +2751,10 @@ export async function createPost(
       profile_picture_url,
     },
     images,
+    is_bookmarked: false,
+    replies: [],
+    reply_count: 0,
+    has_more_replies: false,
     reactions: [],
   };
 }
@@ -3073,8 +3114,12 @@ export async function updatePost(
     updated_at: formatISODate(updatedPost?.updatedAt),
     announcement: updatedPost?.announcement,
     content_warning: updatedPost?.contentWarning,
+    pinned_at: updatedPost?.pinnedAt
+      ? formatISODate(updatedPost.pinnedAt)
+      : null,
     in_reply_to_id: updatedPost?.inReplyToId,
     depth: updatedPost?.depth,
+    root_post_id: updatedPost?.rootPostId ?? null,
     author: {
       id: updatedPost?.profile?.id,
       name: updatedPost?.profile?.name,
@@ -3082,6 +3127,10 @@ export async function updatePost(
       profile_picture_url,
     },
     images,
+    is_bookmarked: false,
+    replies: [],
+    reply_count: 0,
+    has_more_replies: false,
     reactions:
       updatedPost?.postReactions?.map((reaction) => ({
         emoji: reaction.emoji,

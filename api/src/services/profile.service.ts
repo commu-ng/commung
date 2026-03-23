@@ -841,6 +841,8 @@ export async function getProfilePosts(
       root_post_id: post.rootPostId,
       is_bookmarked: false,
       replies: [],
+      reply_count: 0,
+      has_more_replies: false,
       reactions:
         post.postReactions?.map((reaction) => ({
           emoji: reaction.emoji,
