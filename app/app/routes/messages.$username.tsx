@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
 import { toast } from "sonner";
 import { DirectMessageReactions } from "~/components/DirectMessageReactions";
+import { uploadImage } from "~/lib/upload-image";
 import { LoginButton } from "~/components/LoginButton";
 import { MessageBubble } from "~/components/MessageBubble";
 import { ProfileAvatar } from "~/components/profile-avatar";
@@ -388,7 +389,6 @@ export default function MessageConversation() {
   const uploadImages = async (imageObjects: ImageObject[]) => {
     setIsUploadingImages(true);
     try {
-      const { uploadImage } = await import("~/lib/upload-image");
       const uploadPromises = imageObjects.map(async (imageObj) => {
         const uploadedId = await uploadImage(imageObj.file);
         return { tempId: imageObj.tempId, uploadedId };

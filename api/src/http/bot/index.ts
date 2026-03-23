@@ -1,5 +1,6 @@
 import { swaggerUI } from "@hono/swagger-ui";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { getCommunityById, validateBotToken } from "../../services/bot.service";
 import * as postService from "../../services/post.service";
 
 // Schema definitions
@@ -594,9 +595,6 @@ botApiRouter
     }
 
     const token = authHeader.substring(7);
-    const { validateBotToken, getCommunityById } = await import(
-      "../../services/bot.service"
-    );
     const botResult = await validateBotToken(token);
 
     if (!botResult) {
@@ -660,9 +658,6 @@ botApiRouter
     }
 
     const token = authHeader.substring(7);
-    const { validateBotToken, getCommunityById } = await import(
-      "../../services/bot.service"
-    );
     const botResult = await validateBotToken(token);
 
     if (!botResult) {
@@ -722,9 +717,6 @@ botApiRouter
     }
 
     const token = authHeader.substring(7);
-    const { validateBotToken, getCommunityById } = await import(
-      "../../services/bot.service"
-    );
     const botResult = await validateBotToken(token);
 
     if (!botResult) {
@@ -795,9 +787,6 @@ botApiRouter
     }
 
     const token = authHeader.substring(7);
-    const { validateBotToken, getCommunityById } = await import(
-      "../../services/bot.service"
-    );
     const botResult = await validateBotToken(token);
 
     if (!botResult) {
@@ -861,9 +850,6 @@ botApiRouter
     }
 
     const token = authHeader.substring(7);
-    const { validateBotToken, getCommunityById } = await import(
-      "../../services/bot.service"
-    );
     const botResult = await validateBotToken(token);
 
     if (!botResult) {
@@ -924,9 +910,6 @@ botApiRouter
     }
 
     const token = authHeader.substring(7);
-    const { validateBotToken, getCommunityById } = await import(
-      "../../services/bot.service"
-    );
     const botResult = await validateBotToken(token);
 
     if (!botResult) {
@@ -994,9 +977,6 @@ botApiRouter
     }
 
     const token = authHeader.substring(7);
-    const { validateBotToken, getCommunityById } = await import(
-      "../../services/bot.service"
-    );
     const botResult = await validateBotToken(token);
 
     if (!botResult) {
