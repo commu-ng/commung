@@ -1,45 +1,24 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import type { InferResponseType } from "hono/client";
 import { useAuth } from "~/hooks/useAuth";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
 import { useImageUpload } from "~/hooks/useImageUpload";
 import { client } from "~/lib/api-client";
 import type { Route } from "./+types/group-chats.$group_chat_id";
 
-interface GroupChatMessage {
-  id: string;
-  content: string;
-  created_at: string;
-  is_from_me: boolean;
-  sender: {
-    id: string;
-    name: string;
-    username: string;
-    profile_picture_url: string | null;
-  };
-  reactions?: Array<{
-    emoji: string;
-    count: number;
-    profiles: Array<{
-      id: string;
-      name: string;
-      username: string;
-      profile_picture_url: string | null;
-    }>;
-  }>;
-  images?: Array<{
-    id: string;
-    url: string;
-    width: number;
-    height: number;
-  }>;
-}
+type GroupChatMessageFromList = InferResponseType<
+  (typeof client.app)["group-chats"][":group_chat_id"]["messages"]["$get"],
+  200
+>["data"][number];
 
-interface GroupChatMember {
-  id: string;
-  name: string;
-  username: string;
-  profile_picture_url: string | null;
-}
+type GroupChatMessage = Omit<GroupChatMessageFromList, "reactions"> & {
+  reactions?: GroupChatMessageFromList["reactions"];
+};
+
+type GroupChatInfo = InferResponseType<
+  (typeof client.app)["group-chats"][":group_chat_id"]["$get"],
+  200
+>["data"];
 
 import {
   ArrowLeft,
@@ -70,15 +49,6 @@ export function meta(_args: Route.MetaArgs) {
     { title: "그룹 채팅" },
     { name: "description", content: "그룹 채팅" },
   ];
-}
-
-interface GroupChatInfo {
-  id: string;
-  name: string;
-  created_at: string;
-  updated_at: string;
-  created_by_id: string;
-  members: GroupChatMember[];
 }
 
 export default function GroupChatDetail() {
@@ -165,57 +135,14 @@ export default function GroupChatDetail() {
 
         if (messagesResponse.ok) {
           const messagesResult = await messagesResponse.json();
-          const transformedMessages: GroupChatMessage[] =
-            messagesResult.data.map(
-              (message: {
-                id: string;
-                content: string;
-                created_at: string;
-                is_sender: boolean;
-                sender: {
-                  id: string;
-                  name: string;
-                  username: string;
-                  profile_picture_url: string | null;
-                };
-                reactions: Array<{
-                  emoji: string;
-                  count: number;
-                  profiles: Array<{
-                    id: string;
-                    name: string;
-                    username: string;
-                    profile_picture_url: string | null;
-                  }>;
-                }>;
-                images: Array<{
-                  id: string;
-                  url: string;
-                  width: number;
-                  height: number;
-                }>;
-              }) => ({
-                id: message.id,
-                content: message.content,
-                created_at: message.created_at,
-                is_from_me: message.is_sender || false,
-                sender: {
-                  id: message.sender.id,
-                  name: message.sender.name,
-                  username: message.sender.username,
-                  profile_picture_url:
-                    message.sender.profile_picture_url || null,
-                },
-                reactions: message.reactions || [],
-                images: message.images || [],
-              }),
-            );
           setMessages(
-            transformedMessages.sort(
-              (a, b) =>
-                new Date(a.created_at).getTime() -
-                new Date(b.created_at).getTime(),
-            ),
+            messagesResult.data
+              .slice()
+              .sort(
+                (a, b) =>
+                  new Date(a.created_at).getTime() -
+                  new Date(b.created_at).getTime(),
+              ),
           );
 
           // Mark messages as read
@@ -270,28 +197,7 @@ export default function GroupChatDetail() {
         if (chatResponse.ok) {
           const chatResult = await chatResponse.json();
           const chatData = chatResult.data;
-          // Transform API response to match GroupChatInfo interface
-          const transformedChatData: GroupChatInfo = {
-            id: chatData.id,
-            name: chatData.name,
-            created_at: chatData.created_at,
-            updated_at: chatData.updated_at,
-            created_by_id: chatData.created_by_id,
-            members: chatData.members.map(
-              (member: {
-                id: string;
-                name: string;
-                username: string;
-                profile_picture_url: string | null;
-              }) => ({
-                id: member.id,
-                name: member.name,
-                username: member.username,
-                profile_picture_url: member.profile_picture_url || null,
-              }),
-            ),
-          };
-          setGroupChat(transformedChatData);
+          setGroupChat(chatData);
         } else {
           setError("그룹 채팅을 찾을 수 없습니다");
           return;
@@ -300,57 +206,14 @@ export default function GroupChatDetail() {
         if (messagesResponse.ok) {
           const messagesResult = await messagesResponse.json();
           // Transform API response to match GroupChatMessage interface
-          const transformedMessages: GroupChatMessage[] =
-            messagesResult.data.map(
-              (message: {
-                id: string;
-                content: string;
-                created_at: string;
-                is_sender: boolean;
-                sender: {
-                  id: string;
-                  name: string;
-                  username: string;
-                  profile_picture_url: string | null;
-                };
-                reactions: Array<{
-                  emoji: string;
-                  count: number;
-                  profiles: Array<{
-                    id: string;
-                    name: string;
-                    username: string;
-                    profile_picture_url: string | null;
-                  }>;
-                }>;
-                images: Array<{
-                  id: string;
-                  url: string;
-                  width: number;
-                  height: number;
-                }>;
-              }) => ({
-                id: message.id,
-                content: message.content,
-                created_at: message.created_at,
-                is_from_me: message.is_sender || false,
-                sender: {
-                  id: message.sender.id,
-                  name: message.sender.name,
-                  username: message.sender.username,
-                  profile_picture_url:
-                    message.sender.profile_picture_url || null,
-                },
-                reactions: message.reactions || [],
-                images: message.images || [],
-              }),
-            );
           setMessages(
-            transformedMessages.sort(
-              (a, b) =>
-                new Date(a.created_at).getTime() -
-                new Date(b.created_at).getTime(),
-            ),
+            messagesResult.data
+              .slice()
+              .sort(
+                (a, b) =>
+                  new Date(a.created_at).getTime() -
+                  new Date(b.created_at).getTime(),
+              ),
           );
         } else {
           setError("메시지를 불러올 수 없습니다");
@@ -392,21 +255,7 @@ export default function GroupChatDetail() {
       if (response.ok) {
         const result = await response.json();
         const messageData = result.data;
-        // Transform API response to match GroupChatMessage interface
-        const transformedMessage: GroupChatMessage = {
-          id: messageData.id,
-          content: messageData.content,
-          created_at: messageData.created_at,
-          is_from_me: messageData.is_sender || false,
-          sender: {
-            id: messageData.sender.id,
-            name: messageData.sender.name,
-            username: messageData.sender.username,
-            profile_picture_url: messageData.sender.profile_picture_url || null,
-          },
-          images: messageData.images || [],
-        };
-        setMessages((prev) => [...prev, transformedMessage]);
+        setMessages((prev) => [...prev, messageData]);
         setNewMessage("");
         clearImages();
       } else {
@@ -719,16 +568,16 @@ export default function GroupChatDetail() {
                 <div
                   key={message.id}
                   className={`flex ${
-                    message.is_from_me ? "justify-end" : "justify-start"
+                    message.is_sender ? "justify-end" : "justify-start"
                   }`}
                 >
                   <MessageBubble
                     content={message.content}
                     timestamp={formatTime(message.created_at)}
-                    isFromMe={message.is_from_me}
+                    isFromMe={message.is_sender}
                     senderName={message.sender.name}
                     senderAvatar={
-                      !message.is_from_me ? (
+                      !message.is_sender ? (
                         <ProfileAvatar
                           profilePictureUrl={message.sender.profile_picture_url}
                           name={message.sender.name}
@@ -760,7 +609,7 @@ export default function GroupChatDetail() {
                         senderName={message.sender.name}
                         isModalOpen={selectedMessageId === message.id}
                         onModalClose={() => setSelectedMessageId(null)}
-                        isFromMe={message.is_from_me}
+                        isFromMe={message.is_sender}
                       />
                     ) : (
                       currentProfile && (
@@ -777,7 +626,7 @@ export default function GroupChatDetail() {
                           senderName={message.sender.name}
                           isModalOpen={false}
                           onModalClose={() => {}}
-                          isFromMe={message.is_from_me}
+                          isFromMe={message.is_sender}
                         />
                       )
                     )}

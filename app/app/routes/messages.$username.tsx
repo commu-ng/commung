@@ -25,8 +25,19 @@ import {
 import { useUnreadCount } from "~/contexts/UnreadCountContext";
 import { useAuth } from "~/hooks/useAuth";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
+import type { InferResponseType } from "hono/client";
 import { client, getErrorMessage } from "~/lib/api-client";
+import type { Profile } from "~/types/profile";
 import type { Route } from "./+types/messages.$username";
+
+type MessageFromList = InferResponseType<
+  (typeof client.app.conversations)[":other_profile_id"]["$get"],
+  200
+>["data"][number];
+
+type Message = Omit<MessageFromList, "receiver"> & {
+  receiver?: MessageFromList["receiver"];
+};
 
 export function meta({ params }: Route.MetaArgs) {
   return [
@@ -34,36 +45,6 @@ export function meta({ params }: Route.MetaArgs) {
     { name: "description", content: "메시지 대화" },
   ];
 }
-
-interface Message {
-  id: string;
-  content: string;
-  created_at: string;
-  read_at: string | null;
-  is_sender: boolean;
-  sender: {
-    id: string;
-    username: string;
-    name: string;
-    profile_picture_url: string | null;
-  };
-  reactions: Array<{
-    emoji: string;
-    user: {
-      id: string;
-      username: string;
-      name: string;
-    };
-  }>;
-  images?: Array<{
-    id: string;
-    url: string;
-    width: number;
-    height: number;
-  }>;
-}
-
-import type { Profile } from "~/types/profile";
 
 export default function MessageConversation() {
   const { username } = useParams();
@@ -153,46 +134,7 @@ export default function MessageConversation() {
         });
         if (messagesResponse.ok) {
           const messagesResult = await messagesResponse.json();
-          const transformedMessages: Message[] = messagesResult.data.map(
-            (message: {
-              id: string;
-              content: string;
-              created_at: string;
-              read_at: string | null;
-              is_sender: boolean;
-              sender: {
-                id: string;
-                username: string;
-                name: string;
-                profile_picture_url: string | null;
-              };
-              reactions: Array<{
-                emoji: string;
-                user: { id: string; username: string; name: string };
-              }>;
-              images: Array<{
-                id: string;
-                url: string;
-                width: number;
-                height: number;
-              }>;
-            }) => ({
-              id: message.id,
-              content: message.content,
-              created_at: message.created_at,
-              read_at: message.read_at,
-              is_sender: message.is_sender,
-              sender: {
-                id: message.sender.id,
-                username: message.sender.username,
-                name: message.sender.name,
-                profile_picture_url: message.sender.profile_picture_url || null,
-              },
-              reactions: message.reactions,
-              images: message.images,
-            }),
-          );
-          setMessages(transformedMessages.reverse());
+          setMessages(messagesResult.data.slice().reverse());
 
           // Mark messages as read
           await client.app.conversations[":other_profile_id"][
@@ -257,46 +199,7 @@ export default function MessageConversation() {
         if (messagesResponse.ok) {
           const messagesResult = await messagesResponse.json();
           // Transform API response to match Message interface
-          const transformedMessages: Message[] = messagesResult.data.map(
-            (message: {
-              id: string;
-              content: string;
-              created_at: string;
-              read_at: string | null;
-              is_sender: boolean;
-              sender: {
-                id: string;
-                username: string;
-                name: string;
-                profile_picture_url: string | null;
-              };
-              reactions: Array<{
-                emoji: string;
-                user: { id: string; username: string; name: string };
-              }>;
-              images: Array<{
-                id: string;
-                url: string;
-                width: number;
-                height: number;
-              }>;
-            }) => ({
-              id: message.id,
-              content: message.content,
-              created_at: message.created_at,
-              read_at: message.read_at,
-              is_sender: message.is_sender,
-              sender: {
-                id: message.sender.id,
-                username: message.sender.username,
-                name: message.sender.name,
-                profile_picture_url: message.sender.profile_picture_url || null,
-              },
-              reactions: message.reactions,
-              images: message.images,
-            }),
-          );
-          setMessages(transformedMessages.reverse()); // Reverse to show oldest first
+          setMessages(messagesResult.data.slice().reverse()); // Reverse to show oldest first
 
           // Mark messages as read
           try {
@@ -446,22 +349,7 @@ export default function MessageConversation() {
 
       if (response.ok) {
         const result = await response.json();
-        const sentMessage = {
-          id: result.data.id,
-          content: result.data.content,
-          created_at: result.data.created_at,
-          read_at: result.data.read_at,
-          is_sender: result.data.is_sender,
-          sender: {
-            id: result.data.sender.id,
-            username: result.data.sender.username,
-            name: result.data.sender.name,
-            profile_picture_url: result.data.sender.profile_picture_url || null,
-          },
-          reactions: [],
-          images: result.data.images || [],
-        };
-        setMessages((prev) => [...prev, sentMessage]);
+        setMessages((prev) => [...prev, result.data]);
         setNewMessage("");
         setImages([]);
         if (fileInputRef.current) {
@@ -565,47 +453,7 @@ export default function MessageConversation() {
           });
           if (messagesResponse.ok) {
             const messagesResult = await messagesResponse.json();
-            // Transform API response to match Message interface
-            const transformedMessages: Message[] = messagesResult.data.map(
-              (message: {
-                id: string;
-                content: string;
-                created_at: string;
-                read_at: string | null;
-                is_sender: boolean;
-                sender: {
-                  id: string;
-                  username: string;
-                  name: string;
-                  profile_picture_url: string | null;
-                };
-                reactions: Array<{
-                  emoji: string;
-                  user: { id: string; username: string; name: string };
-                }>;
-                images: Array<{
-                  id: string;
-                  url: string;
-                  width: number;
-                  height: number;
-                }>;
-              }) => ({
-                id: message.id,
-                content: message.content,
-                created_at: message.created_at,
-                read_at: message.read_at,
-                is_sender: message.is_sender,
-                sender: {
-                  id: message.sender.id,
-                  username: message.sender.username,
-                  name: message.sender.name,
-                  profile_picture_url: message.sender.profile_picture_url,
-                },
-                reactions: message.reactions,
-                images: message.images,
-              }),
-            );
-            setMessages(transformedMessages.reverse());
+            setMessages(messagesResult.data.slice().reverse());
           }
         }
       } else {
@@ -657,46 +505,7 @@ export default function MessageConversation() {
           });
           if (messagesResponse.ok) {
             const messagesResult = await messagesResponse.json();
-            const transformedMessages: Message[] = messagesResult.data.map(
-              (message: {
-                id: string;
-                content: string;
-                created_at: string;
-                read_at: string | null;
-                is_sender: boolean;
-                sender: {
-                  id: string;
-                  username: string;
-                  name: string;
-                  profile_picture_url: string | null;
-                };
-                reactions: Array<{
-                  emoji: string;
-                  user: { id: string; username: string; name: string };
-                }>;
-                images: Array<{
-                  id: string;
-                  url: string;
-                  width: number;
-                  height: number;
-                }>;
-              }) => ({
-                id: message.id,
-                content: message.content,
-                created_at: message.created_at,
-                read_at: message.read_at,
-                is_sender: message.is_sender,
-                sender: {
-                  id: message.sender.id,
-                  username: message.sender.username,
-                  name: message.sender.name,
-                  profile_picture_url: message.sender.profile_picture_url,
-                },
-                reactions: message.reactions,
-                images: message.images,
-              }),
-            );
-            setMessages(transformedMessages.reverse());
+            setMessages(messagesResult.data.slice().reverse());
           }
         }
       } else {

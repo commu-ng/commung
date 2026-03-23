@@ -6,8 +6,6 @@ import { Spinner } from "~/components/ui/spinner";
 import { useAuth } from "~/hooks/useAuth";
 import { client } from "~/lib/api-client";
 
-import type { Post } from "~/types/post";
-
 export default function Announcements() {
   const { currentProfile } = useAuth();
   const queryClient = useQueryClient();
@@ -19,7 +17,7 @@ export default function Announcements() {
     error,
   } = useQuery({
     queryKey: ["announcements", currentProfileId],
-    queryFn: async (): Promise<Post[]> => {
+    queryFn: async () => {
       const response = await client.app.announcements.$get({
         query: currentProfileId ? { profile_id: currentProfileId } : {},
       });
@@ -29,51 +27,7 @@ export default function Announcements() {
       }
 
       const result = await response.json();
-      return result.data.map(
-        (announcement: {
-          id: string;
-          content: string;
-          created_at: string | null;
-          updated_at: string | null;
-          author: {
-            id: string;
-            name: string;
-            username: string;
-            profile_picture_url: string | null;
-          };
-          images: Array<{
-            id: string;
-            url: string;
-            width: number;
-            height: number;
-            filename: string;
-          }>;
-          reactions: Array<{
-            emoji: string;
-            user: { id: string; username: string; name: string };
-          }>;
-        }) => ({
-          id: announcement.id,
-          content: announcement.content,
-          created_at: announcement.created_at,
-          updated_at: announcement.updated_at,
-          author: {
-            id: announcement.author.id,
-            name: announcement.author.name,
-            username: announcement.author.username,
-            profile_picture_url: announcement.author.profile_picture_url,
-          },
-          images: announcement.images || [],
-          announcement: true,
-          in_reply_to_id: null,
-          depth: 0,
-          root_post_id: null,
-          content_warning: null,
-          replies: [],
-          is_bookmarked: false,
-          reactions: announcement.reactions || [],
-        }),
-      );
+      return result.data;
     },
   });
 
@@ -140,15 +94,7 @@ export default function Announcements() {
             {announcements.map((announcement) => (
               <PostCard
                 key={announcement.id}
-                post={{
-                  ...announcement,
-                  replies: [],
-                  in_reply_to_id: announcement.in_reply_to_id ?? null,
-                  depth: 0,
-                  root_post_id: null,
-                  content_warning: null,
-                  is_bookmarked: false,
-                }}
+                post={announcement}
                 currentProfileId={currentProfileId}
                 onDelete={handleAnnouncementDelete}
               />

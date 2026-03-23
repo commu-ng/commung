@@ -33,18 +33,18 @@ export interface Post {
   content: string;
   created_at: string | null;
   updated_at: string | null;
-  announcement: boolean;
-  content_warning: string | null;
+  announcement?: boolean;
+  content_warning?: string | null;
   scheduled_at?: string | null;
   published_at?: string | null;
   pinned_at?: string | null;
   author: PostAuthor;
   images: PostImage[];
-  in_reply_to_id: string | null;
-  depth: number;
-  root_post_id: string | null;
-  is_bookmarked: boolean;
-  replies: Post[];
+  in_reply_to_id?: string | null;
+  depth?: number;
+  root_post_id?: string | null;
+  is_bookmarked?: boolean;
+  replies?: Post[];
   reply_count?: number;
   has_more_replies?: boolean;
   reactions?: Array<{

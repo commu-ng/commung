@@ -57,48 +57,8 @@ export default function Bookmarks() {
 
       const result = await response.json();
 
-      // Transform and ensure all bookmarked posts have is_bookmarked set to true
-      const transformedData = result.data.map(
-        (bookmark: {
-          id: string;
-          author: {
-            id: string;
-            name: string;
-            username: string;
-            profile_picture_url: string | null;
-          };
-          images: {
-            id: string;
-            url: string;
-            width: number;
-            height: number;
-            filename: string;
-          }[];
-          content_warning: string | null;
-          reactions: {
-            emoji: string;
-            user: { id: string; username: string; name: string };
-          }[];
-          [key: string]: unknown;
-        }) => ({
-          ...bookmark,
-          author: {
-            ...bookmark.author,
-            profile_picture_url: bookmark.author.profile_picture_url || null,
-          },
-          images: bookmark.images || [],
-          content_warning: bookmark.content_warning || null,
-          in_reply_to_id: null,
-          depth: 0,
-          root_post_id: null,
-          is_bookmarked: true,
-          replies: [],
-          reactions: bookmark.reactions || [],
-        }),
-      );
-
       return {
-        data: transformedData,
+        data: result.data,
         nextCursor: result.pagination.next_cursor,
         hasMore: result.pagination.has_more,
       };

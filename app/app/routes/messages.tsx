@@ -15,8 +15,12 @@ import { LoadingState } from "~/components/shared/LoadingState";
 import { useUnreadCount } from "~/contexts/UnreadCountContext";
 import { useAuth } from "~/hooks/useAuth";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
+import type { InferResponseType } from "hono/client";
 import { client } from "~/lib/api-client";
-import type { Conversation, GroupChat } from "~/types/message";
+import type { Conversation } from "~/types/message";
+
+type GroupChatEndpoint = (typeof client.app)["group-chats"]["$get"];
+type GroupChat = InferResponseType<GroupChatEndpoint, 200>["data"][number];
 import type { Route } from "./+types/messages";
 
 export function meta(_args: Route.MetaArgs) {
@@ -120,24 +124,7 @@ export default function Messages() {
 
       const result = await response.json();
 
-      // Transform API response to match GroupChat interface
-      return result.data.map(
-        (chat: {
-          id: string;
-          name: string;
-          created_at: string;
-          member_count: number;
-          unread_count: number;
-          last_message: GroupChat["last_message"];
-        }) => ({
-          id: chat.id,
-          name: chat.name,
-          created_at: chat.created_at,
-          member_count: chat.member_count,
-          unread_count: chat.unread_count,
-          last_message: chat.last_message || null,
-        }),
-      );
+      return result.data;
     },
     getNextPageParam: (lastPage, allPages) => {
       const totalLoaded = allPages.reduce(

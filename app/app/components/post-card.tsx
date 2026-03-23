@@ -454,7 +454,7 @@ export const PostCard = memo(function PostCard({
                   {repliesToShow.map((reply) => {
                     // Only increase depth when branching (parent has multiple children)
                     const childDisplayDepth =
-                      post.replies.length === 1 && depth > 0
+                      (post.replies?.length ?? 0) === 1 && depth > 0
                         ? depth
                         : depth + 1;
                     return (
