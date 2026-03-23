@@ -36,9 +36,9 @@ export function MastodonLayout({
             : ""
         }
       >
-        {/* Sidebar: hidden on mobile, visible on tablet+ */}
+        {/* Sidebar: hidden on mobile, sticky on tablet+ */}
         {isAuthenticated && (
-          <div className="hidden md:block">
+          <div className="hidden md:block sticky top-0 h-screen overflow-y-auto">
             {/* Tablet: collapsed sidebar */}
             <div className="lg:hidden">
               <SidebarNav
