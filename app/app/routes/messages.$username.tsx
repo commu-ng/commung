@@ -206,7 +206,7 @@ export default function MessageConversation() {
       } catch (err) {
         console.error("Failed to poll messages:", err);
       }
-    }, 1000); // 1 second
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [
