@@ -1,6 +1,6 @@
 import { ArrowLeft, Megaphone } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PostCard } from "~/components/post-card";
 import { Spinner } from "~/components/ui/spinner";
 import { useAuth } from "~/hooks/useAuth";
@@ -10,84 +10,75 @@ import type { Post } from "~/types/post";
 
 export default function Announcements() {
   const { currentProfile } = useAuth();
-  const [announcements, setAnnouncements] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const currentProfileId = currentProfile?.id;
 
-  const fetchAnnouncements = useCallback(async () => {
-    try {
-      setIsLoading(true);
+  const {
+    data: announcements = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["announcements", currentProfileId],
+    queryFn: async (): Promise<Post[]> => {
       const response = await client.app.announcements.$get({
-        query: currentProfile ? { profile_id: currentProfile.id } : {},
+        query: currentProfileId ? { profile_id: currentProfileId } : {},
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        // Transform the API response to match PostCard expectations
-        const transformedData = result.data.map(
-          (announcement: {
-            id: string;
-            content: string;
-            created_at: string | null;
-            updated_at: string | null;
-            author: {
-              id: string;
-              name: string;
-              username: string;
-              profile_picture_url: string | null;
-            };
-            images: Array<{
-              id: string;
-              url: string;
-              width: number;
-              height: number;
-              filename: string;
-            }>;
-            reactions: Array<{
-              emoji: string;
-              user: { id: string; username: string; name: string };
-            }>;
-          }) => ({
-            id: announcement.id,
-            content: announcement.content,
-            created_at: announcement.created_at,
-            updated_at: announcement.updated_at,
-            author: {
-              id: announcement.author.id,
-              name: announcement.author.name,
-              username: announcement.author.username,
-              profile_picture_url: announcement.author.profile_picture_url,
-            },
-            images: announcement.images || [],
-            announcement: true,
-            in_reply_to_id: null,
-            depth: 0,
-            root_post_id: null,
-            content_warning: null,
-            replies: [],
-            is_bookmarked: false,
-            reactions: announcement.reactions || [],
-          }),
-        );
-        setAnnouncements(transformedData);
-      } else {
-        setError("공지사항을 불러오는 데 실패했습니다");
+      if (!response.ok) {
+        throw new Error("공지사항을 불러오는 데 실패했습니다");
       }
-    } catch (error) {
-      console.error("Failed to fetch announcements:", error);
-      setError("공지사항을 불러오는 데 실패했습니다");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentProfile]);
 
-  useEffect(() => {
-    fetchAnnouncements();
-  }, [fetchAnnouncements]);
+      const result = await response.json();
+      return result.data.map(
+        (announcement: {
+          id: string;
+          content: string;
+          created_at: string | null;
+          updated_at: string | null;
+          author: {
+            id: string;
+            name: string;
+            username: string;
+            profile_picture_url: string | null;
+          };
+          images: Array<{
+            id: string;
+            url: string;
+            width: number;
+            height: number;
+            filename: string;
+          }>;
+          reactions: Array<{
+            emoji: string;
+            user: { id: string; username: string; name: string };
+          }>;
+        }) => ({
+          id: announcement.id,
+          content: announcement.content,
+          created_at: announcement.created_at,
+          updated_at: announcement.updated_at,
+          author: {
+            id: announcement.author.id,
+            name: announcement.author.name,
+            username: announcement.author.username,
+            profile_picture_url: announcement.author.profile_picture_url,
+          },
+          images: announcement.images || [],
+          announcement: true,
+          in_reply_to_id: null,
+          depth: 0,
+          root_post_id: null,
+          content_warning: null,
+          replies: [],
+          is_bookmarked: false,
+          reactions: announcement.reactions || [],
+        }),
+      );
+    },
+  });
 
   const handleAnnouncementDelete = () => {
-    // Refresh announcements after deletion
-    fetchAnnouncements();
+    queryClient.invalidateQueries({ queryKey: ["announcements"] });
   };
 
   if (isLoading) {
@@ -109,7 +100,7 @@ export default function Announcements() {
             <Megaphone className="h-8 w-8 text-muted-foreground" />
           </div>
           <h1 className="text-xl font-semibold text-foreground mb-2">
-            {error}
+            {error.message}
           </h1>
           <Link
             to="/"
@@ -124,7 +115,6 @@ export default function Announcements() {
 
   return (
     <div>
-      {/* Main Content */}
       <main className="max-w-2xl mx-auto px-4 py-8">
         {announcements.length === 0 ? (
           <div className="bg-card rounded-2xl shadow-sm border border-border p-12 text-center">
@@ -159,7 +149,7 @@ export default function Announcements() {
                   content_warning: null,
                   is_bookmarked: false,
                 }}
-                currentProfileId={currentProfile?.id}
+                currentProfileId={currentProfileId}
                 onDelete={handleAnnouncementDelete}
               />
             ))}

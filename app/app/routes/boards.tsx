@@ -1,50 +1,29 @@
 import { ArrowLeft, LayoutList, MessageSquare } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Spinner } from "~/components/ui/spinner";
 import { useAuth } from "~/hooks/useAuth";
 import { client } from "~/lib/api-client";
 
-interface CommunityBoard {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  allow_comments: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
 export default function Boards() {
   const { isLoading: authLoading, belongsToCurrentInstance } = useAuth();
-  const [boards, setBoards] = useState<CommunityBoard[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchBoards = useCallback(async () => {
-    try {
-      setIsLoading(true);
+  const {
+    data: boards = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["boards"],
+    queryFn: async () => {
       const response = await client.app.boards.$get();
-
-      if (response.ok) {
-        const result = await response.json();
-        setBoards(result.data);
-      } else {
-        setError("게시판을 불러오는 데 실패했습니다");
+      if (!response.ok) {
+        throw new Error("게시판을 불러오는 데 실패했습니다");
       }
-    } catch (err) {
-      console.error("Failed to fetch boards:", err);
-      setError("게시판을 불러오는 데 실패했습니다");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (belongsToCurrentInstance) {
-      fetchBoards();
-    }
-  }, [belongsToCurrentInstance, fetchBoards]);
+      const result = await response.json();
+      return result.data;
+    },
+    enabled: belongsToCurrentInstance,
+  });
 
   if (authLoading || isLoading) {
     return (
@@ -86,7 +65,7 @@ export default function Boards() {
             <LayoutList className="h-8 w-8 text-muted-foreground" />
           </div>
           <h1 className="text-xl font-semibold text-foreground mb-2">
-            {error}
+            {error.message}
           </h1>
           <Link
             to="/"
