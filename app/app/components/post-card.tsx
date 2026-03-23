@@ -18,9 +18,6 @@ import { PostCardHeader } from "./post/PostCardHeader";
 import { PostCardImages } from "./post/PostCardImages";
 import { PostCardReactions } from "./post/PostCardReactions";
 
-/** Must match TIMELINE_REPLY_LIMIT in api/src/services/post.service.ts */
-const TIMELINE_REPLY_LIMIT = 5;
-
 // Helper function to count total replies recursively
 function countTotalReplies(replies: Post[]): number {
   let count = replies.length;
@@ -476,16 +473,14 @@ export const PostCard = memo(function PostCard({
                     );
                   })}
                 </div>
-                {post.has_more_replies &&
-                  !showAllReplies &&
-                  totalReplyCount > TIMELINE_REPLY_LIMIT && (
-                    <Link
-                      to={`/@${post.author.username}/${post.root_post_id ?? post.id}`}
-                      className="block mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                    >
-                      답글 {totalReplyCount}개 모두 보기
-                    </Link>
-                  )}
+                {post.has_more_replies && (
+                  <Link
+                    to={`/@${post.author.username}/${post.root_post_id ?? post.id}`}
+                    className="block mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                  >
+                    답글 {totalReplyCount}개 모두 보기
+                  </Link>
+                )}
               </div>
             );
           })()}
