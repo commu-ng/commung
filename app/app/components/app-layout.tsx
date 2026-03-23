@@ -15,7 +15,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const { isAuthenticated, currentProfile } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, currentProfile } = useAuth();
   const { instanceName } = useCurrentInstance();
   usePrefetchRoutes();
   const headerRef = useRef<HTMLDivElement>(null);
@@ -89,6 +89,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div ref={headerRef}>
         <MastodonLayout
           isAuthenticated={isAuthenticated}
+          isLoading={authLoading}
           communityName={instanceName}
           consoleUrl={env.consoleUrl}
           unreadCount={unreadCount}

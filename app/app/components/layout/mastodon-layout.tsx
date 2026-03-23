@@ -5,6 +5,7 @@ import { SidebarNav } from "./sidebar-nav";
 interface MastodonLayoutProps {
   children: ReactNode;
   isAuthenticated: boolean;
+  isLoading: boolean;
   communityName: string;
   consoleUrl: string;
   unreadCount: number;
@@ -14,57 +15,73 @@ interface MastodonLayoutProps {
 export function MastodonLayout({
   children,
   isAuthenticated,
+  isLoading,
   communityName,
   consoleUrl,
   unreadCount,
   unreadMessageCount,
 }: MastodonLayoutProps) {
+  // During loading, assume authenticated if session token exists to prevent layout shift
+  const hasSessionToken =
+    typeof window !== "undefined" && !!localStorage.getItem("session_token");
+  const showAuthenticatedLayout =
+    isAuthenticated || (isLoading && hasSessionToken);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile Header */}
-      {isAuthenticated && (
+      {showAuthenticatedLayout && (
         <header className="sticky top-0 z-40 bg-card border-b border-border px-4 h-14 flex items-center justify-between md:hidden">
-          <h1 className="font-bold text-lg text-foreground">{communityName}</h1>
+          <h1 className="font-bold text-lg text-foreground">
+            {communityName || "\u00A0"}
+          </h1>
         </header>
       )}
 
       {/* Responsive grid when authenticated, plain container otherwise */}
       <div
         className={
-          isAuthenticated
+          showAuthenticatedLayout
             ? "md:grid md:grid-cols-[72px_1fr] lg:grid-cols-[280px_1fr] max-w-[960px] mx-auto"
             : ""
         }
       >
         {/* Sidebar: hidden on mobile, sticky on tablet+ */}
-        {isAuthenticated && (
+        {showAuthenticatedLayout && (
           <div className="hidden md:block sticky top-0 h-screen overflow-y-auto">
-            {/* Tablet: collapsed sidebar */}
-            <div className="lg:hidden">
-              <SidebarNav
-                communityName={communityName}
-                consoleUrl={consoleUrl}
-                unreadCount={unreadCount}
-                unreadMessageCount={unreadMessageCount}
-                collapsed
-              />
-            </div>
-            {/* Desktop: full sidebar */}
-            <div className="hidden lg:block">
-              <SidebarNav
-                communityName={communityName}
-                consoleUrl={consoleUrl}
-                unreadCount={unreadCount}
-                unreadMessageCount={unreadMessageCount}
-              />
-            </div>
+            {isAuthenticated ? (
+              <>
+                {/* Tablet: collapsed sidebar */}
+                <div className="lg:hidden">
+                  <SidebarNav
+                    communityName={communityName}
+                    consoleUrl={consoleUrl}
+                    unreadCount={unreadCount}
+                    unreadMessageCount={unreadMessageCount}
+                    collapsed
+                  />
+                </div>
+                {/* Desktop: full sidebar */}
+                <div className="hidden lg:block">
+                  <SidebarNav
+                    communityName={communityName}
+                    consoleUrl={consoleUrl}
+                    unreadCount={unreadCount}
+                    unreadMessageCount={unreadMessageCount}
+                  />
+                </div>
+              </>
+            ) : (
+              /* Sidebar placeholder during loading */
+              <div className="w-full h-full" />
+            )}
           </div>
         )}
 
         {/* Main Content - always at same tree position */}
         <main
           className={
-            isAuthenticated
+            showAuthenticatedLayout
               ? "min-h-screen border-x border-border pb-16 md:pb-0"
               : "min-h-screen"
           }
