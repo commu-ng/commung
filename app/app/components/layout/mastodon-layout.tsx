@@ -19,57 +19,60 @@ export function MastodonLayout({
   unreadCount,
   unreadMessageCount,
 }: MastodonLayoutProps) {
-  if (!isAuthenticated) {
-    return <div className="min-h-screen bg-background">{children}</div>;
-  }
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Desktop Layout: 2-column grid */}
-      <div className="hidden lg:grid lg:grid-cols-[280px_1fr] max-w-[960px] mx-auto">
-        {/* Left Sidebar */}
-        <SidebarNav
-          communityName={communityName}
-          consoleUrl={consoleUrl}
-          unreadCount={unreadCount}
-          unreadMessageCount={unreadMessageCount}
-        />
+      {isAuthenticated && (
+        <>
+          {/* Desktop Sidebar */}
+          <div className="hidden lg:fixed lg:inset-y-0 lg:left-[max(0px,calc(50%-480px))] lg:block lg:w-[280px]">
+            <SidebarNav
+              communityName={communityName}
+              consoleUrl={consoleUrl}
+              unreadCount={unreadCount}
+              unreadMessageCount={unreadMessageCount}
+            />
+          </div>
 
-        {/* Main Content */}
-        <main className="min-h-screen border-x border-border">{children}</main>
-      </div>
+          {/* Tablet Sidebar (collapsed) */}
+          <div className="hidden md:fixed md:inset-y-0 md:left-0 md:block md:w-[72px] lg:hidden">
+            <SidebarNav
+              communityName={communityName}
+              consoleUrl={consoleUrl}
+              unreadCount={unreadCount}
+              unreadMessageCount={unreadMessageCount}
+              collapsed
+            />
+          </div>
 
-      {/* Tablet Layout: 2-column with collapsed sidebar */}
-      <div className="hidden md:grid md:grid-cols-[72px_1fr] lg:hidden max-w-[1100px] mx-auto">
-        {/* Collapsed Sidebar */}
-        <SidebarNav
-          communityName={communityName}
-          consoleUrl={consoleUrl}
-          unreadCount={unreadCount}
-          unreadMessageCount={unreadMessageCount}
-          collapsed
-        />
+          {/* Mobile Header */}
+          <header className="sticky top-0 z-40 bg-card border-b border-border px-4 h-14 flex items-center justify-between md:hidden">
+            <h1 className="font-bold text-lg text-foreground">
+              {communityName}
+            </h1>
+          </header>
+        </>
+      )}
 
-        {/* Main Content */}
-        <main className="min-h-screen border-x border-border">{children}</main>
-      </div>
+      {/* Main Content - rendered once */}
+      <main
+        className={
+          isAuthenticated
+            ? "min-h-screen pb-16 md:pb-0 md:ml-[72px] lg:ml-[280px] lg:mr-0 lg:max-w-[680px] lg:mx-auto lg:border-x lg:border-border"
+            : ""
+        }
+      >
+        {children}
+      </main>
 
-      {/* Mobile Layout: Single column */}
-      <div className="md:hidden">
-        {/* Mobile Header */}
-        <header className="sticky top-0 z-40 bg-card border-b border-border px-4 h-14 flex items-center justify-between">
-          <h1 className="font-bold text-lg text-foreground">{communityName}</h1>
-        </header>
-
-        {/* Main Content */}
-        <main className="pb-16">{children}</main>
-
-        {/* Bottom Navigation */}
-        <MobileBottomNav
-          unreadCount={unreadCount}
-          unreadMessageCount={unreadMessageCount}
-        />
-      </div>
+      {isAuthenticated && (
+        /* Mobile Bottom Navigation */
+        <div className="md:hidden">
+          <MobileBottomNav
+            unreadCount={unreadCount}
+            unreadMessageCount={unreadMessageCount}
+          />
+        </div>
+      )}
     </div>
   );
 }
