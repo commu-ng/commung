@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { MobileBottomNav } from "./mobile-bottom-nav";
-import { RightPanel } from "./right-panel";
 import { SidebarNav } from "./sidebar-nav";
 
 interface MastodonLayoutProps {
@@ -20,8 +19,8 @@ export function MastodonLayout({
 }: MastodonLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
-      {/* Desktop Layout: 3-column grid */}
-      <div className="hidden lg:grid lg:grid-cols-[280px_1fr_350px] max-w-[1400px] mx-auto">
+      {/* Desktop Layout: 2-column grid */}
+      <div className="hidden lg:grid lg:grid-cols-[280px_1fr] max-w-[960px] mx-auto">
         {/* Left Sidebar */}
         <SidebarNav
           communityName={communityName}
@@ -32,9 +31,6 @@ export function MastodonLayout({
 
         {/* Main Content */}
         <main className="min-h-screen border-x border-border">{children}</main>
-
-        {/* Right Panel */}
-        <RightPanel />
       </div>
 
       {/* Tablet Layout: 2-column with collapsed sidebar */}
