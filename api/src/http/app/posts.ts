@@ -152,6 +152,7 @@ export const postsRouter = new Hono<{ Variables: AuthVariables }>()
         limit,
         cursor,
         profile_id,
+        community.showAllReplies,
       );
 
       return c.json(result);

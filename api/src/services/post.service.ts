@@ -952,6 +952,7 @@ export async function getPosts(
   limit: number = 20,
   cursor?: string,
   profileId?: string,
+  showAllReplies?: boolean,
 ) {
   // Build base conditions (without cursor) for count query
   const baseConditions = [
@@ -1085,7 +1086,7 @@ export async function getPosts(
     communityId,
     10,
     profileId,
-    5,
+    showAllReplies ? undefined : 5,
   );
 
   // Build result using pre-loaded data
