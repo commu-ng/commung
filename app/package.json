@@ -41,6 +41,7 @@
   },
   "devDependencies": {
     "@react-router/dev": "^7.7.1",
+    "@react-router/node": "^7.7.1",
     "@tailwindcss/typography": "^0.5.18",
     "@tailwindcss/vite": "^4.1.4",
     "@types/markdown-it": "^14.1.2",
