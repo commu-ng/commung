@@ -36,7 +36,7 @@ function prefetchNotifications(qc: QueryClient, profileId: string) {
   });
 }
 
-function prefetchConversations(qc: QueryClient, profileId: string) {
+function prefetchMessages(qc: QueryClient, profileId: string) {
   qc.prefetchInfiniteQuery({
     queryKey: ["conversations", profileId],
     queryFn: async () => {
@@ -44,6 +44,17 @@ function prefetchConversations(qc: QueryClient, profileId: string) {
         query: { profile_id: profileId, limit: ITEMS_PER_PAGE },
       });
       if (!response.ok) throw new Error("Failed to fetch conversations");
+      return (await response.json()).data;
+    },
+    initialPageParam: 0,
+  });
+  qc.prefetchInfiniteQuery({
+    queryKey: ["group-chats", profileId],
+    queryFn: async () => {
+      const response = await client.app["group-chats"].$get({
+        query: { profile_id: profileId, limit: ITEMS_PER_PAGE },
+      });
+      if (!response.ok) throw new Error("Failed to fetch group chats");
       return (await response.json()).data;
     },
     initialPageParam: 0,
@@ -104,7 +115,7 @@ type PrefetchFn = (qc: QueryClient, profileId: string) => void;
 const routePrefetchers: Record<string, PrefetchFn> = {
   "/": prefetchPosts,
   "/notifications": prefetchNotifications,
-  "/messages": prefetchConversations,
+  "/messages": prefetchMessages,
   "/announcements": prefetchAnnouncements,
   "/boards": prefetchBoards,
   "/bookmarks": prefetchBookmarks,
