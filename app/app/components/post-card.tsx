@@ -431,7 +431,7 @@ export const PostCard = memo(function PostCard({
                 className={`mt-3 pt-3 border-t border-border ${isReply ? "-ml-2" : ""}`}
               >
                 {/* Show toggle button only if there are hidden replies */}
-                {hasHiddenReplies && (
+                {hasHiddenReplies && !showAllReplies && (
                   <button
                     type="button"
                     onClick={() => setIsThreadCollapsed(!isThreadCollapsed)}
@@ -473,7 +473,7 @@ export const PostCard = memo(function PostCard({
                     );
                   })}
                 </div>
-                {post.has_more_replies && (
+                {post.has_more_replies && !showAllReplies && (
                   <Link
                     to={`/@${post.author.username}/${post.root_post_id ?? post.id}`}
                     className="block mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
