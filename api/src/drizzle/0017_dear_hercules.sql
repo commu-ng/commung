@@ -1,0 +1,2 @@
+CREATE INDEX "idx_direct_message_deletion_profile" ON "direct_message_deletion" USING btree ("profile_id","message_id");--> statement-breakpoint
+CREATE INDEX "idx_group_chat_message_deletion_profile" ON "group_chat_message_deletion" USING btree ("profile_id","message_id");

@@ -1063,6 +1063,10 @@ export const directMessageDeletion = pgTable(
       table.messageId,
       table.profileId,
     ),
+    index("idx_direct_message_deletion_profile").on(
+      table.profileId,
+      table.messageId,
+    ),
   ],
 );
 
@@ -1090,6 +1094,10 @@ export const groupChatMessageDeletion = pgTable(
     unique("unique_group_chat_message_deletion").on(
       table.messageId,
       table.profileId,
+    ),
+    index("idx_group_chat_message_deletion_profile").on(
+      table.profileId,
+      table.messageId,
     ),
   ],
 );
