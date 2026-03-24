@@ -1122,6 +1122,54 @@ export async function listGroupChats(
 /**
  * Create a group chat
  */
+/**
+ * Rename a group chat (any member can rename)
+ */
+export async function renameGroupChat(
+  groupChatId: string,
+  profileId: string,
+  communityId: string,
+  name: string,
+) {
+  const groupChat = await db.query.groupChat.findFirst({
+    where: and(
+      eq(groupChatTable.id, groupChatId),
+      eq(groupChatTable.communityId, communityId),
+      isNull(groupChatTable.deletedAt),
+    ),
+  });
+
+  if (!groupChat) {
+    throw new AppException(
+      404,
+      GENERAL_ERROR_CODE,
+      "그룹 채팅을 찾을 수 없습니다",
+    );
+  }
+
+  const membership = await db.query.groupChatMembership.findFirst({
+    where: and(
+      eq(groupChatMembershipTable.groupChatId, groupChatId),
+      eq(groupChatMembershipTable.profileId, profileId),
+    ),
+  });
+
+  if (!membership) {
+    throw new AppException(
+      403,
+      GENERAL_ERROR_CODE,
+      "이 그룹 채팅에 대한 접근이 거부되었습니다",
+    );
+  }
+
+  await db
+    .update(groupChatTable)
+    .set({ name })
+    .where(eq(groupChatTable.id, groupChatId));
+
+  return { id: groupChatId, name };
+}
+
 export async function createGroupChat(
   name: string,
   memberProfileIds: string[],

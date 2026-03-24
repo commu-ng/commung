@@ -8,6 +8,7 @@ import {
   conversationsQuerySchema,
   groupChatCreateRequestSchema,
   groupChatIdParamSchema,
+  groupChatUpdateRequestSchema,
   groupChatMessageCreateRequestSchema,
   groupChatMessageReactionCreateSchema,
   groupChatMessageReactionDeleteSchema,
@@ -546,6 +547,48 @@ export const messagesRouter = new Hono<{ Variables: AuthVariables }>()
         group_chat_id,
         profile_id,
         community.id,
+      );
+      return c.json({ data: result });
+    },
+  )
+
+  .patch(
+    "/group-chats/:group_chat_id",
+    communityMiddleware,
+    appAuthMiddleware,
+    membershipMiddleware,
+    zValidator("param", groupChatIdParamSchema),
+    zValidator("json", groupChatUpdateRequestSchema),
+    async (c) => {
+      const user = c.get("user");
+      const community = c.get("community");
+      const { group_chat_id } = c.req.valid("param");
+      const { profile_id, name } = c.req.valid("json");
+
+      const profile = await profileService.validateAndGetProfile(
+        user.id,
+        profile_id,
+        community.id,
+        false,
+      );
+
+      if (!profile) {
+        return c.json(
+          {
+            error: {
+              code: GeneralErrorCode.FORBIDDEN,
+              message: "프로필에 접근할 권한이 없습니다",
+            },
+          },
+          403,
+        );
+      }
+
+      const result = await messageService.renameGroupChat(
+        group_chat_id,
+        profile.id,
+        community.id,
+        name,
       );
       return c.json({ data: result });
     },

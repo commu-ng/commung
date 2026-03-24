@@ -22,8 +22,10 @@ type GroupChatInfo = InferResponseType<
 
 import {
   ArrowLeft,
+  Check,
   Image,
   MessageCircle,
+  Pencil,
   Send,
   Settings,
   Shield,
@@ -72,6 +74,9 @@ export default function GroupChatDetail() {
   const [confirmDeleteMessageId, setConfirmDeleteMessageId] = useState<
     string | null
   >(null);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [isSavingName, setIsSavingName] = useState(false);
   const { isAuthenticated, currentProfile, isLoading: authLoading } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -445,6 +450,44 @@ export default function GroupChatDetail() {
     setConfirmDeleteMessageId(null);
   };
 
+  const handleStartEditName = () => {
+    if (groupChat) {
+      setEditName(groupChat.name);
+      setIsEditingName(true);
+    }
+  };
+
+  const handleSaveName = async () => {
+    if (!currentProfile || !group_chat_id || !editName.trim()) return;
+
+    try {
+      setIsSavingName(true);
+      const response = await client.app["group-chats"][":group_chat_id"].$patch(
+        {
+          param: { group_chat_id },
+          json: { profile_id: currentProfile.id, name: editName.trim() },
+        },
+      );
+
+      if (response.ok) {
+        setGroupChat((prev) =>
+          prev ? { ...prev, name: editName.trim() } : prev,
+        );
+        setIsEditingName(false);
+        toast.success("그룹 이름이 변경되었습니다");
+      } else {
+        const errorData = await response.json();
+        toast.error(
+          getErrorMessage(errorData, "그룹 이름 변경에 실패했습니다"),
+        );
+      }
+    } catch (_error) {
+      toast.error("그룹 이름 변경 중 오류가 발생했습니다");
+    } finally {
+      setIsSavingName(false);
+    }
+  };
+
   const formatTime = (createdAt: string) => {
     const date = new Date(createdAt);
     const now = new Date();
@@ -569,8 +612,69 @@ export default function GroupChatDetail() {
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>그룹 멤버</DialogTitle>
+                  <DialogTitle>그룹 설정</DialogTitle>
                 </DialogHeader>
+
+                {/* Group name edit */}
+                <div className="mb-4">
+                  <div className="text-sm font-medium text-muted-foreground mb-2">
+                    그룹 이름
+                  </div>
+                  {isEditingName ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSaveName();
+                          if (e.key === "Escape") setIsEditingName(false);
+                        }}
+                        disabled={isSavingName}
+                        className="flex-1 px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={handleSaveName}
+                        disabled={isSavingName || !editName.trim()}
+                        className="p-1.5 text-primary hover:bg-accent rounded-lg transition-colors disabled:opacity-50"
+                      >
+                        {isSavingName ? (
+                          <Spinner className="h-4 w-4" />
+                        ) : (
+                          <Check className="h-4 w-4" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingName(false)}
+                        disabled={isSavingName}
+                        className="p-1.5 text-muted-foreground hover:bg-accent rounded-lg transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-background">
+                      <span className="font-medium text-foreground">
+                        {groupChat?.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleStartEditName}
+                        className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Members */}
+                <div className="text-sm font-medium text-muted-foreground mb-2">
+                  멤버 ({groupChat?.members.length}명)
+                </div>
                 <div className="space-y-3 max-h-80 overflow-y-auto">
                   {groupChat?.members.map((member) => (
                     <div

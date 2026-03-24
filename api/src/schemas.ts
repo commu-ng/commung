@@ -163,6 +163,11 @@ export const groupChatCreateRequestSchema = z.object({
   creator_profile_id: z.uuid(),
 });
 
+export const groupChatUpdateRequestSchema = z.object({
+  profile_id: z.uuid(),
+  name: z.string().min(1, "Name cannot be empty").max(100),
+});
+
 export const groupChatMessageCreateRequestSchema = z.object({
   content: z.string(),
   profile_id: z.uuid(),
