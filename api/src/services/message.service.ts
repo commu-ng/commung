@@ -134,13 +134,14 @@ export async function sendDirectMessage(
     );
   }
 
-  // Validate images if provided
+  // Validate and load images if provided
+  let validatedImages: Array<typeof imageTable.$inferSelect> = [];
   if (imageIds && imageIds.length > 0) {
-    const images = await db.query.image.findMany({
+    validatedImages = await db.query.image.findMany({
       where: inArray(imageTable.id, imageIds),
     });
 
-    if (images.length !== imageIds.length) {
+    if (validatedImages.length !== imageIds.length) {
       throw new AppException(
         400,
         GENERAL_ERROR_CODE,
@@ -182,13 +183,7 @@ export async function sendDirectMessage(
     ? addImageUrl(senderProfilePicture).url
     : null;
 
-  // Fetch images for the message
-  const messageImages =
-    imageIds && imageIds.length > 0
-      ? await db.query.image.findMany({
-          where: inArray(imageTable.id, imageIds),
-        })
-      : [];
+  const messageImages = validatedImages;
 
   // Send push notification to receiver (skip if sender and receiver are the same user)
   const receiverOwnership = await db.query.profileOwnership.findFirst({
