@@ -51,7 +51,7 @@ export default function Messages() {
   const [createError, setCreateError] = useState("");
 
   const { isAuthenticated, currentProfile, isLoading: authLoading } = useAuth();
-  const { instanceSlug } = useCurrentInstance();
+  const { instanceSlug, isLoading: instanceLoading } = useCurrentInstance();
   const { refreshUnreadCounts } = useUnreadCount();
 
   // Fetch conversations with infinite query
@@ -139,7 +139,8 @@ export default function Messages() {
 
   const conversations = conversationsData?.pages.flat() ?? [];
   const groupChats = groupChatsData?.pages.flat() ?? [];
-  const isLoading = isLoadingConversations || isLoadingGroupChats;
+  const isLoading =
+    isLoadingConversations || isLoadingGroupChats || instanceLoading;
 
   const markAllAsRead = async () => {
     if (!currentProfile) return;
