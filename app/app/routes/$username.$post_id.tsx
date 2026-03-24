@@ -122,6 +122,13 @@ export default function PostDetail() {
     enabled: !!post_id && !isLoading && !error,
   });
 
+  // Auto-fetch all reply pages so every reply is visible
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   const allReplies = repliesData?.pages.flatMap((page) => page.data) ?? [];
   const totalReplyCount = repliesData?.pages[0]?.pagination.total_count ?? 0;
 
@@ -373,20 +380,9 @@ export default function PostDetail() {
                   />
                 ))}
 
-                {hasNextPage && (
+                {isFetchingNextPage && (
                   <div className="flex justify-center py-4">
-                    <button
-                      type="button"
-                      onClick={() => fetchNextPage()}
-                      disabled={isFetchingNextPage}
-                      className="px-6 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors disabled:opacity-50"
-                    >
-                      {isFetchingNextPage ? (
-                        <Spinner className="h-4 w-4" />
-                      ) : (
-                        "더 보기"
-                      )}
-                    </button>
+                    <Spinner className="h-4 w-4" />
                   </div>
                 )}
               </div>
