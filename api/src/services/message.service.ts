@@ -713,9 +713,9 @@ export async function getConversationThread(
     isNull(directMessageTable.deletedAt),
     // Exclude messages deleted for the current user
     sql`NOT EXISTS (
-      SELECT 1 FROM ${directMessageDeletionTable}
-      WHERE ${directMessageDeletionTable.messageId} = ${directMessageTable.id}
-      AND ${directMessageDeletionTable.profileId} = ${profileId}
+      SELECT 1 FROM "direct_message_deletion" dmd
+      WHERE dmd."message_id" = ${directMessageTable.id}
+      AND dmd."profile_id" = ${profileId}
     )`,
   ];
 
@@ -1268,9 +1268,9 @@ export async function getGroupChatMessages(
       eq(groupChatMessageTable.groupChatId, groupChatId),
       isNull(groupChatMessageTable.deletedAt),
       sql`NOT EXISTS (
-        SELECT 1 FROM ${groupChatMessageDeletionTable}
-        WHERE ${groupChatMessageDeletionTable.messageId} = ${groupChatMessageTable.id}
-        AND ${groupChatMessageDeletionTable.profileId} = ${profileId}
+        SELECT 1 FROM "group_chat_message_deletion" gcmd
+        WHERE gcmd."message_id" = ${groupChatMessageTable.id}
+        AND gcmd."profile_id" = ${profileId}
       )`,
     ),
     with: {
