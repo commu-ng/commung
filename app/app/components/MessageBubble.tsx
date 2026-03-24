@@ -1,5 +1,5 @@
-import { Clock } from "lucide-react";
-import { useState } from "react";
+import { Clock, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { PostPreview } from "./PostPreview";
 import { ImageModal } from "./post/ImageModal";
 
@@ -13,6 +13,7 @@ interface MessageBubbleProps {
   onClick?: () => void;
   hasReactions?: boolean;
   currentProfileId?: string;
+  onDelete?: () => void;
   images?: Array<{
     id: string;
     url: string;
@@ -31,12 +32,40 @@ export function MessageBubble({
   onClick,
   hasReactions = false,
   currentProfileId,
+  onDelete,
   images,
 }: MessageBubbleProps) {
   const [selectedImage, setSelectedImage] = useState<{
     url: string;
     filename: string;
   } | null>(null);
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!showMenu) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        menuRef.current &&
+        event.target instanceof Element &&
+        !menuRef.current.contains(event.target)
+      ) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showMenu]);
+
+  const handleBubbleTap = () => {
+    if (onDelete) {
+      setShowMenu((prev) => !prev);
+    }
+    if (onClick) {
+      onClick();
+    }
+  };
 
   // Detect post URLs in the content
   // Pattern matches: /username/post_id or https://domain/username/post_id
@@ -75,58 +104,73 @@ export function MessageBubble({
         </div>
       )}
 
-      {/* Message bubble */}
-      {(contentWithoutUrls || (images && images.length > 0)) && (
-        <div
-          {...(onClick && {
-            onClick,
-            onKeyDown: (e: React.KeyboardEvent) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onClick();
-              }
-            },
-            role: "button" as const,
-            tabIndex: 0,
-          })}
-          className={`rounded-lg px-4 py-2 ${
-            isFromMe ? "bg-blue-600 text-white" : "bg-accent text-foreground"
-          } ${hasReactions && onClick ? "cursor-pointer hover:opacity-90" : ""}`}
-        >
-          {/* Images */}
-          {images && images.length > 0 && (
-            <div className={`flex flex-col gap-2 ${content ? "mb-2" : ""}`}>
-              {images.map((image) => (
-                <button
-                  key={image.id}
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedImage({
-                      url: image.url,
-                      filename: `image-${image.id}`,
-                    });
-                  }}
-                  className="cursor-pointer"
-                >
-                  <img
-                    src={image.url}
-                    alt="Attached"
-                    width={image.width}
-                    height={image.height}
-                    className="rounded-md w-full h-auto object-cover"
-                    style={{ maxHeight: "300px", minWidth: "200px" }}
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-          {/* Content */}
-          {contentWithoutUrls && (
-            <p className="text-sm whitespace-pre-wrap">{contentWithoutUrls}</p>
-          )}
-        </div>
-      )}
+      {/* Message bubble with action menu */}
+      <div className="relative" ref={menuRef}>
+        {(contentWithoutUrls || (images && images.length > 0)) && (
+          <button
+            type="button"
+            onClick={handleBubbleTap}
+            className={`rounded-lg px-4 py-2 text-left ${
+              isFromMe ? "bg-blue-600 text-white" : "bg-accent text-foreground"
+            } ${onDelete || (hasReactions && onClick) ? "cursor-pointer" : ""}`}
+          >
+            {/* Images */}
+            {images && images.length > 0 && (
+              <div className={`flex flex-col gap-2 ${content ? "mb-2" : ""}`}>
+                {images.map((image) => (
+                  <button
+                    key={image.id}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedImage({
+                        url: image.url,
+                        filename: `image-${image.id}`,
+                      });
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <img
+                      src={image.url}
+                      alt="Attached"
+                      width={image.width}
+                      height={image.height}
+                      className="rounded-md w-full h-auto object-cover"
+                      style={{ maxHeight: "300px", minWidth: "200px" }}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* Content */}
+            {contentWithoutUrls && (
+              <p className="text-sm whitespace-pre-wrap">
+                {contentWithoutUrls}
+              </p>
+            )}
+          </button>
+        )}
+
+        {/* Action menu popover */}
+        {showMenu && onDelete && (
+          <div
+            className={`absolute z-20 ${isFromMe ? "right-0" : "left-0"} bottom-full mb-1 bg-popover border border-border rounded-lg shadow-lg overflow-hidden`}
+          >
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu(false);
+                onDelete();
+              }}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-accent transition-colors whitespace-nowrap"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              삭제
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Timestamp, reactions, and actions */}
       <div className="flex flex-wrap items-center gap-1 mt-1">

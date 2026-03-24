@@ -648,6 +648,7 @@ export default function GroupChatDetail() {
                     hasReactions={hasReactions}
                     images={message.images}
                     currentProfileId={currentProfile?.id}
+                    onDelete={() => handleDeleteClick(message.id)}
                   >
                     {hasReactions ? (
                       <GroupChatMessageReactions
@@ -663,8 +664,6 @@ export default function GroupChatDetail() {
                         senderName={message.sender.name}
                         isModalOpen={selectedMessageId === message.id}
                         onModalClose={() => setSelectedMessageId(null)}
-                        onDelete={() => handleDeleteClick(message.id)}
-                        isDeleting={deletingMessageId === message.id}
                         isFromMe={message.is_sender}
                       />
                     ) : (
@@ -682,8 +681,6 @@ export default function GroupChatDetail() {
                           senderName={message.sender.name}
                           isModalOpen={false}
                           onModalClose={() => {}}
-                          onDelete={() => handleDeleteClick(message.id)}
-                          isDeleting={deletingMessageId === message.id}
                           isFromMe={message.is_sender}
                         />
                       )

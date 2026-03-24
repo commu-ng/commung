@@ -709,6 +709,7 @@ export default function MessageConversation() {
                           isFromMe={message.sender.id === currentProfile?.id}
                           images={message.images}
                           currentProfileId={currentProfile?.id}
+                          onDelete={() => handleDeleteClick(message.id)}
                         >
                           <DirectMessageReactions
                             reactions={message.reactions || []}
@@ -719,8 +720,6 @@ export default function MessageConversation() {
                             onRemoveReaction={(emoji) =>
                               removeReaction(message.id, emoji)
                             }
-                            onDelete={() => handleDeleteClick(message.id)}
-                            isDeleting={deletingMessageId === message.id}
                             isFromMe={message.sender.id === currentProfile?.id}
                           />
                         </MessageBubble>

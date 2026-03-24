@@ -1,6 +1,5 @@
-import { Smile, Trash2 } from "lucide-react";
+import { Smile } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Spinner } from "~/components/ui/spinner";
 
 interface Reaction {
   emoji: string;
@@ -15,8 +14,6 @@ interface DirectMessageReactionsProps {
   currentProfileId?: string;
   onAddReaction: (emoji: string) => Promise<void>;
   onRemoveReaction: (emoji: string) => Promise<void>;
-  onDelete?: () => void;
-  isDeleting?: boolean;
   isFromMe?: boolean;
 }
 
@@ -35,8 +32,6 @@ export function DirectMessageReactions({
   currentProfileId,
   onAddReaction,
   onRemoveReaction,
-  onDelete,
-  isDeleting = false,
   isFromMe = false,
 }: DirectMessageReactionsProps) {
   const [openReactionSelector, setOpenReactionSelector] = useState(false);
@@ -149,23 +144,6 @@ export function DirectMessageReactions({
             </div>
           )}
         </div>
-      )}
-
-      {/* Delete button */}
-      {onDelete && (
-        <button
-          type="button"
-          onClick={onDelete}
-          disabled={isDeleting}
-          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950 border border-red-200 dark:border-red-800 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="삭제"
-        >
-          {isDeleting ? (
-            <Spinner className="h-3 w-3" />
-          ) : (
-            <Trash2 className="h-3 w-3" />
-          )}
-        </button>
       )}
     </>
   );
