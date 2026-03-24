@@ -34,6 +34,10 @@ interface UseImageUploadReturn {
    */
   uploadedImageIds: string[];
   /**
+   * Upload progress percentage (0-100), null when not uploading
+   */
+  uploadProgress: number | null;
+  /**
    * Whether images are currently being uploaded
    */
   isUploadingImages: boolean;
@@ -67,14 +71,29 @@ export function useImageUpload(
   const { maxImages } = options;
   const [images, setImages] = useState<ImageUpload[]>([]);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const uploadImages = async (imageObjects: ImageUpload[]) => {
     setIsUploadingImages(true);
+    setUploadProgress(0);
     try {
+      const total = imageObjects.filter((o) => o.file !== null).length;
+      let completed = 0;
+
       const uploadPromises = imageObjects
         .filter((imageObj) => imageObj.file !== null)
         .map(async (imageObj) => {
-          const result = await uploadImageToServer(imageObj.file as File);
+          const result = await uploadImageToServer(
+            imageObj.file as File,
+            (percent) => {
+              const overall = Math.round(
+                ((completed + percent / 100) / total) * 100,
+              );
+              setUploadProgress(overall);
+            },
+          );
+          completed++;
+          setUploadProgress(Math.round((completed / total) * 100));
           return { id: imageObj.id, uploadedId: result.id };
         });
 
@@ -96,6 +115,7 @@ export function useImageUpload(
       setImages((prev) => prev.filter((img) => !failedIds.includes(img.id)));
     } finally {
       setIsUploadingImages(false);
+      setUploadProgress(null);
     }
   };
 
@@ -187,6 +207,7 @@ export function useImageUpload(
     images,
     imagePreviews,
     uploadedImageIds,
+    uploadProgress,
     isUploadingImages,
     handleImageSelect,
     removeImage,

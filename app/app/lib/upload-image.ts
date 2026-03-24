@@ -20,22 +20,42 @@ export interface UploadedImage {
   height: number;
 }
 
-export async function uploadImage(file: File): Promise<UploadedImage> {
+export async function uploadImage(
+  file: File,
+  onProgress?: (percent: number) => void,
+): Promise<UploadedImage> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const uploadResponse = await fetch(`${env.apiBaseUrl}/app/upload/file`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("session_token")}`,
-    },
-    body: formData,
+  return new Promise<UploadedImage>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${env.apiBaseUrl}/app/upload/file`);
+    xhr.setRequestHeader(
+      "Authorization",
+      `Bearer ${localStorage.getItem("session_token")}`,
+    );
+
+    if (onProgress) {
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+    }
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const data = JSON.parse(xhr.responseText);
+        resolve(data.data);
+      } else {
+        reject(new Error("이미지 업로드에 실패했습니다"));
+      }
+    };
+
+    xhr.onerror = () => {
+      reject(new Error("네트워크 오류가 발생했습니다"));
+    };
+
+    xhr.send(formData);
   });
-
-  if (!uploadResponse.ok) {
-    throw new Error("이미지 업로드에 실패했습니다");
-  }
-
-  const uploadData = await uploadResponse.json();
-  return uploadData.data;
 }

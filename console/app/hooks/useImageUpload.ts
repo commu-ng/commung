@@ -20,6 +20,10 @@ interface UseImageUploadReturn {
    */
   uploadedImageId: string | null;
   /**
+   * Upload progress percentage (0-100), null when not uploading
+   */
+  uploadProgress: number | null;
+  /**
    * Whether image is currently being uploaded
    */
   isUploadingImage: boolean;
@@ -52,6 +56,7 @@ export function useImageUpload(): UseImageUploadReturn {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadedImageId, setUploadedImageId] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -83,8 +88,11 @@ export function useImageUpload(): UseImageUploadReturn {
 
     // Upload the file
     setIsUploadingImage(true);
+    setUploadProgress(0);
     try {
-      const imageId = await uploadImage(file);
+      const imageId = await uploadImage(file, (percent) => {
+        setUploadProgress(percent);
+      });
       setUploadedImageId(imageId.id);
     } catch (err) {
       toast.error(
@@ -95,6 +103,7 @@ export function useImageUpload(): UseImageUploadReturn {
       setImagePreview(null);
     } finally {
       setIsUploadingImage(false);
+      setUploadProgress(null);
     }
   };
 
@@ -119,6 +128,7 @@ export function useImageUpload(): UseImageUploadReturn {
     selectedImage,
     imagePreview,
     uploadedImageId,
+    uploadProgress,
     isUploadingImage,
     handleImageSelect,
     removeImage,

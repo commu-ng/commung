@@ -53,25 +53,48 @@ export const ALLOWED_IMAGE_TYPES = [
 
 export const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-// Upload image helper - uses raw fetch because FormData with Hono RPC client
-// has issues with Content-Type headers
+// Upload image helper - uses XMLHttpRequest for progress tracking
+// (fetch does not support upload progress)
 export async function uploadImage(
   file: File,
+  onProgress?: (percent: number) => void,
 ): Promise<{ id: string; url: string }> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${env.apiBaseUrl}/console/upload/file`, {
-    method: "POST",
-    body: formData,
-    credentials: "include",
+  return new Promise<{ id: string; url: string }>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${env.apiBaseUrl}/console/upload/file`);
+    xhr.withCredentials = true;
+
+    if (onProgress) {
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+    }
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const data = JSON.parse(xhr.responseText);
+        resolve(data.data);
+      } else {
+        let message = "이미지 업로드에 실패했습니다";
+        try {
+          const errorData = JSON.parse(xhr.responseText);
+          message = getErrorMessage(errorData, message);
+        } catch {
+          // use default message
+        }
+        reject(new Error(message));
+      }
+    };
+
+    xhr.onerror = () => {
+      reject(new Error("네트워크 오류가 발생했습니다"));
+    };
+
+    xhr.send(formData);
   });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(getErrorMessage(errorData, "이미지 업로드에 실패했습니다"));
-  }
-
-  const result = await response.json();
-  return result.data;
 }
