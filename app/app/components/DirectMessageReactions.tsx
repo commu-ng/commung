@@ -86,7 +86,7 @@ export function DirectMessageReactions({
   }, {});
 
   return (
-    <div className="flex flex-wrap items-center gap-1 mt-1">
+    <>
       {/* Existing reactions display */}
       {Object.entries(reactionGroups).map(([emoji, { count, users }]) => {
         const hasCurrentUserReaction =
@@ -167,6 +167,6 @@ export function DirectMessageReactions({
           )}
         </button>
       )}
-    </div>
+    </>
   );
 }

@@ -84,91 +84,87 @@ export function GroupChatMessageReactions({
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-1 mt-1">
-        {/* Existing reactions display */}
-        {reactions.map((reaction) => {
-          const hasCurrentUserReaction =
-            currentProfileId &&
-            reaction.profiles.some(
-              (profile) => profile.id === currentProfileId,
-            );
+      {/* Existing reactions display */}
+      {reactions.map((reaction) => {
+        const hasCurrentUserReaction =
+          currentProfileId &&
+          reaction.profiles.some((profile) => profile.id === currentProfileId);
 
-          return (
-            <button
-              type="button"
-              key={reaction.emoji}
-              onClick={() => {
-                if (hasCurrentUserReaction) {
-                  onRemoveReaction(reaction.emoji);
-                } else {
-                  handleReactionClick(reaction.emoji);
-                }
-              }}
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors ${
-                hasCurrentUserReaction
-                  ? "bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900"
-                  : "bg-card border-border text-foreground hover:bg-accent"
-              }`}
-              title={reaction.profiles
-                .map((p) => `${p.name} (@${p.username})`)
-                .join(", ")}
-            >
-              <span>{reaction.emoji}</span>
-              <span className="font-medium">{reaction.count}</span>
-            </button>
-          );
-        })}
-
-        {/* Add reaction button */}
-        {currentProfileId && (
-          <div className="relative reaction-selector inline-flex">
-            <button
-              type="button"
-              onClick={() => setOpenReactionSelector(!openReactionSelector)}
-              className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent border border-border rounded-full transition-colors"
-            >
-              <Smile className="h-3 w-3" />
-            </button>
-
-            {openReactionSelector && (
-              <div
-                className={`absolute bottom-full mb-2 bg-popover border border-border rounded-lg shadow-lg p-2 flex gap-1 z-10 ${
-                  isFromMe ? "right-0" : "left-0"
-                }`}
-              >
-                {AVAILABLE_REACTIONS.map(({ emoji, label }) => (
-                  <button
-                    type="button"
-                    key={emoji}
-                    onClick={() => handleReactionClick(emoji)}
-                    className="hover:bg-accent p-1 rounded text-lg transition-colors"
-                    title={label}
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Delete button */}
-        {onDelete && (
+        return (
           <button
             type="button"
-            onClick={onDelete}
-            disabled={isDeleting}
-            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950 border border-red-200 dark:border-red-800 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="삭제"
+            key={reaction.emoji}
+            onClick={() => {
+              if (hasCurrentUserReaction) {
+                onRemoveReaction(reaction.emoji);
+              } else {
+                handleReactionClick(reaction.emoji);
+              }
+            }}
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors ${
+              hasCurrentUserReaction
+                ? "bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900"
+                : "bg-card border-border text-foreground hover:bg-accent"
+            }`}
+            title={reaction.profiles
+              .map((p) => `${p.name} (@${p.username})`)
+              .join(", ")}
           >
-            {isDeleting ? (
-              <Spinner className="h-3 w-3" />
-            ) : (
-              <Trash2 className="h-3 w-3" />
-            )}
+            <span>{reaction.emoji}</span>
+            <span className="font-medium">{reaction.count}</span>
           </button>
-        )}
-      </div>
+        );
+      })}
+
+      {/* Add reaction button */}
+      {currentProfileId && (
+        <div className="relative reaction-selector inline-flex">
+          <button
+            type="button"
+            onClick={() => setOpenReactionSelector(!openReactionSelector)}
+            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent border border-border rounded-full transition-colors"
+          >
+            <Smile className="h-3 w-3" />
+          </button>
+
+          {openReactionSelector && (
+            <div
+              className={`absolute bottom-full mb-2 bg-popover border border-border rounded-lg shadow-lg p-2 flex gap-1 z-10 ${
+                isFromMe ? "right-0" : "left-0"
+              }`}
+            >
+              {AVAILABLE_REACTIONS.map(({ emoji, label }) => (
+                <button
+                  type="button"
+                  key={emoji}
+                  onClick={() => handleReactionClick(emoji)}
+                  className="hover:bg-accent p-1 rounded text-lg transition-colors"
+                  title={label}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Delete button */}
+      {onDelete && (
+        <button
+          type="button"
+          onClick={onDelete}
+          disabled={isDeleting}
+          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950 border border-red-200 dark:border-red-800 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title="삭제"
+        >
+          {isDeleting ? (
+            <Spinner className="h-3 w-3" />
+          ) : (
+            <Trash2 className="h-3 w-3" />
+          )}
+        </button>
+      )}
 
       {/* Reaction details modal */}
       <Dialog open={isModalOpen} onOpenChange={onModalClose}>

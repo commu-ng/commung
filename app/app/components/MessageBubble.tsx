@@ -128,14 +128,14 @@ export function MessageBubble({
         </div>
       )}
 
-      {/* Timestamp */}
-      <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-        <Clock className="h-3 w-3" />
-        <span>{timestamp}</span>
+      {/* Timestamp, reactions, and actions */}
+      <div className="flex flex-wrap items-center gap-1 mt-1">
+        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground mr-1">
+          <Clock className="h-3 w-3" />
+          {timestamp}
+        </span>
+        {children}
       </div>
-
-      {/* Reactions and other content */}
-      {children}
 
       {/* Image Modal */}
       <ImageModal
