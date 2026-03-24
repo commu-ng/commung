@@ -8,6 +8,7 @@ import {
   isNull,
   sql,
 } from "drizzle-orm";
+import sharp from "sharp";
 import { db } from "../db";
 import {
   image as imageTable,
@@ -32,12 +33,7 @@ import {
   getProfilePictureUrl,
   getProfilePictureUrlById,
 } from "../utils/profile-picture-helper";
-import {
-  addImageUrl,
-  optimizeImage,
-  uploadFileDirect,
-  validateImageFile,
-} from "../utils/r2";
+import { addImageUrl, uploadFileDirect, validateImageFile } from "../utils/r2";
 
 /**
  * Upload and set profile picture for an profile
@@ -58,28 +54,28 @@ export async function uploadProfilePicture(
     throw new AppException(400, GENERAL_ERROR_CODE, errorMessage);
   }
 
-  // Optimize and upload to R2 (smaller max for profile pictures)
-  let optimized: { buffer: Buffer; width: number; height: number };
+  // Upload to R2
+  const uniqueKey = await uploadFileDirect(
+    fileBuffer,
+    fileName,
+    fileContentType,
+  );
+
+  // Get image dimensions
+  let width = 0;
+  let height = 0;
   try {
-    optimized = await optimizeImage(
-      Buffer.from(fileBuffer),
-      fileContentType,
-      512,
-    );
+    const image = sharp(Buffer.from(fileBuffer));
+    const metadata = await image.metadata();
+    width = metadata.width ?? 0;
+    height = metadata.height ?? 0;
   } catch (_err) {
     throw new AppException(
       400,
       GENERAL_ERROR_CODE,
-      "이미지 처리에 실패했습니다",
+      "이미지 크기 가져오기에 실패했습니다",
     );
   }
-
-  const uniqueKey = await uploadFileDirect(
-    optimized.buffer,
-    fileName,
-    fileContentType,
-  );
-  const { width, height } = optimized;
 
   // Create image record and profile picture in a transaction
   const result = await db.transaction(async (tx) => {
