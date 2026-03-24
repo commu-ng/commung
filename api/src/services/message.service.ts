@@ -52,9 +52,9 @@ export async function getUnreadCount(profileId: string, communityId: string) {
         isNull(directMessageTable.readAt),
         isNull(directMessageTable.deletedAt),
         sql`NOT EXISTS (
-          SELECT 1 FROM direct_message_deletion
-          WHERE direct_message_deletion.message_id = direct_message.id
-          AND direct_message_deletion.profile_id = ${profileId}
+          SELECT 1 FROM "direct_message_deletion" dmd
+          WHERE dmd."message_id" = ${directMessageTable.id}
+          AND dmd."profile_id" = ${profileId}
         )`,
       ),
     );
@@ -533,9 +533,9 @@ export async function getConversations(
       eq(directMessageTable.communityId, communityId),
       isNull(directMessageTable.deletedAt),
       sql`NOT EXISTS (
-        SELECT 1 FROM direct_message_deletion
-        WHERE direct_message_deletion.message_id = direct_message.id
-        AND direct_message_deletion.profile_id = ${profileId}
+        SELECT 1 FROM "direct_message_deletion" dmd
+        WHERE dmd."message_id" = ${directMessageTable.id}
+        AND dmd."profile_id" = ${profileId}
       )`,
     ),
     orderBy: [desc(directMessageTable.createdAt)],
@@ -588,9 +588,9 @@ export async function getConversations(
         isNull(directMessageTable.readAt),
         isNull(directMessageTable.deletedAt),
         sql`NOT EXISTS (
-          SELECT 1 FROM direct_message_deletion
-          WHERE direct_message_deletion.message_id = direct_message.id
-          AND direct_message_deletion.profile_id = ${profileId}
+          SELECT 1 FROM "direct_message_deletion" dmd
+          WHERE dmd."message_id" = ${directMessageTable.id}
+          AND dmd."profile_id" = ${profileId}
         )`,
       ),
     )
