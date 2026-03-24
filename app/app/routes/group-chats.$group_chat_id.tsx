@@ -799,8 +799,16 @@ export default function GroupChatDetail() {
                   </div>
                 </div>
               </button>
-              {messages.find((m) => m.id === confirmDeleteMessageId)
-                ?.is_sender && (
+              {(() => {
+                const msg = messages.find(
+                  (m) => m.id === confirmDeleteMessageId,
+                );
+                const withinTimeWindow =
+                  msg &&
+                  Date.now() - new Date(msg.created_at).getTime() <=
+                    2 * 60 * 1000;
+                return msg?.is_sender && withinTimeWindow;
+              })() && (
                 <button
                   type="button"
                   onClick={() =>

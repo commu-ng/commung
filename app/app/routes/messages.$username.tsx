@@ -846,8 +846,17 @@ export default function MessageConversation() {
                   </div>
                 </div>
               </button>
-              {messages.find((m) => m.id === confirmDeleteMessageId)?.sender
-                .id === currentProfile?.id && (
+              {(() => {
+                const msg = messages.find(
+                  (m) => m.id === confirmDeleteMessageId,
+                );
+                const isFromMe = msg?.sender.id === currentProfile?.id;
+                const withinTimeWindow =
+                  msg &&
+                  Date.now() - new Date(msg.created_at).getTime() <=
+                    2 * 60 * 1000;
+                return isFromMe && withinTimeWindow;
+              })() && (
                 <button
                   type="button"
                   onClick={() =>

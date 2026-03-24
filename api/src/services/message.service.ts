@@ -289,6 +289,17 @@ export async function deleteDirectMessage(
       );
     }
 
+    // Only allow delete-for-all within 2 minutes of sending
+    const createdAt = new Date(message.createdAt).getTime();
+    const now = Date.now();
+    if (now - createdAt > 2 * 60 * 1000) {
+      throw new AppException(
+        403,
+        GENERAL_ERROR_CODE,
+        "메시지 전송 후 2분이 지나면 모두에게 삭제할 수 없습니다",
+      );
+    }
+
     await db
       .update(directMessageTable)
       .set({ deletedAt: sql`NOW()` })
@@ -373,6 +384,16 @@ export async function deleteGroupChatMessage(
         403,
         GENERAL_ERROR_CODE,
         "자신의 메시지만 모두에게 삭제할 수 있습니다",
+      );
+    }
+
+    const createdAt = new Date(message.createdAt).getTime();
+    const now = Date.now();
+    if (now - createdAt > 2 * 60 * 1000) {
+      throw new AppException(
+        403,
+        GENERAL_ERROR_CODE,
+        "메시지 전송 후 2분이 지나면 모두에게 삭제할 수 없습니다",
       );
     }
 
