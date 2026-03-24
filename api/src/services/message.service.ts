@@ -38,6 +38,9 @@ import {
 import { addImageUrl } from "../utils/r2";
 import { pushNotificationService } from "./push-notification.service";
 
+/** Maximum time (ms) after sending a message during which delete-for-all is allowed */
+const DELETE_FOR_ALL_WINDOW_MS = 2 * 60 * 1000;
+
 /**
  * Get unread message count for an profile
  */
@@ -287,7 +290,7 @@ export async function deleteDirectMessage(
     // Only allow delete-for-all within 2 minutes of sending
     const createdAt = new Date(message.createdAt).getTime();
     const now = Date.now();
-    if (now - createdAt > 2 * 60 * 1000) {
+    if (now - createdAt > DELETE_FOR_ALL_WINDOW_MS) {
       throw new AppException(
         403,
         GENERAL_ERROR_CODE,
@@ -384,7 +387,7 @@ export async function deleteGroupChatMessage(
 
     const createdAt = new Date(message.createdAt).getTime();
     const now = Date.now();
-    if (now - createdAt > 2 * 60 * 1000) {
+    if (now - createdAt > DELETE_FOR_ALL_WINDOW_MS) {
       throw new AppException(
         403,
         GENERAL_ERROR_CODE,
