@@ -556,12 +556,19 @@ export const messagesRouter = new Hono<{ Variables: AuthVariables }>()
     communityMiddleware,
     appAuthMiddleware,
     zValidator("param", groupChatIdParamSchema),
-    zValidator("query", profileIdQuerySchema),
+    zValidator(
+      "query",
+      z.object({
+        profile_id: z.uuid(),
+        limit: z.coerce.number().min(1).max(100).optional(),
+        cursor: z.uuid().optional(),
+      }),
+    ),
     async (c) => {
       const user = c.get("user");
       const community = c.get("community");
       const { group_chat_id } = c.req.valid("param");
-      const { profile_id } = c.req.valid("query");
+      const { profile_id, limit, cursor } = c.req.valid("query");
 
       // Verify profile belongs to user
       const profile = await profileService.validateAndGetProfile(
@@ -587,8 +594,10 @@ export const messagesRouter = new Hono<{ Variables: AuthVariables }>()
         group_chat_id,
         profile_id,
         community.id,
+        limit,
+        cursor,
       );
-      return c.json({ data: result });
+      return c.json({ data: result.messages, pagination: result.pagination });
     },
   )
 

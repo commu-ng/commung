@@ -1249,6 +1249,8 @@ export async function getGroupChatMessages(
   groupChatId: string,
   profileId: string,
   communityId: string,
+  limit = 50,
+  cursor?: string,
 ) {
   // Verify the group chat exists and belongs to this community
   const groupChat = await db.query.groupChat.findFirst({
@@ -1283,17 +1285,24 @@ export async function getGroupChatMessages(
     );
   }
 
+  // Build query conditions
+  const baseConditions = [
+    eq(groupChatMessageTable.groupChatId, groupChatId),
+    isNull(groupChatMessageTable.deletedAt),
+    sql`NOT EXISTS (
+      SELECT 1 FROM "group_chat_message_deletion" gcmd
+      WHERE gcmd."message_id" = ${groupChatMessageTable.id}
+      AND gcmd."profile_id" = ${profileId}
+    )`,
+  ];
+
+  if (cursor) {
+    baseConditions.push(sql`${groupChatMessageTable.id} < ${cursor}`);
+  }
+
   // Get messages for the group chat
   const messages = await db.query.groupChatMessage.findMany({
-    where: and(
-      eq(groupChatMessageTable.groupChatId, groupChatId),
-      isNull(groupChatMessageTable.deletedAt),
-      sql`NOT EXISTS (
-        SELECT 1 FROM "group_chat_message_deletion" gcmd
-        WHERE gcmd."message_id" = ${groupChatMessageTable.id}
-        AND gcmd."profile_id" = ${profileId}
-      )`,
-    ),
+    where: and(...baseConditions),
     with: {
       profile: {
         with: {
@@ -1316,13 +1325,16 @@ export async function getGroupChatMessages(
         },
       },
     },
-    orderBy: [asc(groupChatMessageTable.createdAt)],
-    limit: 100,
+    orderBy: [desc(groupChatMessageTable.id)],
+    limit: limit + 1,
   });
+
+  const hasMore = messages.length > limit;
+  const messagesToReturn = hasMore ? messages.slice(0, limit) : messages;
 
   // Collect unique profile IDs from reactions
   const reactionProfileIds = new Set<string>();
-  messages.forEach((message) => {
+  messagesToReturn.forEach((message) => {
     message.groupChatMessageReactions.forEach((reaction) => {
       reactionProfileIds.add(reaction.profile.id);
     });
@@ -1334,7 +1346,7 @@ export async function getGroupChatMessages(
   );
 
   // Format message data with aggregated reactions
-  const formattedMessages = messages.map((message) => {
+  const formattedMessages = messagesToReturn.map((message) => {
     const profilePicture = message.profile.profilePictures[0]?.image;
     const profile_picture_url = profilePicture
       ? addImageUrl(profilePicture).url
@@ -1397,7 +1409,18 @@ export async function getGroupChatMessages(
     };
   });
 
-  return formattedMessages;
+  const nextCursor =
+    hasMore && messagesToReturn.length > 0
+      ? messagesToReturn[messagesToReturn.length - 1]?.id || null
+      : null;
+
+  return {
+    messages: formattedMessages.reverse(),
+    pagination: {
+      next_cursor: nextCursor,
+      has_more: hasMore,
+    },
+  };
 }
 
 /**
