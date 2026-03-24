@@ -45,7 +45,11 @@ export async function uploadProfilePicture(
   fileContentType: string,
   fileSize: number,
 ) {
-  const [isValid, errorMessage] = validateImageFile(fileContentType, fileSize);
+  const [isValid, errorMessage] = validateImageFile(
+    fileContentType,
+    fileSize,
+    fileName,
+  );
   if (!isValid) {
     throw new AppException(400, GENERAL_ERROR_CODE, errorMessage);
   }

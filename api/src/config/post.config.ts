@@ -54,9 +54,9 @@ export const POST_CONFIG = {
    */
   IMAGE: {
     /**
-     * Maximum file size in bytes (5MB)
+     * Maximum file size in bytes (10MB)
      */
-    MAX_FILE_SIZE: 5 * 1024 * 1024,
+    MAX_FILE_SIZE: 10 * 1024 * 1024,
 
     /**
      * Allowed image MIME types
@@ -67,6 +67,13 @@ export const POST_CONFIG = {
       "image/png",
       "image/gif",
       "image/webp",
+      "image/heic",
+      "image/heif",
     ],
+
+    /**
+     * Allowed file extensions (lowercase, without dot)
+     */
+    ALLOWED_EXTENSIONS: ["jpg", "jpeg", "png", "gif", "webp", "heic", "heif"],
   },
 } as const;

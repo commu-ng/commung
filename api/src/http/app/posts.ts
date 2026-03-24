@@ -59,7 +59,7 @@ export const postsRouter = new Hono<{ Variables: AuthVariables }>()
     }
 
     const fileBuffer = await file.arrayBuffer();
-    const fileContentType = file.type || "application/octet-stream";
+    const fileContentType = file.type || "";
 
     const result = await postService.uploadImage(
       fileBuffer,

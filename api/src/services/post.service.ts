@@ -306,7 +306,11 @@ export async function uploadImage(
   contentType: string,
   fileSize: number,
 ) {
-  const [isValid, errorMessage] = validateImageFile(contentType, fileSize);
+  const [isValid, errorMessage] = validateImageFile(
+    contentType,
+    fileSize,
+    fileName,
+  );
   if (!isValid) {
     throw new AppException(400, GENERAL_ERROR_CODE, errorMessage);
   }

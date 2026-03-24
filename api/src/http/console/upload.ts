@@ -48,9 +48,13 @@ export const uploadRouter = new Hono().post(
       );
     }
     const fileBuffer = await file.arrayBuffer();
-    const contentType = file.type || "application/octet-stream";
+    const contentType = file.type || "";
 
-    const [isValid, errorMessage] = validateImageFile(contentType, file.size);
+    const [isValid, errorMessage] = validateImageFile(
+      contentType,
+      file.size,
+      file.name,
+    );
     if (!isValid) {
       return c.json(
         {

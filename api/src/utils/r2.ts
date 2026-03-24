@@ -6,6 +6,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { env } from "../config/env";
+import { POST_CONFIG } from "../config/post.config";
 import { logger } from "../config/logger";
 import { R2_KEY_PREFIXES } from "../constants/r2";
 
@@ -62,26 +63,22 @@ export async function uploadFileDirect(
 export function validateImageFile(
   contentType: string,
   fileSize: number,
-  maxSizeMb: number = 10,
+  filename?: string,
 ): [boolean, string] {
-  const allowedTypes = [
-    "image/jpeg",
-    "image/jpg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-    "image/heic",
-    "image/heif",
-    "application/octet-stream",
-  ];
-
-  if (!allowedTypes.includes(contentType)) {
+  if (!POST_CONFIG.IMAGE.ALLOWED_MIME_TYPES.includes(contentType)) {
     return [false, "Only image files are allowed"];
   }
 
-  const maxSizeBytes = maxSizeMb * 1024 * 1024;
-  if (fileSize > maxSizeBytes) {
-    return [false, `File size must be less than ${maxSizeMb}MB`];
+  if (filename) {
+    const ext = filename.split(".").pop()?.toLowerCase() || "";
+    if (!POST_CONFIG.IMAGE.ALLOWED_EXTENSIONS.includes(ext)) {
+      return [false, "File extension is not allowed"];
+    }
+  }
+
+  if (fileSize > POST_CONFIG.IMAGE.MAX_FILE_SIZE) {
+    const maxMb = POST_CONFIG.IMAGE.MAX_FILE_SIZE / (1024 * 1024);
+    return [false, `File size must be less than ${maxMb}MB`];
   }
 
   if (fileSize === 0) {

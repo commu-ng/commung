@@ -77,7 +77,7 @@ export const profilesRouter = new Hono<{ Variables: AuthVariables }>()
       }
 
       const fileBuffer = await file.arrayBuffer();
-      const fileContentType = file.type || "application/octet-stream";
+      const fileContentType = file.type || "";
 
       const result2 = await profileService.uploadProfilePicture(
         profile.id,
