@@ -1576,21 +1576,23 @@ export async function sendGroupChatMessage(
         const baseDomain = process.env.BASE_DOMAIN || "commu.ng";
         const communityUrl = `https://${community.slug}.${baseDomain}`;
 
-        // Send push notification to each recipient
-        for (const recipientUserId of recipientUserIds) {
-          await pushNotificationService.sendPushNotification(recipientUserId, {
-            title: `${profile.name} - ${groupChat.name || "그룹 채팅"}`,
-            body: content.trim() || "사진을 보냈습니다",
-            data: {
-              type: "group_message",
-              message_id: newMessage.id,
-              group_chat_id: groupChatId,
-              sender_id: profileId,
-              community_url: communityUrl,
-              url: `${communityUrl}/group-chats/${groupChatId}`,
-            },
-          });
-        }
+        // Send push notifications to all recipients in parallel
+        await Promise.all(
+          recipientUserIds.map((recipientUserId) =>
+            pushNotificationService.sendPushNotification(recipientUserId, {
+              title: `${profile.name} - ${groupChat.name || "그룹 채팅"}`,
+              body: content.trim() || "사진을 보냈습니다",
+              data: {
+                type: "group_message",
+                message_id: newMessage.id,
+                group_chat_id: groupChatId,
+                sender_id: profileId,
+                community_url: communityUrl,
+                url: `${communityUrl}/group-chats/${groupChatId}`,
+              },
+            }),
+          ),
+        );
       }
     }
   }
