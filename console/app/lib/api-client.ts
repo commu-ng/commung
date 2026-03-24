@@ -53,9 +53,18 @@ export const ALLOWED_IMAGE_TYPES = [
 
 export const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-// Upload image helper - uses XMLHttpRequest for progress tracking
-// (fetch does not support upload progress)
-export async function uploadImage(
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 1000;
+
+class UploadError extends Error {
+  retryable: boolean;
+  constructor(message: string, retryable: boolean) {
+    super(message);
+    this.retryable = retryable;
+  }
+}
+
+function attemptUpload(
   file: File,
   onProgress?: (percent: number) => void,
 ): Promise<{ id: string; url: string }> {
@@ -79,6 +88,8 @@ export async function uploadImage(
       if (xhr.status >= 200 && xhr.status < 300) {
         const data = JSON.parse(xhr.responseText);
         resolve(data.data);
+      } else if (xhr.status >= 500) {
+        reject(new UploadError("서버 오류가 발생했습니다", true));
       } else {
         let message = "이미지 업로드에 실패했습니다";
         try {
@@ -87,14 +98,38 @@ export async function uploadImage(
         } catch {
           // use default message
         }
-        reject(new Error(message));
+        reject(new UploadError(message, false));
       }
     };
 
     xhr.onerror = () => {
-      reject(new Error("네트워크 오류가 발생했습니다"));
+      reject(new UploadError("네트워크 오류가 발생했습니다", true));
     };
 
     xhr.send(formData);
   });
+}
+
+// Upload image helper with retry logic for network/server errors
+export async function uploadImage(
+  file: File,
+  onProgress?: (percent: number) => void,
+): Promise<{ id: string; url: string }> {
+  let lastError: Error | undefined;
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      return await attemptUpload(file, onProgress);
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (err instanceof UploadError && !err.retryable) {
+        throw lastError;
+      }
+      if (attempt < MAX_RETRIES - 1) {
+        await new Promise((r) => setTimeout(r, BASE_DELAY_MS * 2 ** attempt));
+      }
+    }
+  }
+
+  throw lastError || new Error("이미지 업로드에 실패했습니다");
 }
