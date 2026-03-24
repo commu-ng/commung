@@ -41,6 +41,8 @@ import { pushNotificationService } from "./push-notification.service";
 /** Maximum time (ms) after sending a message during which delete-for-all is allowed */
 const DELETE_FOR_ALL_WINDOW_MS = 2 * 60 * 1000;
 
+const BASE_DOMAIN = process.env.BASE_DOMAIN || "commu.ng";
+
 /**
  * Get unread message count for an profile
  */
@@ -1571,8 +1573,7 @@ export async function sendGroupChatMessage(
       });
 
       if (community) {
-        const baseDomain = process.env.BASE_DOMAIN || "commu.ng";
-        const communityUrl = `https://${community.slug}.${baseDomain}`;
+        const communityUrl = `https://${community.slug}.${BASE_DOMAIN}`;
 
         // Send push notifications to all recipients in parallel
         await Promise.all(
