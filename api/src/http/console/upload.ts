@@ -1,10 +1,10 @@
 import { Hono } from "hono";
-import sharp from "sharp";
 import { authMiddleware } from "../../middleware/auth";
 import * as imageService from "../../services/image.service";
 import { GeneralErrorCode } from "../../types/api-responses";
 import {
   getFileUrl,
+  optimizeImage,
   uploadFileDirect,
   validateImageFile,
 } from "../../utils/r2";
@@ -67,19 +67,15 @@ export const uploadRouter = new Hono().post(
       );
     }
 
+    const optimized = await optimizeImage(Buffer.from(fileBuffer), contentType);
+
     const uniqueKey = await uploadFileDirect(
-      fileBuffer,
+      optimized.buffer,
       file.name,
       contentType,
     );
 
-    // Use sharp to get image dimensions
-    let width = 0;
-    let height = 0;
-    const image = sharp(Buffer.from(fileBuffer));
-    const metadata = await image.metadata();
-    width = metadata.width ?? 0;
-    height = metadata.height ?? 0;
+    const { width, height } = optimized;
 
     const newImage = await imageService.createImageRecord(
       uniqueKey,

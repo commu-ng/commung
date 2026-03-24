@@ -5,6 +5,7 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
+import sharp from "sharp";
 import { env } from "../config/env";
 import { POST_CONFIG } from "../config/post.config";
 import { logger } from "../config/logger";
@@ -38,6 +39,63 @@ export function addImageUrl<
     url: getFileUrl(image.key),
     created_at: createdAt,
     deleted_at: deletedAt,
+  };
+}
+
+/**
+ * Optimize an image: resize if exceeding max dimension and compress.
+ * Skips GIFs to preserve animation.
+ */
+export async function optimizeImage(
+  buffer: Buffer,
+  contentType: string,
+  maxDimension = 2048,
+  quality = 80,
+): Promise<{ buffer: Buffer; width: number; height: number }> {
+  // Skip GIFs to preserve animation
+  if (contentType === "image/gif") {
+    const metadata = await sharp(buffer).metadata();
+    return {
+      buffer,
+      width: metadata.width || 0,
+      height: metadata.height || 0,
+    };
+  }
+
+  let pipeline = sharp(buffer).rotate(); // auto-rotate based on EXIF
+
+  const metadata = await sharp(buffer).metadata();
+  const { width, height } = metadata;
+
+  // Resize if either dimension exceeds the max
+  if ((width && width > maxDimension) || (height && height > maxDimension)) {
+    pipeline = pipeline.resize(maxDimension, maxDimension, {
+      fit: "inside",
+      withoutEnlargement: true,
+    });
+  }
+
+  // Compress based on format
+  if (
+    contentType === "image/jpeg" ||
+    contentType === "image/jpg" ||
+    contentType === "image/heic" ||
+    contentType === "image/heif"
+  ) {
+    pipeline = pipeline.jpeg({ quality });
+  } else if (contentType === "image/png") {
+    pipeline = pipeline.png({ quality });
+  } else if (contentType === "image/webp") {
+    pipeline = pipeline.webp({ quality });
+  }
+
+  const optimizedBuffer = await pipeline.toBuffer();
+  const optimizedMetadata = await sharp(optimizedBuffer).metadata();
+
+  return {
+    buffer: optimizedBuffer,
+    width: optimizedMetadata.width || 0,
+    height: optimizedMetadata.height || 0,
   };
 }
 

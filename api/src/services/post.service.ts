@@ -8,7 +8,6 @@ import {
   isNull,
   sql,
 } from "drizzle-orm";
-import sharp from "sharp";
 import { db } from "../db";
 import {
   community as communityTable,
@@ -31,7 +30,12 @@ import { GENERAL_ERROR_CODE } from "../types/api-responses";
 import { validateCommunityActive } from "../utils/community-validation";
 import { formatISODate } from "../utils/datetime";
 import { batchLoadProfilePictures } from "../utils/profile-picture-helper";
-import { addImageUrl, uploadFileDirect, validateImageFile } from "../utils/r2";
+import {
+  addImageUrl,
+  optimizeImage,
+  uploadFileDirect,
+  validateImageFile,
+} from "../utils/r2";
 import * as membershipService from "./membership.service";
 import { pushNotificationService } from "./push-notification.service";
 
@@ -315,23 +319,23 @@ export async function uploadImage(
     throw new AppException(400, GENERAL_ERROR_CODE, errorMessage);
   }
 
-  const uniqueKey = await uploadFileDirect(fileBuffer, fileName, contentType);
-
-  // Use sharp to get image dimensions
-  let width = 0;
-  let height = 0;
+  let optimized: { buffer: Buffer; width: number; height: number };
   try {
-    const image = sharp(Buffer.from(fileBuffer));
-    const metadata = await image.metadata();
-    width = metadata.width ?? 0;
-    height = metadata.height ?? 0;
+    optimized = await optimizeImage(Buffer.from(fileBuffer), contentType);
   } catch (_err) {
     throw new AppException(
       400,
       GENERAL_ERROR_CODE,
-      "이미지 크기 가져오기에 실패했습니다",
+      "이미지 처리에 실패했습니다",
     );
   }
+
+  const uniqueKey = await uploadFileDirect(
+    optimized.buffer,
+    fileName,
+    contentType,
+  );
+  const { width, height } = optimized;
 
   const newImageResult = await db
     .insert(imageTable)
