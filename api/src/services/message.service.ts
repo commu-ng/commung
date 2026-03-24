@@ -204,8 +204,8 @@ export async function sendDirectMessage(
       await pushNotificationService.sendPushNotification(
         receiverOwnership.userId,
         {
-          title: "새로운 메시지",
-          body: `${senderProfile.name}님이 메시지를 보냈습니다`,
+          title: senderProfile.name,
+          body: content.trim() || "사진을 보냈습니다",
           data: {
             type: "direct_message",
             message_id: message.id,
@@ -1416,8 +1416,8 @@ export async function sendGroupChatMessage(
         // Send push notification to each recipient
         for (const recipientUserId of recipientUserIds) {
           await pushNotificationService.sendPushNotification(recipientUserId, {
-            title: groupChat.name || "그룹 채팅",
-            body: `${profile.name}님이 메시지를 보냈습니다`,
+            title: `${profile.name} - ${groupChat.name || "그룹 채팅"}`,
+            body: content.trim() || "사진을 보냈습니다",
             data: {
               type: "group_message",
               message_id: newMessage.id,
