@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import { Skeleton } from "~/components/ui/skeleton";
 import { useAuth } from "~/hooks/useAuth";
 
 interface ProfileSwitcherProps {
@@ -17,9 +18,17 @@ interface ProfileSwitcherProps {
 }
 
 export function ProfileSwitcher({ compact = false }: ProfileSwitcherProps) {
-  const { currentProfile, availableProfiles, switchProfile } = useAuth();
+  const { currentProfile, availableProfiles, switchProfile, isLoading } =
+    useAuth();
 
   if (!currentProfile || availableProfiles.length === 0) {
+    if (isLoading) {
+      return compact ? (
+        <Skeleton className="h-10 w-10 rounded-full" />
+      ) : (
+        <Skeleton className="h-10 w-full rounded-full" />
+      );
+    }
     return null;
   }
 

@@ -49,32 +49,25 @@ export function MastodonLayout({
         {/* Sidebar: hidden on mobile, sticky on tablet+ */}
         {showAuthenticatedLayout && (
           <div className="hidden md:block sticky top-0 h-screen overflow-y-auto">
-            {isAuthenticated ? (
-              <>
-                {/* Tablet: collapsed sidebar */}
-                <div className="lg:hidden">
-                  <SidebarNav
-                    communityName={communityName}
-                    consoleUrl={consoleUrl}
-                    unreadCount={unreadCount}
-                    unreadMessageCount={unreadMessageCount}
-                    collapsed
-                  />
-                </div>
-                {/* Desktop: full sidebar */}
-                <div className="hidden lg:block">
-                  <SidebarNav
-                    communityName={communityName}
-                    consoleUrl={consoleUrl}
-                    unreadCount={unreadCount}
-                    unreadMessageCount={unreadMessageCount}
-                  />
-                </div>
-              </>
-            ) : (
-              /* Sidebar placeholder during loading */
-              <div className="w-full h-full" />
-            )}
+            {/* Tablet: collapsed sidebar */}
+              <div className="lg:hidden">
+                <SidebarNav
+                  communityName={communityName}
+                  consoleUrl={consoleUrl}
+                  unreadCount={unreadCount}
+                  unreadMessageCount={unreadMessageCount}
+                  collapsed
+                />
+              </div>
+              {/* Desktop: full sidebar */}
+              <div className="hidden lg:block">
+                <SidebarNav
+                  communityName={communityName}
+                  consoleUrl={consoleUrl}
+                  unreadCount={unreadCount}
+                  unreadMessageCount={unreadMessageCount}
+                />
+              </div>
           </div>
         )}
 
