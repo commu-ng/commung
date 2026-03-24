@@ -809,15 +809,48 @@ export async function getConversationThread(
         profile_picture_url: receiver_profile_picture_url,
       },
       is_sender: sender.id === profile.id,
-      reactions:
-        message.directMessageReactions?.map((reaction) => ({
-          emoji: reaction.emoji,
-          user: {
+      reactions: (() => {
+        const reactionsByEmoji = new Map<
+          string,
+          {
+            emoji: string;
+            count: number;
+            profiles: Array<{
+              id: string;
+              name: string;
+              username: string;
+              profile_picture_url: string | null;
+            }>;
+          }
+        >();
+        for (const reaction of message.directMessageReactions || []) {
+          const reactionProfile =
+            reaction.profile.id === profile.id ? profile : otherProfile;
+          const ppImage = reactionProfile.profilePictures.find(
+            (pp) => pp.deletedAt === null,
+          )?.image;
+          const ppUrl = ppImage ? addImageUrl(ppImage).url : null;
+
+          const existing = reactionsByEmoji.get(reaction.emoji);
+          const profileData = {
             id: reaction.profile.id,
-            username: reaction.profile.username,
             name: reaction.profile.name,
-          },
-        })) || [],
+            username: reaction.profile.username,
+            profile_picture_url: ppUrl,
+          };
+          if (existing) {
+            existing.count++;
+            existing.profiles.push(profileData);
+          } else {
+            reactionsByEmoji.set(reaction.emoji, {
+              emoji: reaction.emoji,
+              count: 1,
+              profiles: [profileData],
+            });
+          }
+        }
+        return Array.from(reactionsByEmoji.values());
+      })(),
       images:
         message.directMessageImages?.map((dmi) => addImageUrl(dmi.image)) || [],
     };

@@ -3,10 +3,13 @@ import { useEffect, useState } from "react";
 
 interface Reaction {
   emoji: string;
-  user: {
+  count: number;
+  profiles: Array<{
     id: string;
     name: string;
-  };
+    username: string;
+    profile_picture_url: string | null;
+  }>;
 }
 
 interface DirectMessageReactionsProps {
@@ -59,45 +62,26 @@ export function DirectMessageReactions({
     setOpenReactionSelector(false);
   };
 
-  // Group reactions by emoji
-  const reactionGroups = reactions.reduce<
-    Record<
-      string,
-      {
-        count: number;
-        users: Array<{ id: string; name: string }>;
-      }
-    >
-  >((acc, reaction) => {
-    if (!acc[reaction.emoji]) {
-      acc[reaction.emoji] = { count: 0, users: [] };
-    }
-    const group = acc[reaction.emoji];
-    if (group) {
-      group.count++;
-      group.users.push(reaction.user);
-    }
-    return acc;
-  }, {});
-
   return (
     <>
       {/* Existing reactions display */}
-      {Object.entries(reactionGroups).map(([emoji, { count, users }]) => {
+      {reactions.map((reaction) => {
         const hasCurrentUserReaction =
           currentProfileId &&
-          users.some((user) => user.id === currentProfileId);
-        const userNames = users.map((u) => u.name).join(", ");
+          reaction.profiles.some((profile) => profile.id === currentProfileId);
+        const userNames = reaction.profiles
+          .map((p) => `${p.name} (@${p.username})`)
+          .join(", ");
 
         return (
           <button
             type="button"
-            key={emoji}
+            key={reaction.emoji}
             onClick={() => {
               if (hasCurrentUserReaction) {
-                onRemoveReaction(emoji);
+                onRemoveReaction(reaction.emoji);
               } else {
-                handleReactionClick(emoji);
+                handleReactionClick(reaction.emoji);
               }
             }}
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors ${
@@ -107,8 +91,8 @@ export function DirectMessageReactions({
             }`}
             title={userNames}
           >
-            <span>{emoji}</span>
-            <span className="font-medium">{count}</span>
+            <span>{reaction.emoji}</span>
+            <span className="font-medium">{reaction.count}</span>
           </button>
         );
       })}
