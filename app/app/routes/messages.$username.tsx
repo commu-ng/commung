@@ -10,7 +10,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
 import { toast } from "sonner";
 import { DirectMessageReactions } from "~/components/DirectMessageReactions";
-import { uploadImage } from "~/lib/upload-image";
+import {
+  ALLOWED_IMAGE_TYPES,
+  MAX_IMAGE_FILE_SIZE,
+  uploadImage,
+} from "~/lib/upload-image";
 import { LoginButton } from "~/components/LoginButton";
 import { MessageBubble } from "~/components/MessageBubble";
 import { ProfileAvatar } from "~/components/profile-avatar";
@@ -240,19 +244,12 @@ export default function MessageConversation() {
 
     const validFiles: File[] = [];
     for (const file of files) {
-      const allowedTypes = [
-        "image/jpeg",
-        "image/jpg",
-        "image/png",
-        "image/gif",
-        "image/webp",
-      ];
-      if (!allowedTypes.includes(file.type)) {
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
         toast.error("이미지 파일만 업로드 가능합니다 (JPG, PNG, GIF, WebP)");
         continue;
       }
 
-      if (file.size > 10 * 1024 * 1024) {
+      if (file.size > MAX_IMAGE_FILE_SIZE) {
         toast.error("이미지 크기는 10MB 이하여야 합니다");
         continue;
       }

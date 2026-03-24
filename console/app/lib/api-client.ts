@@ -41,6 +41,18 @@ export const client = hc<AppType>(env.apiBaseUrl, {
 // Export single unified API client
 export const api = client;
 
+export const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+];
+
+export const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 // Upload image helper - uses raw fetch because FormData with Hono RPC client
 // has issues with Content-Type headers
 export async function uploadImage(

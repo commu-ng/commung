@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { uploadImage } from "~/lib/api-client";
+import {
+  ALLOWED_IMAGE_TYPES,
+  MAX_IMAGE_FILE_SIZE,
+  uploadImage,
+} from "~/lib/api-client";
 
 interface UseImageUploadReturn {
   /**
@@ -37,14 +41,8 @@ interface UseImageUploadReturn {
   setExistingImage: (url: string, imageId?: string) => void;
 }
 
-const ALLOWED_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_TYPES = ALLOWED_IMAGE_TYPES;
+const MAX_FILE_SIZE = MAX_IMAGE_FILE_SIZE;
 
 /**
  * Custom hook for handling image uploads in console

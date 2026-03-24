@@ -3,8 +3,12 @@ import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "~/hooks/useAuth";
 import { client } from "~/lib/api-client";
-import { env } from "~/lib/env";
 import { getReadOnlyMarkdownInstance } from "~/lib/markdown-utils";
+import {
+  ALLOWED_IMAGE_TYPES,
+  MAX_IMAGE_FILE_SIZE,
+  uploadImage,
+} from "~/lib/upload-image";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Spinner } from "./ui/spinner";
@@ -16,23 +20,6 @@ interface BoardPostFormProps {
   onSuccess: () => void;
   onCancel: () => void;
 }
-
-interface UploadedImage {
-  id: string;
-  filename: string;
-  url: string;
-  width: number;
-  height: number;
-}
-
-const ALLOWED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export function BoardPostForm({
   boardSlug,
@@ -47,26 +34,6 @@ export function BoardPostForm({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const md = useMemo(() => getReadOnlyMarkdownInstance(), []);
-
-  const uploadImage = async (file: File): Promise<UploadedImage> => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const uploadResponse = await fetch(`${env.apiBaseUrl}/app/upload/file`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("session_token")}`,
-      },
-      body: formData,
-    });
-
-    if (!uploadResponse.ok) {
-      throw new Error("이미지 업로드에 실패했습니다");
-    }
-
-    const uploadData = await uploadResponse.json();
-    return uploadData.data;
-  };
 
   const insertTextAtCursor = (text: string) => {
     const textarea = textareaRef.current;
@@ -106,7 +73,7 @@ export function BoardPostForm({
     }
 
     // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
       toast.error("이미지 크기는 10MB 이하여야 합니다");
       return;
     }

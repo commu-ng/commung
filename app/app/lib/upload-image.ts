@@ -1,6 +1,26 @@
 import { env } from "~/lib/env";
 
-export async function uploadImage(file: File): Promise<string> {
+export const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+];
+
+export const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+export interface UploadedImage {
+  id: string;
+  filename: string;
+  url: string;
+  width: number;
+  height: number;
+}
+
+export async function uploadImage(file: File): Promise<UploadedImage> {
   const formData = new FormData();
   formData.append("file", file);
 
@@ -17,5 +37,5 @@ export async function uploadImage(file: File): Promise<string> {
   }
 
   const uploadData = await uploadResponse.json();
-  return uploadData.data.id;
+  return uploadData.data;
 }

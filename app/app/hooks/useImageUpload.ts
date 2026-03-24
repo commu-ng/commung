@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { uploadImage as uploadImageToServer } from "~/lib/upload-image";
+import {
+  ALLOWED_IMAGE_TYPES,
+  MAX_IMAGE_FILE_SIZE,
+  uploadImage as uploadImageToServer,
+} from "~/lib/upload-image";
 
 export interface ImageUpload {
   id: string;
@@ -51,14 +55,8 @@ interface UseImageUploadReturn {
   initializeWithExisting: (existingImages: ImageUpload[]) => void;
 }
 
-const ALLOWED_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_TYPES = ALLOWED_IMAGE_TYPES;
+const MAX_FILE_SIZE = MAX_IMAGE_FILE_SIZE;
 
 /**
  * Custom hook for handling image uploads
@@ -76,8 +74,8 @@ export function useImageUpload(
       const uploadPromises = imageObjects
         .filter((imageObj) => imageObj.file !== null)
         .map(async (imageObj) => {
-          const uploadedId = await uploadImageToServer(imageObj.file as File);
-          return { id: imageObj.id, uploadedId };
+          const result = await uploadImageToServer(imageObj.file as File);
+          return { id: imageObj.id, uploadedId: result.id };
         });
 
       const uploadResults = await Promise.all(uploadPromises);
