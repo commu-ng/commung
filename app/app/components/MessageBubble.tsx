@@ -1,4 +1,4 @@
-import { Clock, Trash2 } from "lucide-react";
+import { Clock, Copy, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { PostPreview } from "./PostPreview";
 import { ImageModal } from "./post/ImageModal";
@@ -11,7 +11,6 @@ interface MessageBubbleProps {
   senderAvatar?: React.ReactNode;
   children?: React.ReactNode;
   onClick?: () => void;
-  hasReactions?: boolean;
   currentProfileId?: string;
   onDelete?: () => void;
   images?: Array<{
@@ -30,7 +29,6 @@ export function MessageBubble({
   senderAvatar,
   children,
   onClick,
-  hasReactions = false,
   currentProfileId,
   onDelete,
   images,
@@ -59,12 +57,15 @@ export function MessageBubble({
   }, [showMenu]);
 
   const handleBubbleTap = () => {
-    if (onDelete) {
-      setShowMenu((prev) => !prev);
-    }
+    setShowMenu((prev) => !prev);
     if (onClick) {
       onClick();
     }
+  };
+
+  const handleCopyText = () => {
+    navigator.clipboard.writeText(content);
+    setShowMenu(false);
   };
 
   // Detect post URLs in the content
@@ -112,7 +113,7 @@ export function MessageBubble({
             onClick={handleBubbleTap}
             className={`rounded-lg px-4 py-2 text-left ${
               isFromMe ? "bg-blue-600 text-white" : "bg-accent text-foreground"
-            } ${onDelete || (hasReactions && onClick) ? "cursor-pointer" : ""}`}
+            } cursor-pointer`}
           >
             {/* Images */}
             {images && images.length > 0 && (
@@ -152,7 +153,7 @@ export function MessageBubble({
         )}
 
         {/* Action menu popover */}
-        {showMenu && onDelete && (
+        {showMenu && (
           <div
             className={`absolute z-20 ${isFromMe ? "right-0" : "left-0"} bottom-full mb-1 bg-popover border border-border rounded-lg shadow-lg overflow-hidden`}
           >
@@ -160,14 +161,27 @@ export function MessageBubble({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setShowMenu(false);
-                onDelete();
+                handleCopyText();
               }}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-accent transition-colors whitespace-nowrap"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors whitespace-nowrap w-full"
             >
-              <Trash2 className="h-3.5 w-3.5" />
-              삭제
+              <Copy className="h-3.5 w-3.5" />
+              복사
             </button>
+            {onDelete && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMenu(false);
+                  onDelete();
+                }}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-accent transition-colors whitespace-nowrap w-full"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                삭제
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -645,7 +645,6 @@ export default function GroupChatDetail() {
                         ? () => setSelectedMessageId(message.id)
                         : undefined
                     }
-                    hasReactions={hasReactions}
                     images={message.images}
                     currentProfileId={currentProfile?.id}
                     onDelete={() => handleDeleteClick(message.id)}
