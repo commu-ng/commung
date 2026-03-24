@@ -26,7 +26,7 @@ export function ConsoleLayout({ children }: ConsoleLayoutProps) {
             onClick={() => setSidebarOpen(false)}
             aria-label="Close sidebar"
           />
-          <div className="fixed inset-y-0 left-0 z-50 w-64">
+          <div className="fixed inset-y-0 left-0 z-50 w-52">
             <Sidebar />
           </div>
         </div>

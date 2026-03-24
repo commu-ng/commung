@@ -132,7 +132,7 @@ export function Sidebar() {
   ].some((path) => location.pathname.startsWith(path));
 
   return (
-    <aside className="w-64 border-r border-border bg-card flex flex-col h-screen sticky top-0">
+    <aside className="w-52 border-r border-border bg-card flex flex-col h-screen sticky top-0">
       {/* Logo */}
       <div className="p-4 border-b border-border">
         <Link to="/" className="flex items-center gap-2">
