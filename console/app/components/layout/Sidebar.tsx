@@ -265,7 +265,9 @@ export function Sidebar() {
             >
               <Link to="/account">
                 <UserIcon className="h-4 w-4 mr-2" />
-                <span className="truncate">{user?.email}</span>
+                <span className="truncate">
+                  {user?.login_name || user?.email}
+                </span>
               </Link>
             </Button>
           ) : (
