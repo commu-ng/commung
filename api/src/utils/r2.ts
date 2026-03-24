@@ -54,6 +54,8 @@ export async function uploadFileDirect(
     Key: uniqueKey,
     Body: Buffer.from(fileContent),
     ContentType: contentType,
+    CacheControl: "public, max-age=31536000, immutable",
+    ContentDisposition: "inline",
   };
 
   await s3Client.send(new PutObjectCommand(uploadParams));
@@ -117,6 +119,8 @@ export async function uploadExportFile(
       Key: uniqueKey,
       Body: stream,
       ContentType: "application/zip",
+      CacheControl: "private, max-age=3600",
+      ContentDisposition: `attachment; filename="${filename}"`,
     },
   });
 
