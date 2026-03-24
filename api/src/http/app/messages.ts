@@ -12,6 +12,7 @@ import {
   groupChatMessageReactionCreateSchema,
   groupChatMessageReactionDeleteSchema,
   messageCreateSchema,
+  messageDeleteQuerySchema,
   messageIdParamSchema,
   messageReactionCreateSchema,
   messageReactionDeleteSchema,
@@ -77,12 +78,12 @@ export const messagesRouter = new Hono<{ Variables: AuthVariables }>()
     appAuthMiddleware,
     membershipMiddleware,
     zValidator("param", messageIdParamSchema),
-    zValidator("query", profileIdQuerySchema),
+    zValidator("query", messageDeleteQuerySchema),
     async (c) => {
       const user = c.get("user");
       const community = c.get("community");
       const { message_id: messageId } = c.req.valid("param");
-      const { profile_id: profileId } = c.req.valid("query");
+      const { profile_id: profileId, mode } = c.req.valid("query");
 
       // Get and validate the profile belongs to the user
       const profile = await profileService.validateAndGetProfile(
@@ -108,6 +109,7 @@ export const messagesRouter = new Hono<{ Variables: AuthVariables }>()
         profile.id,
         messageId,
         community.id,
+        mode,
       );
 
       return c.json({ data: { id: messageId, deleted: true } });
@@ -728,6 +730,53 @@ export const messagesRouter = new Hono<{ Variables: AuthVariables }>()
       return c.json({
         data: { message_id, emoji, deleted: true },
       });
+    },
+  )
+
+  .delete(
+    "/group-chats/:group_chat_id/messages/:message_id",
+    communityMiddleware,
+    appAuthMiddleware,
+    membershipMiddleware,
+    zValidator(
+      "param",
+      z.object({ group_chat_id: z.uuid(), message_id: z.uuid() }),
+    ),
+    zValidator("query", messageDeleteQuerySchema),
+    async (c) => {
+      const user = c.get("user");
+      const community = c.get("community");
+      const { group_chat_id, message_id } = c.req.valid("param");
+      const { profile_id, mode } = c.req.valid("query");
+
+      const profile = await profileService.validateAndGetProfile(
+        user.id,
+        profile_id,
+        community.id,
+        false,
+      );
+
+      if (!profile) {
+        return c.json(
+          {
+            error: {
+              code: GeneralErrorCode.FORBIDDEN,
+              message: "프로필에 접근할 권한이 없습니다",
+            },
+          },
+          403,
+        );
+      }
+
+      await messageService.deleteGroupChatMessage(
+        profile.id,
+        message_id,
+        group_chat_id,
+        community.id,
+        mode,
+      );
+
+      return c.json({ data: { id: message_id, deleted: true } });
     },
   )
 

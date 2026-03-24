@@ -27,10 +27,13 @@ import {
   Send,
   Settings,
   Shield,
+  Trash2,
   Users,
   X,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
+import { toast } from "sonner";
+import { getErrorMessage } from "~/lib/api-client";
 import { GroupChatMessageReactions } from "~/components/GroupChatMessageReactions";
 import { LoginButton } from "~/components/LoginButton";
 import { MessageBubble } from "~/components/MessageBubble";
@@ -63,6 +66,12 @@ export default function GroupChatDetail() {
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
     null,
   );
+  const [deletingMessageId, setDeletingMessageId] = useState<string | null>(
+    null,
+  );
+  const [confirmDeleteMessageId, setConfirmDeleteMessageId] = useState<
+    string | null
+  >(null);
   const { isAuthenticated, currentProfile, isLoading: authLoading } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -391,6 +400,51 @@ export default function GroupChatDetail() {
     }
   };
 
+  const deleteMessage = async (
+    messageId: string,
+    mode: "for_me" | "for_all",
+  ) => {
+    if (!currentProfile || !group_chat_id) return;
+
+    try {
+      setDeletingMessageId(messageId);
+
+      const response = await client.app["group-chats"][
+        ":group_chat_id"
+      ].messages[":message_id"].$delete({
+        param: { group_chat_id, message_id: messageId },
+        query: { profile_id: currentProfile.id, mode },
+      });
+
+      if (response.ok) {
+        setMessages((prev) => prev.filter((m) => m.id !== messageId));
+        toast.success("메시지가 삭제되었습니다");
+      } else {
+        try {
+          const errorData = await response.json();
+          toast.error(
+            getErrorMessage(errorData, "메시지를 삭제할 수 없습니다"),
+          );
+        } catch {
+          toast.error("메시지를 삭제할 수 없습니다");
+        }
+      }
+    } catch (_error) {
+      toast.error("메시지 삭제 중 오류가 발생했습니다");
+    } finally {
+      setDeletingMessageId(null);
+      setConfirmDeleteMessageId(null);
+    }
+  };
+
+  const handleDeleteClick = (messageId: string) => {
+    setConfirmDeleteMessageId(messageId);
+  };
+
+  const cancelDelete = () => {
+    setConfirmDeleteMessageId(null);
+  };
+
   const formatTime = (createdAt: string) => {
     const date = new Date(createdAt);
     const now = new Date();
@@ -609,6 +663,8 @@ export default function GroupChatDetail() {
                         senderName={message.sender.name}
                         isModalOpen={selectedMessageId === message.id}
                         onModalClose={() => setSelectedMessageId(null)}
+                        onDelete={() => handleDeleteClick(message.id)}
+                        isDeleting={deletingMessageId === message.id}
                         isFromMe={message.is_sender}
                       />
                     ) : (
@@ -626,6 +682,8 @@ export default function GroupChatDetail() {
                           senderName={message.sender.name}
                           isModalOpen={false}
                           onModalClose={() => {}}
+                          onDelete={() => handleDeleteClick(message.id)}
+                          isDeleting={deletingMessageId === message.id}
                           isFromMe={message.is_sender}
                         />
                       )
@@ -706,6 +764,74 @@ export default function GroupChatDetail() {
           </div>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {confirmDeleteMessageId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <Trash2 className="h-5 w-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">
+                  메시지 삭제
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  삭제 방식을 선택해주세요
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => deleteMessage(confirmDeleteMessageId, "for_me")}
+                disabled={deletingMessageId !== null}
+                className="w-full px-4 py-3 text-left text-foreground bg-accent hover:bg-muted rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {deletingMessageId === confirmDeleteMessageId ? (
+                  <Spinner className="h-4 w-4" />
+                ) : null}
+                <div>
+                  <div className="font-medium">나에게만 삭제</div>
+                  <div className="text-sm text-muted-foreground">
+                    다른 멤버에게는 계속 보입니다
+                  </div>
+                </div>
+              </button>
+              {messages.find((m) => m.id === confirmDeleteMessageId)
+                ?.is_sender && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    deleteMessage(confirmDeleteMessageId, "for_all")
+                  }
+                  disabled={deletingMessageId !== null}
+                  className="w-full px-4 py-3 text-left text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {deletingMessageId === confirmDeleteMessageId ? (
+                    <Spinner className="h-4 w-4" />
+                  ) : null}
+                  <div>
+                    <div className="font-medium">모두에게 삭제</div>
+                    <div className="text-sm text-muted-foreground">
+                      이 메시지는 모든 참여자에게서 삭제됩니다
+                    </div>
+                  </div>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={cancelDelete}
+                disabled={deletingMessageId !== null}
+                className="w-full px-4 py-2 text-foreground bg-accent hover:bg-muted rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-center"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

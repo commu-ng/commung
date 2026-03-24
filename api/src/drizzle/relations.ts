@@ -15,12 +15,14 @@ import {
   communityHashtag,
   communityLink,
   directMessage,
+  directMessageDeletion,
   directMessageImage,
   directMessageReaction,
   exchangeToken,
   groupChat,
   groupChatMembership,
   groupChatMessage,
+  groupChatMessageDeletion,
   groupChatMessageImage,
   groupChatMessageReaction,
   groupChatMessageRead,
@@ -170,6 +172,7 @@ export const groupChatMessageRelations = relations(
       fields: [groupChatMessage.senderId],
       references: [profile.id],
     }),
+    groupChatMessageDeletions: many(groupChatMessageDeletion),
     groupChatMessageReads: many(groupChatMessageRead),
     groupChatMessageReactions: many(groupChatMessageReaction),
     groupChatMessageImages: many(groupChatMessageImage),
@@ -412,9 +415,38 @@ export const directMessageReactionRelations = relations(
   }),
 );
 
+export const directMessageDeletionRelations = relations(
+  directMessageDeletion,
+  ({ one }) => ({
+    directMessage: one(directMessage, {
+      fields: [directMessageDeletion.messageId],
+      references: [directMessage.id],
+    }),
+    profile: one(profile, {
+      fields: [directMessageDeletion.profileId],
+      references: [profile.id],
+    }),
+  }),
+);
+
+export const groupChatMessageDeletionRelations = relations(
+  groupChatMessageDeletion,
+  ({ one }) => ({
+    groupChatMessage: one(groupChatMessage, {
+      fields: [groupChatMessageDeletion.messageId],
+      references: [groupChatMessage.id],
+    }),
+    profile: one(profile, {
+      fields: [groupChatMessageDeletion.profileId],
+      references: [profile.id],
+    }),
+  }),
+);
+
 export const directMessageRelations = relations(
   directMessage,
   ({ one, many }) => ({
+    directMessageDeletions: many(directMessageDeletion),
     directMessageReactions: many(directMessageReaction),
     directMessageImages: many(directMessageImage),
     community: one(community, {

@@ -1038,6 +1038,62 @@ export const directMessage = pgTable(
   ],
 );
 
+export const directMessageDeletion = pgTable(
+  "direct_message_deletion",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    messageId: uuid("message_id").notNull(),
+    profileId: uuid("profile_id").notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.messageId],
+      foreignColumns: [directMessage.id],
+      name: "direct_message_deletion_message_id_fkey",
+    }),
+    foreignKey({
+      columns: [table.profileId],
+      foreignColumns: [profile.id],
+      name: "direct_message_deletion_profile_id_fkey",
+    }),
+    unique("unique_direct_message_deletion").on(
+      table.messageId,
+      table.profileId,
+    ),
+  ],
+);
+
+export const groupChatMessageDeletion = pgTable(
+  "group_chat_message_deletion",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    messageId: uuid("message_id").notNull(),
+    profileId: uuid("profile_id").notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.messageId],
+      foreignColumns: [groupChatMessage.id],
+      name: "group_chat_message_deletion_message_id_fkey",
+    }),
+    foreignKey({
+      columns: [table.profileId],
+      foreignColumns: [profile.id],
+      name: "group_chat_message_deletion_profile_id_fkey",
+    }),
+    unique("unique_group_chat_message_deletion").on(
+      table.messageId,
+      table.profileId,
+    ),
+  ],
+);
+
 export const post = pgTable(
   "post",
   {

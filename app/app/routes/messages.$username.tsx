@@ -365,38 +365,26 @@ export default function MessageConversation() {
     }
   };
 
-  const deleteMessage = async (messageId: string) => {
+  const deleteMessage = async (
+    messageId: string,
+    mode: "for_me" | "for_all",
+  ) => {
     if (!currentProfile) return;
-
-    // Find the message to validate
-    const messageToDelete = messages.find((m) => m.id === messageId);
-    if (!messageToDelete) {
-      toast.error("메시지를 찾을 수 없습니다");
-      return;
-    }
-
-    // Verify this is the user's message
-    if (messageToDelete.sender.id !== currentProfile.id) {
-      toast.error("자신의 메시지만 삭제할 수 있습니다");
-      return;
-    }
 
     try {
       setDeletingMessageId(messageId);
 
       const response = await client.app.messages[":message_id"].$delete({
         param: { message_id: messageId },
-        query: { profile_id: currentProfile.id },
+        query: { profile_id: currentProfile.id, mode },
       });
 
       if (response.ok) {
-        // Remove the message from the local state
         setMessages((prevMessages) =>
           prevMessages.filter((message) => message.id !== messageId),
         );
         toast.success("메시지가 삭제되었습니다");
       } else {
-        // Handle API error response
         try {
           const errorData = await response.json();
           toast.error(
@@ -416,12 +404,6 @@ export default function MessageConversation() {
 
   const handleDeleteClick = (messageId: string) => {
     setConfirmDeleteMessageId(messageId);
-  };
-
-  const confirmDelete = () => {
-    if (confirmDeleteMessageId) {
-      deleteMessage(confirmDeleteMessageId);
-    }
   };
 
   const cancelDelete = () => {
@@ -737,11 +719,7 @@ export default function MessageConversation() {
                             onRemoveReaction={(emoji) =>
                               removeReaction(message.id, emoji)
                             }
-                            onDelete={
-                              message.sender.id === currentProfile?.id
-                                ? () => handleDeleteClick(message.id)
-                                : undefined
-                            }
+                            onDelete={() => handleDeleteClick(message.id)}
                             isDeleting={deletingMessageId === message.id}
                             isFromMe={message.sender.id === currentProfile?.id}
                           />
@@ -847,36 +825,55 @@ export default function MessageConversation() {
                   메시지 삭제
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  이 작업은 되돌릴 수 없습니다
+                  삭제 방식을 선택해주세요
                 </p>
               </div>
             </div>
-            <p className="text-foreground mb-6">
-              정말로 이 메시지를 삭제하시겠습니까?
-            </p>
-            <div className="flex gap-3 justify-end">
+            <div className="flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => deleteMessage(confirmDeleteMessageId, "for_me")}
+                disabled={deletingMessageId !== null}
+                className="w-full px-4 py-3 text-left text-foreground bg-accent hover:bg-muted rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {deletingMessageId === confirmDeleteMessageId ? (
+                  <Spinner className="h-4 w-4" />
+                ) : null}
+                <div>
+                  <div className="font-medium">나에게만 삭제</div>
+                  <div className="text-sm text-muted-foreground">
+                    상대방에게는 계속 보입니다
+                  </div>
+                </div>
+              </button>
+              {messages.find((m) => m.id === confirmDeleteMessageId)?.sender
+                .id === currentProfile?.id && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    deleteMessage(confirmDeleteMessageId, "for_all")
+                  }
+                  disabled={deletingMessageId !== null}
+                  className="w-full px-4 py-3 text-left text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {deletingMessageId === confirmDeleteMessageId ? (
+                    <Spinner className="h-4 w-4" />
+                  ) : null}
+                  <div>
+                    <div className="font-medium">모두에게 삭제</div>
+                    <div className="text-sm text-muted-foreground">
+                      이 메시지는 모든 참여자에게서 삭제됩니다
+                    </div>
+                  </div>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={cancelDelete}
                 disabled={deletingMessageId !== null}
-                className="px-4 py-2 text-foreground bg-accent hover:bg-muted rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2 text-foreground bg-accent hover:bg-muted rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-center"
               >
                 취소
-              </button>
-              <button
-                type="button"
-                onClick={confirmDelete}
-                disabled={deletingMessageId !== null}
-                className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {deletingMessageId ? (
-                  <>
-                    <Spinner className="h-4 w-4 text-white" />
-                    삭제 중...
-                  </>
-                ) : (
-                  "삭제"
-                )}
               </button>
             </div>
           </div>

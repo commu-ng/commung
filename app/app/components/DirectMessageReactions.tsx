@@ -151,8 +151,8 @@ export function DirectMessageReactions({
         </div>
       )}
 
-      {/* Delete button for own messages */}
-      {isFromMe && onDelete && (
+      {/* Delete button */}
+      {onDelete && (
         <button
           type="button"
           onClick={onDelete}

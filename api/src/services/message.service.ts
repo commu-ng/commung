@@ -13,10 +13,12 @@ import {
 import { db } from "../db";
 import {
   community as communityTable,
+  directMessageDeletion as directMessageDeletionTable,
   directMessageReaction as directMessageReactionTable,
   directMessage as directMessageTable,
   directMessageImage as directMessageImageTable,
   groupChatMembership as groupChatMembershipTable,
+  groupChatMessageDeletion as groupChatMessageDeletionTable,
   groupChatMessageImage as groupChatMessageImageTable,
   groupChatMessageReaction as groupChatMessageReactionTable,
   groupChatMessageRead as groupChatMessageReadTable,
@@ -49,6 +51,11 @@ export async function getUnreadCount(profileId: string, communityId: string) {
         eq(directMessageTable.communityId, communityId),
         isNull(directMessageTable.readAt),
         isNull(directMessageTable.deletedAt),
+        sql`NOT EXISTS (
+          SELECT 1 FROM direct_message_deletion
+          WHERE direct_message_deletion.message_id = direct_message.id
+          AND direct_message_deletion.profile_id = ${profileId}
+        )`,
       ),
     );
 
@@ -236,18 +243,20 @@ export async function sendDirectMessage(
 }
 
 /**
- * Delete a direct message (soft delete)
+ * Delete a direct message
+ * - for_all: soft delete the message (sender only)
+ * - for_me: hide the message for the requesting profile
  */
 export async function deleteDirectMessage(
   profileId: string,
   messageId: string,
   communityId: string,
+  mode: "for_me" | "for_all",
 ) {
-  // Find the message and verify it belongs to the profile (as sender)
+  // Find the message and verify it exists and profile is a participant
   const message = await db.query.directMessage.findFirst({
     where: and(
       eq(directMessageTable.id, messageId),
-      eq(directMessageTable.senderId, profileId),
       eq(directMessageTable.communityId, communityId),
       isNull(directMessageTable.deletedAt),
     ),
@@ -257,17 +266,129 @@ export async function deleteDirectMessage(
     throw new AppException(
       404,
       GENERAL_ERROR_CODE,
-      "메시지를 찾을 수 없거나 삭제 권한이 없습니다",
+      "메시지를 찾을 수 없습니다",
     );
   }
 
-  // Soft delete the message by setting the deleted timestamp
-  await db
-    .update(directMessageTable)
-    .set({
-      deletedAt: sql`NOW()`,
-    })
-    .where(eq(directMessageTable.id, messageId));
+  // Verify the profile is part of the conversation
+  if (message.senderId !== profileId && message.receiverId !== profileId) {
+    throw new AppException(
+      403,
+      GENERAL_ERROR_CODE,
+      "이 메시지에 접근할 권한이 없습니다",
+    );
+  }
+
+  if (mode === "for_all") {
+    // Only the sender can delete for all
+    if (message.senderId !== profileId) {
+      throw new AppException(
+        403,
+        GENERAL_ERROR_CODE,
+        "자신의 메시지만 모두에게 삭제할 수 있습니다",
+      );
+    }
+
+    await db
+      .update(directMessageTable)
+      .set({ deletedAt: sql`NOW()` })
+      .where(eq(directMessageTable.id, messageId));
+  } else {
+    // Delete for me - insert into per-user deletion table
+    await db
+      .insert(directMessageDeletionTable)
+      .values({
+        messageId,
+        profileId,
+      })
+      .onConflictDoNothing();
+  }
+}
+
+/**
+ * Delete a group chat message
+ * - for_all: soft delete the message (sender only)
+ * - for_me: hide the message for the requesting profile
+ */
+export async function deleteGroupChatMessage(
+  profileId: string,
+  messageId: string,
+  groupChatId: string,
+  communityId: string,
+  mode: "for_me" | "for_all",
+) {
+  // Verify group chat exists
+  const groupChat = await db.query.groupChat.findFirst({
+    where: and(
+      eq(groupChatTable.id, groupChatId),
+      eq(groupChatTable.communityId, communityId),
+      isNull(groupChatTable.deletedAt),
+    ),
+  });
+
+  if (!groupChat) {
+    throw new AppException(
+      404,
+      GENERAL_ERROR_CODE,
+      "그룹 채팅을 찾을 수 없습니다",
+    );
+  }
+
+  // Verify profile is a member
+  const membership = await db.query.groupChatMembership.findFirst({
+    where: and(
+      eq(groupChatMembershipTable.groupChatId, groupChatId),
+      eq(groupChatMembershipTable.profileId, profileId),
+    ),
+  });
+
+  if (!membership) {
+    throw new AppException(
+      403,
+      GENERAL_ERROR_CODE,
+      "이 그룹 채팅에 대한 접근이 거부되었습니다",
+    );
+  }
+
+  // Verify message exists
+  const message = await db.query.groupChatMessage.findFirst({
+    where: and(
+      eq(groupChatMessageTable.id, messageId),
+      eq(groupChatMessageTable.groupChatId, groupChatId),
+      isNull(groupChatMessageTable.deletedAt),
+    ),
+  });
+
+  if (!message) {
+    throw new AppException(
+      404,
+      GENERAL_ERROR_CODE,
+      "메시지를 찾을 수 없습니다",
+    );
+  }
+
+  if (mode === "for_all") {
+    if (message.senderId !== profileId) {
+      throw new AppException(
+        403,
+        GENERAL_ERROR_CODE,
+        "자신의 메시지만 모두에게 삭제할 수 있습니다",
+      );
+    }
+
+    await db
+      .update(groupChatMessageTable)
+      .set({ deletedAt: sql`NOW()` })
+      .where(eq(groupChatMessageTable.id, messageId));
+  } else {
+    await db
+      .insert(groupChatMessageDeletionTable)
+      .values({
+        messageId,
+        profileId,
+      })
+      .onConflictDoNothing();
+  }
 }
 
 /**
@@ -411,6 +532,11 @@ export async function getConversations(
       ),
       eq(directMessageTable.communityId, communityId),
       isNull(directMessageTable.deletedAt),
+      sql`NOT EXISTS (
+        SELECT 1 FROM direct_message_deletion
+        WHERE direct_message_deletion.message_id = direct_message.id
+        AND direct_message_deletion.profile_id = ${profileId}
+      )`,
     ),
     orderBy: [desc(directMessageTable.createdAt)],
     limit: 100, // Get more to extract unique conversations
@@ -461,6 +587,11 @@ export async function getConversations(
         eq(directMessageTable.communityId, communityId),
         isNull(directMessageTable.readAt),
         isNull(directMessageTable.deletedAt),
+        sql`NOT EXISTS (
+          SELECT 1 FROM direct_message_deletion
+          WHERE direct_message_deletion.message_id = direct_message.id
+          AND direct_message_deletion.profile_id = ${profileId}
+        )`,
       ),
     )
     .groupBy(directMessageTable.senderId);
@@ -580,6 +711,12 @@ export async function getConversationThread(
     ),
     eq(directMessageTable.communityId, communityId),
     isNull(directMessageTable.deletedAt),
+    // Exclude messages deleted for the current user
+    sql`NOT EXISTS (
+      SELECT 1 FROM direct_message_deletion
+      WHERE direct_message_deletion.message_id = direct_message.id
+      AND direct_message_deletion.profile_id = ${profileId}
+    )`,
   ];
 
   // Add cursor condition if provided
@@ -1130,6 +1267,11 @@ export async function getGroupChatMessages(
     where: and(
       eq(groupChatMessageTable.groupChatId, groupChatId),
       isNull(groupChatMessageTable.deletedAt),
+      sql`NOT EXISTS (
+        SELECT 1 FROM group_chat_message_deletion
+        WHERE group_chat_message_deletion.message_id = group_chat_message.id
+        AND group_chat_message_deletion.profile_id = ${profileId}
+      )`,
     ),
     with: {
       profile: {

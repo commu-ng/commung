@@ -228,6 +228,11 @@ export const postReactionDeleteSchema = z.object({
   emoji: z.string().min(1, "Emoji cannot be empty").max(10, "Emoji too long"),
 });
 
+export const messageDeleteQuerySchema = z.object({
+  profile_id: z.uuid(),
+  mode: z.enum(["for_me", "for_all"]),
+});
+
 export const messageIdParamSchema = z.object({
   message_id: z.uuid(),
 });
