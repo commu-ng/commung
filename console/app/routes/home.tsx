@@ -4,6 +4,8 @@ import {
   BookOpen,
   Bot,
   ExternalLink,
+  ImageIcon,
+  MessageSquare,
   Plus,
   Rocket,
   Search,
@@ -11,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { Link } from "react-router";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -46,6 +49,43 @@ interface Community {
   pending_application_count?: number;
 }
 
+interface BoardPost {
+  id: string;
+  board: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  title: string;
+  content: string;
+  image: {
+    id: string;
+    url: string;
+    width: number;
+    height: number;
+    filename: string;
+  } | null;
+  hashtags: {
+    id: string;
+    tag: string;
+  }[];
+  author: {
+    id: string;
+    login_name: string;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+interface Board {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 async function fetchMyCommunities(): Promise<Community[]> {
   const res = await api.console.communities.mine.$get();
   if (!res.ok) {
@@ -55,66 +95,93 @@ async function fetchMyCommunities(): Promise<Community[]> {
   return json.data;
 }
 
+async function fetchBoards(): Promise<Board[]> {
+  const res = await api.console.boards.$get();
+  if (!res.ok) {
+    throw new Error("Failed to fetch boards");
+  }
+  const json = await res.json();
+  return json.data;
+}
+
+async function fetchBoardPosts(boardSlug: string): Promise<BoardPost[]> {
+  const res = await api.console.board[":board_slug"].posts.$get({
+    param: { board_slug: boardSlug },
+    query: { limit: "5" },
+  });
+  if (!res.ok) {
+    throw new Error("Failed to fetch board posts");
+  }
+  const json = await res.json();
+  return json.data;
+}
+
 function DashboardSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-24" />
-        ))}
-      </div>
+      <Skeleton className="h-48" />
+      <Skeleton className="h-32" />
       <Skeleton className="h-64" />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Skeleton className="h-48" />
-        <Skeleton className="h-48" />
-      </div>
     </div>
   );
 }
 
-function StatsCards({ communities }: { communities: Community[] }) {
-  const now = new Date();
-  const activeCommunities = communities.filter(
-    (c) => new Date(c.ends_at) >= now,
+function PendingApplications({ communities }: { communities: Community[] }) {
+  const communitiesWithPending = communities.filter(
+    (c) => c.pending_application_count && c.pending_application_count > 0,
   );
-  const ownedCount = communities.filter((c) => c.role === "owner").length;
-  const pendingApplications = communities.reduce(
+
+  if (communitiesWithPending.length === 0) {
+    return null;
+  }
+
+  const totalPending = communitiesWithPending.reduce(
     (sum, c) => sum + (c.pending_application_count || 0),
     0,
   );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardDescription>활성 커뮤</CardDescription>
-          <CardTitle className="text-3xl">{activeCommunities.length}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground">
-            총 {communities.length}개 커뮤 참여 중
-          </p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardDescription>운영 중인 커뮤</CardDescription>
-          <CardTitle className="text-3xl">{ownedCount}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground">내가 만든 커뮤</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardDescription>대기 중인 지원서</CardDescription>
-          <CardTitle className="text-3xl">{pendingApplications}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground">검토가 필요한 지원서</p>
-        </CardContent>
-      </Card>
-    </div>
+    <Card className="border-yellow-200 dark:border-yellow-800 bg-yellow-50/50 dark:bg-yellow-950/20">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg">
+              대기 중인 지원서 {totalPending}건
+            </CardTitle>
+            <CardDescription>검토가 필요한 지원서가 있습니다</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {communitiesWithPending.map((community) => (
+            <Link
+              key={community.id}
+              to={`/communities/${community.slug}/applications`}
+              className="flex items-center justify-between p-3 rounded-lg border border-yellow-200 dark:border-yellow-800 bg-white dark:bg-background hover:bg-yellow-50 dark:hover:bg-yellow-950/30 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center overflow-hidden">
+                  {community.banner_image_url ? (
+                    <img
+                      src={community.banner_image_url}
+                      alt={community.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </div>
+                <span className="font-medium">{community.name}</span>
+              </div>
+              <span className="text-sm font-medium text-yellow-700 dark:text-yellow-300">
+                {community.pending_application_count}건
+              </span>
+            </Link>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -208,6 +275,110 @@ function MyCommunities({ communities }: { communities: Community[] }) {
                     {community.pending_application_count}개 지원서
                   </span>
                 )}
+            </Link>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function LatestBoardPosts() {
+  const { data: boards, isLoading: boardsLoading } = useQuery({
+    queryKey: ["boards"],
+    queryFn: fetchBoards,
+  });
+
+  const firstBoardSlug = boards?.[0]?.slug;
+
+  const { data: posts, isLoading: postsLoading } = useQuery({
+    queryKey: ["board-posts-home", firstBoardSlug],
+    queryFn: () => fetchBoardPosts(firstBoardSlug as string),
+    enabled: !!firstBoardSlug,
+  });
+
+  if (boardsLoading || postsLoading) {
+    return <Skeleton className="h-48" />;
+  }
+
+  const board = boards?.[0];
+
+  if (!board || !posts || posts.length === 0) {
+    return null;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              {board.name}
+            </CardTitle>
+            {board.description && (
+              <CardDescription>{board.description}</CardDescription>
+            )}
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link to={`/boards/${board.slug}`}>
+              전체 보기
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Link>
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-1">
+          {posts.map((post) => (
+            <Link
+              key={post.id}
+              to={`/boards/${board.slug}/posts/${post.id}`}
+              className="flex gap-2 p-2 rounded-lg border hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex-shrink-0">
+                {post.image ? (
+                  <img
+                    src={post.image.url}
+                    alt=""
+                    className="rounded object-cover"
+                    style={{ width: "48px", height: "48px" }}
+                  />
+                ) : (
+                  <div
+                    className="rounded bg-muted flex items-center justify-center"
+                    style={{ width: "48px", height: "48px" }}
+                  >
+                    <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{post.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium">{post.author.login_name}</span>
+                  <span className="mx-1">·</span>
+                  <span>
+                    {new Date(post.created_at).toLocaleDateString("ko-KR", {
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </span>
+                </p>
+                {post.hashtags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {post.hashtags.map((hashtag) => (
+                      <Badge
+                        key={hashtag.id}
+                        variant="outline"
+                        className="text-xs h-4 px-1 py-0"
+                      >
+                        #{hashtag.tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
             </Link>
           ))}
         </div>
@@ -409,8 +580,9 @@ function AuthenticatedHome() {
 
   return (
     <div className="space-y-6">
-      <StatsCards communities={communityList} />
       <MyCommunities communities={communityList} />
+      <PendingApplications communities={communityList} />
+      <LatestBoardPosts />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <GettingStarted hasCommunities={communityList.length > 0} />
         <DeveloperResources />
@@ -470,6 +642,8 @@ function UnauthenticatedHome() {
           </CardContent>
         </Card>
       </div>
+
+      <LatestBoardPosts />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <DeveloperResources />
