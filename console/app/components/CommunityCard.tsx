@@ -217,10 +217,16 @@ export function CommunityCard({ community }: CommunityCardProps) {
 
           {/* Community URL */}
           <div className="mt-3 pt-3 border-t border-border">
-            <span className="inline-flex items-center text-xs text-muted-foreground font-mono hover:text-foreground">
+            <a
+              href={`https://${communityUrl}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center text-xs text-muted-foreground font-mono hover:text-foreground"
+            >
               <ExternalLink className="h-3 w-3 mr-1.5" />
               {communityUrl}
-            </span>
+            </a>
           </div>
         </div>
       </div>
