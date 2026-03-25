@@ -46,6 +46,8 @@ interface Community {
   ends_at: string;
   role: string;
   banner_image_url?: string | null;
+  custom_domain?: string | null;
+  domain_verified?: string | null;
   pending_application_count?: number;
 }
 
@@ -240,13 +242,19 @@ function MyCommunities({ communities }: { communities: Community[] }) {
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {activeCommunities.map((community) => (
-            <Link
-              key={community.id}
-              to={`/communities/${community.slug}`}
-              className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors"
-            >
-              <div className="flex items-center gap-3">
+          {activeCommunities.map((community) => {
+            const communityHost =
+              community.custom_domain && community.domain_verified
+                ? community.custom_domain
+                : `${community.slug}.${env.domain}`;
+            return (
+              <a
+                key={community.id}
+                href={`https://${communityHost}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted transition-colors"
+              >
                 <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center overflow-hidden">
                   {community.banner_image_url ? (
                     <img
@@ -268,15 +276,9 @@ function MyCommunities({ communities }: { communities: Community[] }) {
                         : "멤버"}
                   </p>
                 </div>
-              </div>
-              {community.pending_application_count &&
-                community.pending_application_count > 0 && (
-                  <span className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded-full">
-                    {community.pending_application_count}개 지원서
-                  </span>
-                )}
-            </Link>
-          ))}
+              </a>
+            );
+          })}
         </div>
       </CardContent>
     </Card>
