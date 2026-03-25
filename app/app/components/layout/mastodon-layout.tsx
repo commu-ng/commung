@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useScrollDirection } from "~/hooks/useScrollDirection";
 import { MobileBottomNav } from "./mobile-bottom-nav";
 import { MobileNavDrawer } from "./mobile-nav-drawer";
 import { SidebarNav } from "./sidebar-nav";
@@ -22,6 +23,8 @@ export function MastodonLayout({
   unreadCount,
   unreadMessageCount,
 }: MastodonLayoutProps) {
+  const headerHidden = useScrollDirection();
+
   // During loading, assume authenticated if session token exists to prevent layout shift
   const hasSessionToken =
     typeof window !== "undefined" && !!localStorage.getItem("session_token");
@@ -32,7 +35,9 @@ export function MastodonLayout({
     <div className="min-h-screen bg-background">
       {/* Mobile Header */}
       {showAuthenticatedLayout && (
-        <header className="sticky top-0 z-40 bg-card border-b border-border px-4 h-14 flex items-center gap-3 md:hidden">
+        <header
+          className={`sticky top-0 z-40 bg-card border-b border-border px-4 h-14 flex items-center gap-3 md:hidden transition-transform duration-300 ${headerHidden ? "-translate-y-full" : "translate-y-0"}`}
+        >
           <MobileNavDrawer
             communityName={communityName}
             consoleUrl={consoleUrl}
@@ -82,7 +87,7 @@ export function MastodonLayout({
         <main
           className={
             showAuthenticatedLayout
-              ? "min-h-screen border-x border-border pb-16 md:pb-0"
+              ? "min-h-screen border-x border-border pb-14 md:pb-0"
               : "min-h-screen"
           }
         >

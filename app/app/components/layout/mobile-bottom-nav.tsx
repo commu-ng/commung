@@ -20,36 +20,33 @@ export function MobileBottomNav({
       (path === "/" && location.pathname === "/") ||
       (path !== "/" && location.pathname.startsWith(path));
 
-    return `flex flex-col items-center justify-center flex-1 py-2 ${
+    return `flex items-center justify-center flex-1 py-2 ${
       isActive ? "text-primary" : "text-muted-foreground"
     }`;
   };
 
   const navItems = [
-    { to: "/", icon: Home, label: "홈" },
-    { to: "/search", icon: Search, label: "검색" },
+    { to: "/", icon: Home },
+    { to: "/search", icon: Search },
     {
       to: "/notifications",
       icon: Bell,
-      label: "알림",
       badge: unreadCount,
     },
     {
       to: "/messages",
       icon: MessageCircle,
-      label: "메시지",
       badge: unreadMessageCount,
     },
     {
       to: currentProfile ? `/@${currentProfile.username}` : "/settings",
       icon: User,
-      label: "프로필",
     },
   ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 md:hidden">
-      <div className="flex items-center justify-around h-14">
+      <div className="flex items-center justify-around h-12">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -64,7 +61,6 @@ export function MobileBottomNav({
                   </div>
                 )}
               </div>
-              <span className="text-[10px] mt-1">{item.label}</span>
             </Link>
           );
         })}
