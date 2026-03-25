@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
   BookOpen,
@@ -289,101 +289,118 @@ function LatestBoardPosts() {
     queryFn: fetchBoards,
   });
 
-  const firstBoardSlug = boards?.[0]?.slug;
-
-  const { data: posts, isLoading: postsLoading } = useQuery({
-    queryKey: ["board-posts-home", firstBoardSlug],
-    queryFn: () => fetchBoardPosts(firstBoardSlug as string),
-    enabled: !!firstBoardSlug,
+  const postQueries = useQueries({
+    queries: (boards ?? []).map((board) => ({
+      queryKey: ["board-posts-home", board.slug],
+      queryFn: () => fetchBoardPosts(board.slug),
+      enabled: !!boards,
+    })),
   });
 
-  if (boardsLoading || postsLoading) {
+  const isLoading = boardsLoading || postQueries.some((q) => q.isLoading);
+
+  if (isLoading) {
     return <Skeleton className="h-48" />;
   }
 
-  const board = boards?.[0];
+  if (!boards || boards.length === 0) {
+    return null;
+  }
 
-  if (!board || !posts || posts.length === 0) {
+  const boardsWithPosts = boards
+    .map((board, i) => ({
+      board,
+      posts: postQueries[i]?.data ?? [],
+    }))
+    .filter((entry) => entry.posts.length > 0);
+
+  if (boardsWithPosts.length === 0) {
     return null;
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              {board.name}
-            </CardTitle>
-            {board.description && (
-              <CardDescription>{board.description}</CardDescription>
-            )}
-          </div>
-          <Button variant="outline" size="sm" asChild>
-            <Link to={`/boards/${board.slug}`}>
-              전체 보기
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Link>
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-1">
-          {posts.map((post) => (
-            <Link
-              key={post.id}
-              to={`/boards/${board.slug}/posts/${post.id}`}
-              className="flex gap-2 p-2 rounded-lg border hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex-shrink-0">
-                {post.image ? (
-                  <img
-                    src={post.image.url}
-                    alt=""
-                    className="rounded object-cover"
-                    style={{ width: "48px", height: "48px" }}
-                  />
-                ) : (
-                  <div
-                    className="rounded bg-muted flex items-center justify-center"
-                    style={{ width: "48px", height: "48px" }}
-                  >
-                    <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                  </div>
+    <div className="space-y-6">
+      {boardsWithPosts.map(({ board, posts }) => (
+        <Card key={board.id}>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  {board.name}
+                </CardTitle>
+                {board.description && (
+                  <CardDescription>{board.description}</CardDescription>
                 )}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{post.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  <span className="font-medium">{post.author.login_name}</span>
-                  <span className="mx-1">·</span>
-                  <span>
-                    {new Date(post.created_at).toLocaleDateString("ko-KR", {
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </span>
-                </p>
-                {post.hashtags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {post.hashtags.map((hashtag) => (
-                      <Badge
-                        key={hashtag.id}
-                        variant="outline"
-                        className="text-xs h-4 px-1 py-0"
+              <Button variant="outline" size="sm" asChild>
+                <Link to={`/boards/${board.slug}`}>
+                  전체 보기
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Link>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1">
+              {posts.map((post) => (
+                <Link
+                  key={post.id}
+                  to={`/boards/${board.slug}/posts/${post.id}`}
+                  className="flex gap-2 p-2 rounded-lg border hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex-shrink-0">
+                    {post.image ? (
+                      <img
+                        src={post.image.url}
+                        alt=""
+                        className="rounded object-cover"
+                        style={{ width: "48px", height: "48px" }}
+                      />
+                    ) : (
+                      <div
+                        className="rounded bg-muted flex items-center justify-center"
+                        style={{ width: "48px", height: "48px" }}
                       >
-                        #{hashtag.tag}
-                      </Badge>
-                    ))}
+                        <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </Link>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{post.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-medium">
+                        {post.author.login_name}
+                      </span>
+                      <span className="mx-1">·</span>
+                      <span>
+                        {new Date(post.created_at).toLocaleDateString("ko-KR", {
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </p>
+                    {post.hashtags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {post.hashtags.map((hashtag) => (
+                          <Badge
+                            key={hashtag.id}
+                            variant="outline"
+                            className="text-xs h-4 px-1 py-0"
+                          >
+                            #{hashtag.tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }
 
