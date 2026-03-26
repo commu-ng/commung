@@ -103,6 +103,7 @@ export async function publishScheduledPosts(): Promise<number> {
       .update(postTable)
       .set({
         publishedAt: sql`NOW()`,
+        bumpedAt: sql`NOW()`,
       })
       .where(
         and(
@@ -973,7 +974,16 @@ export async function getPosts(
   // Build query conditions (with cursor)
   const queryConditions = [...baseConditions];
   if (cursor) {
-    queryConditions.push(sql`${postTable.id} < ${cursor}`);
+    // Cursor format: "bumpedAt|id" for composite cursor
+    const [cursorBumpedAt, cursorId] = cursor.split("|");
+    if (cursorBumpedAt && cursorId) {
+      queryConditions.push(
+        sql`(${postTable.bumpedAt}, ${postTable.id}) < (${cursorBumpedAt}, ${cursorId})`,
+      );
+    } else {
+      // Fallback for legacy cursors (just an ID)
+      queryConditions.push(sql`${postTable.id} < ${cursor}`);
+    }
   }
 
   // Run count and data queries in parallel
@@ -985,7 +995,7 @@ export async function getPosts(
       .from(postTable)
       .leftJoin(profileTable, eq(postTable.authorId, profileTable.id))
       .where(and(...queryConditions, eq(profileTable.communityId, communityId)))
-      .orderBy(desc(postTable.id)) // Use ID for consistent ordering (UUIDv7 is time-ordered)
+      .orderBy(desc(postTable.bumpedAt), desc(postTable.id))
       .limit(limit + 1),
     // Count total posts
     db
@@ -1012,11 +1022,10 @@ export async function getPosts(
   const hasMore = posts.length > limit;
   // Remove the extra item if we have more
   const postsToReturn = hasMore ? posts.slice(0, limit) : posts;
-  // Get the last post's ID as the next cursor
+  // Get the last post's bumpedAt|id as the next cursor
+  const lastPost = postsToReturn[postsToReturn.length - 1]?.post;
   const nextCursor =
-    hasMore && postsToReturn.length > 0
-      ? postsToReturn[postsToReturn.length - 1]?.post?.id || null
-      : null;
+    hasMore && lastPost ? `${lastPost.bumpedAt}|${lastPost.id}` : null;
 
   // Collect all profile IDs and post IDs for batch loading
   const profileIds = new Set<string>();
@@ -2566,6 +2575,7 @@ export async function createPost(
       contentWarning: contentWarning || null,
       scheduledAt: scheduledAt || null,
       publishedAt: scheduledAt ? null : sql`NOW()`,
+      bumpedAt: inReplyToId ? null : sql`NOW()`,
     })
     .returning();
 
@@ -2582,6 +2592,14 @@ export async function createPost(
     }));
 
     await db.insert(postImageTable).values(postImageInserts);
+  }
+
+  // Bump root post's bumpedAt when a reply is created
+  if (rootPostId) {
+    await db
+      .update(postTable)
+      .set({ bumpedAt: sql`NOW()` })
+      .where(eq(postTable.id, rootPostId));
   }
 
   // Keep track of who already received a reply notification

@@ -1134,6 +1134,10 @@ export const post = pgTable(
       withTimezone: true,
       mode: "string",
     }),
+    bumpedAt: timestamp("bumped_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
   },
   (table) => [
     index("idx_post_depth").using(
@@ -1154,6 +1158,11 @@ export const post = pgTable(
       "btree",
       table.communityId.asc().nullsLast().op("uuid_ops"),
       table.createdAt.desc().nullsLast().op("timestamptz_ops"),
+    ),
+    index("idx_post_community_id_bumped").using(
+      "btree",
+      table.communityId.asc().nullsLast().op("uuid_ops"),
+      table.bumpedAt.desc().nullsLast().op("timestamptz_ops"),
     ),
     index("idx_post_scheduled_at").using(
       "btree",
