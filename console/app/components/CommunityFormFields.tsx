@@ -18,6 +18,7 @@ export interface CommunityFormData {
   profile_name: string;
   mute_new_members: boolean;
   show_all_replies: boolean;
+  bump_on_reply: boolean;
 }
 
 interface CommunityFormFieldsProps {
@@ -75,6 +76,7 @@ export function CommunityFormFields({
   const recruitingId = useId();
   const muteNewMembersId = useId();
   const showAllRepliesId = useId();
+  const bumpOnReplyId = useId();
 
   const communityCreationYear = existingCommunity
     ? new Date(existingCommunity.starts_at).getFullYear()
@@ -405,6 +407,33 @@ export function CommunityFormFields({
           <FieldDescription>
             타임라인에서 모든 답글을 펼쳐서 표시합니다. 비활성화하면 사용자가
             참여하거나 언급된 답글만 기본으로 표시됩니다.
+          </FieldDescription>
+        </div>
+      </Field>
+
+      <Field orientation="horizontal">
+        <Checkbox
+          id={bumpOnReplyId}
+          name="bump_on_reply"
+          checked={formData.bump_on_reply}
+          onCheckedChange={(checked) => {
+            const event = {
+              target: {
+                name: "bump_on_reply",
+                type: "checkbox",
+                checked: checked === true,
+                value: "",
+              },
+            };
+            onInputChange(event as React.ChangeEvent<HTMLInputElement>);
+          }}
+        />
+        <div className="space-y-1">
+          <FieldLabel htmlFor={bumpOnReplyId}>
+            답글 시 게시물 끌어올리기
+          </FieldLabel>
+          <FieldDescription>
+            새 답글이 달리면 해당 게시물을 타임라인 상단으로 끌어올립니다.
           </FieldDescription>
         </div>
       </Field>

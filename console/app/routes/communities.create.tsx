@@ -36,6 +36,7 @@ export default function CreateCommunity() {
     profile_name: "",
     mute_new_members: false,
     show_all_replies: false,
+    bump_on_reply: false,
   });
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [startDate, setStartDate] = useState<Date>();
@@ -184,6 +185,7 @@ export default function CreateCommunity() {
         profile_name: formData.profile_name,
         mute_new_members: formData.mute_new_members,
         show_all_replies: formData.show_all_replies,
+        bump_on_reply: formData.bump_on_reply,
       };
 
       await api.console.communities.$post({

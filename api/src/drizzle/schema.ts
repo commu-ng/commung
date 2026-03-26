@@ -223,6 +223,7 @@ export const community = pgTable(
     description: text(),
     muteNewMembers: boolean("mute_new_members").notNull().default(false),
     showAllReplies: boolean("show_all_replies").notNull().default(false),
+    bumpOnReply: boolean("bump_on_reply").notNull().default(false),
   },
   (table) => [
     unique("community_slug_key").on(table.slug),

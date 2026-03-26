@@ -1,0 +1,1 @@
+ALTER TABLE "community" ADD COLUMN "bump_on_reply" boolean DEFAULT false NOT NULL;

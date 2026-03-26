@@ -134,6 +134,13 @@
       "when": 1774518692495,
       "tag": "0018_handy_rafael_vega",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1774529667215,
+      "tag": "0019_safe_crusher_hogan",
+      "breakpoints": true
     }
   ]
 }

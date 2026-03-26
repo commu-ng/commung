@@ -962,6 +962,7 @@ export async function getPosts(
   cursor?: string,
   profileId?: string,
   showAllReplies?: boolean,
+  bumpOnReply?: boolean,
 ) {
   // Build base conditions (without cursor) for count query
   const baseConditions = [
@@ -974,14 +975,15 @@ export async function getPosts(
   // Build query conditions (with cursor)
   const queryConditions = [...baseConditions];
   if (cursor) {
-    // Cursor format: "bumpedAt|id" for composite cursor
-    const [cursorBumpedAt, cursorId] = cursor.split("|");
-    if (cursorBumpedAt && cursorId) {
-      queryConditions.push(
-        sql`(${postTable.bumpedAt}, ${postTable.id}) < (${cursorBumpedAt}, ${cursorId})`,
-      );
+    if (bumpOnReply) {
+      // Cursor format: "bumpedAt|id" for composite cursor
+      const [cursorBumpedAt, cursorId] = cursor.split("|");
+      if (cursorBumpedAt && cursorId) {
+        queryConditions.push(
+          sql`(${postTable.bumpedAt}, ${postTable.id}) < (${cursorBumpedAt}, ${cursorId})`,
+        );
+      }
     } else {
-      // Fallback for legacy cursors (just an ID)
       queryConditions.push(sql`${postTable.id} < ${cursor}`);
     }
   }
@@ -995,7 +997,11 @@ export async function getPosts(
       .from(postTable)
       .leftJoin(profileTable, eq(postTable.authorId, profileTable.id))
       .where(and(...queryConditions, eq(profileTable.communityId, communityId)))
-      .orderBy(desc(postTable.bumpedAt), desc(postTable.id))
+      .orderBy(
+        ...(bumpOnReply
+          ? [desc(postTable.bumpedAt), desc(postTable.id)]
+          : [desc(postTable.id)]),
+      )
       .limit(limit + 1),
     // Count total posts
     db
@@ -1022,10 +1028,14 @@ export async function getPosts(
   const hasMore = posts.length > limit;
   // Remove the extra item if we have more
   const postsToReturn = hasMore ? posts.slice(0, limit) : posts;
-  // Get the last post's bumpedAt|id as the next cursor
+  // Get the next cursor based on ordering mode
   const lastPost = postsToReturn[postsToReturn.length - 1]?.post;
   const nextCursor =
-    hasMore && lastPost ? `${lastPost.bumpedAt}|${lastPost.id}` : null;
+    hasMore && lastPost
+      ? bumpOnReply
+        ? `${lastPost.bumpedAt}|${lastPost.id}`
+        : lastPost.id
+      : null;
 
   // Collect all profile IDs and post IDs for batch loading
   const profileIds = new Set<string>();

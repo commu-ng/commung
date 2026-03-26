@@ -121,6 +121,7 @@ export const communityCreateRequestSchema = z.object({
   description: z.string().nullable().optional(),
   mute_new_members: z.boolean().optional(),
   show_all_replies: z.boolean().optional(),
+  bump_on_reply: z.boolean().optional(),
 });
 
 export const communityUpdateRequestSchema = z.object({
@@ -146,6 +147,7 @@ export const communityUpdateRequestSchema = z.object({
   description_image_ids: z.array(z.uuid()).optional(),
   mute_new_members: z.boolean().optional(),
   show_all_replies: z.boolean().optional(),
+  bump_on_reply: z.boolean().optional(),
 });
 
 export const imageCreateRequestSchema = z.object({

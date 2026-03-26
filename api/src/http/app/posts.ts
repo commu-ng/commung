@@ -153,6 +153,7 @@ export const postsRouter = new Hono<{ Variables: AuthVariables }>()
         cursor,
         profile_id,
         community.showAllReplies,
+        community.bumpOnReply,
       );
 
       return c.json(result);
