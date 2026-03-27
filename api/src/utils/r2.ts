@@ -67,13 +67,21 @@ export function validateImageFile(
   fileSize: number,
   filename?: string,
 ): [boolean, string] {
-  if (!POST_CONFIG.IMAGE.ALLOWED_MIME_TYPES.includes(contentType)) {
+  if (
+    !(POST_CONFIG.IMAGE.ALLOWED_MIME_TYPES as ReadonlyArray<string>).includes(
+      contentType,
+    )
+  ) {
     return [false, "Only image files are allowed"];
   }
 
   if (filename) {
     const ext = filename.split(".").pop()?.toLowerCase() || "";
-    if (!POST_CONFIG.IMAGE.ALLOWED_EXTENSIONS.includes(ext)) {
+    if (
+      !(POST_CONFIG.IMAGE.ALLOWED_EXTENSIONS as ReadonlyArray<string>).includes(
+        ext,
+      )
+    ) {
       return [false, "File extension is not allowed"];
     }
   }

@@ -87,7 +87,7 @@ export function MastodonLayout({
         <main
           className={
             showAuthenticatedLayout
-              ? "min-h-screen border-x border-border pb-14 md:pb-0"
+              ? "min-h-screen md:border-x md:border-border pb-14 md:pb-0"
               : "min-h-screen"
           }
         >
