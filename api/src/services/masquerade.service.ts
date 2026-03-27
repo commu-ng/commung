@@ -1,7 +1,9 @@
 import { and, desc, eq, ilike, isNull, ne, or, sql } from "drizzle-orm";
 import { db } from "../db";
 import {
+  community as communityTable,
   masqueradeAuditLog as masqueradeAuditLogTable,
+  membership as membershipTable,
   session as sessionTable,
   user as userTable,
 } from "../drizzle/schema";
@@ -267,12 +269,56 @@ export async function listUsersForMasquerade(
     limit,
   });
 
+  // Fetch owned communities for all returned users in one query
+  const userIds = users.map((u) => u.id);
+  const ownedCommunities =
+    userIds.length > 0
+      ? await db
+          .select({
+            userId: membershipTable.userId,
+            communityId: communityTable.id,
+            communityName: communityTable.name,
+            communitySlug: communityTable.slug,
+          })
+          .from(membershipTable)
+          .innerJoin(
+            communityTable,
+            and(
+              eq(membershipTable.communityId, communityTable.id),
+              isNull(communityTable.deletedAt),
+            ),
+          )
+          .where(
+            and(
+              sql`${membershipTable.userId} IN ${userIds}`,
+              eq(membershipTable.role, "owner"),
+              sql`${membershipTable.activatedAt} IS NOT NULL`,
+            ),
+          )
+      : [];
+
+  // Group owned communities by user ID
+  const communitiesByUser = new Map<
+    string,
+    Array<{ id: string; name: string; slug: string }>
+  >();
+  for (const row of ownedCommunities) {
+    const list = communitiesByUser.get(row.userId) ?? [];
+    list.push({
+      id: row.communityId,
+      name: row.communityName,
+      slug: row.communitySlug,
+    });
+    communitiesByUser.set(row.userId, list);
+  }
+
   return users.map((user) => ({
     id: user.id,
     login_name: user.loginName,
     email: user.email,
     created_at: user.createdAt,
     is_admin: user.isAdmin,
+    owned_communities: communitiesByUser.get(user.id) ?? [],
   }));
 }
 

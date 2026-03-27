@@ -8,11 +8,13 @@ import {
   UserCog,
   Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Checkbox } from "~/components/ui/checkbox";
 import {
   Empty,
   EmptyDescription,
@@ -40,12 +42,19 @@ export function meta(_args: Route.MetaArgs) {
   ];
 }
 
+interface OwnedCommunity {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 interface User {
   id: string;
   login_name: string;
   email: string | null;
   created_at: string;
   is_admin: boolean;
+  owned_communities: OwnedCommunity[];
 }
 
 async function fetchUsers(search?: string): Promise<User[]> {
@@ -67,6 +76,8 @@ export default function AdminMasquerade() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [communityOwnersOnly, setCommunityOwnersOnly] = useState(false);
+  const communityOwnersCheckboxId = useId();
 
   // Debounce search query to prevent API calls on every keystroke
   useEffect(() => {
@@ -87,6 +98,10 @@ export default function AdminMasquerade() {
     queryFn: () => fetchUsers(debouncedSearch),
     enabled: isAuthenticated,
   });
+
+  const filteredUsers = communityOwnersOnly
+    ? users?.filter((u) => u.owned_communities.length > 0)
+    : users;
 
   const startMasqueradeMutation = useMutation({
     mutationFn: async (targetUserId: string) => {
@@ -220,10 +235,10 @@ export default function AdminMasquerade() {
           <CardTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              전체 사용자 ({users?.length || 0}명)
+              전체 사용자 ({filteredUsers?.length || 0}명)
             </span>
           </CardTitle>
-          <div className="mt-4">
+          <div className="mt-4 flex items-center gap-4">
             <Input
               type="text"
               placeholder="사용자 검색 (로그인 이름, 이메일, 또는 UUID)"
@@ -231,6 +246,18 @@ export default function AdminMasquerade() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="max-w-md"
             />
+            <div className="flex items-center gap-2 text-sm whitespace-nowrap">
+              <Checkbox
+                id={communityOwnersCheckboxId}
+                checked={communityOwnersOnly}
+                onCheckedChange={(checked) =>
+                  setCommunityOwnersOnly(checked === true)
+                }
+              />
+              <label htmlFor={communityOwnersCheckboxId} className="cursor-pointer">
+                커뮤니티 소유자만
+              </label>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -240,7 +267,7 @@ export default function AdminMasquerade() {
               검색 중...
             </div>
           )}
-          {!users || users.length === 0 ? (
+          {!filteredUsers || filteredUsers.length === 0 ? (
             <Empty>
               <EmptyHeader>
                 <EmptyMedia variant="icon">
@@ -261,12 +288,13 @@ export default function AdminMasquerade() {
                   <TableHead>로그인 이름</TableHead>
                   <TableHead>이메일</TableHead>
                   <TableHead>역할</TableHead>
+                  <TableHead>소유 커뮤니티</TableHead>
                   <TableHead>가입일</TableHead>
                   <TableHead className="text-right">작업</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((targetUser) => (
+                {filteredUsers.map((targetUser) => (
                   <TableRow key={targetUser.id}>
                     <TableCell className="font-medium">
                       {targetUser.login_name}
@@ -282,6 +310,19 @@ export default function AdminMasquerade() {
                         <span className="text-xs text-muted-foreground">
                           일반 사용자
                         </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {targetUser.owned_communities.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {targetUser.owned_communities.map((c) => (
+                            <Badge key={c.id} variant="secondary">
+                              {c.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
                       )}
                     </TableCell>
                     <TableCell>
