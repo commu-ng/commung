@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   FileText,
+  Globe,
   Home,
   LogIn,
   MessageSquare,
@@ -202,6 +203,12 @@ export function Sidebar() {
 
             {user?.is_admin && (
               <NavSection title="관리자">
+                <NavLink
+                  to="/admin/communities"
+                  icon={<Globe className="h-4 w-4" />}
+                >
+                  커뮤니티 관리
+                </NavLink>
                 <NavLink
                   to="/admin/boards"
                   icon={<Settings className="h-4 w-4" />}
