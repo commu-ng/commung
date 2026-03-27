@@ -41,6 +41,29 @@ export const consoleAdminCommunitiesRouter = new Hono<{
     const { sort, days } = c.req.valid("query");
     const since = sql`NOW() - INTERVAL '1 day' * ${days}`;
 
+    const ownerSubquery = db
+      .select({
+        communityId: membershipTable.communityId,
+        userId: userTable.id,
+        loginName: userTable.loginName,
+      })
+      .from(membershipTable)
+      .innerJoin(userTable, eq(userTable.id, membershipTable.userId))
+      .where(
+        and(
+          eq(membershipTable.role, "owner"),
+          sql`${membershipTable.activatedAt} IS NOT NULL`,
+        ),
+      )
+      .as("owner");
+
+    const memberCountExpr = count(
+      sql`DISTINCT CASE WHEN ${membershipTable.activatedAt} IS NOT NULL THEN ${membershipTable.id} END`,
+    );
+    const postCountExpr = count(
+      sql`DISTINCT CASE WHEN ${postTable.id} IS NOT NULL AND ${postTable.createdAt} > ${since} THEN ${postTable.id} END`,
+    );
+
     const communities = await db
       .select({
         id: communityTable.id,
@@ -50,14 +73,10 @@ export const consoleAdminCommunitiesRouter = new Hono<{
         startsAt: communityTable.startsAt,
         endsAt: communityTable.endsAt,
         isRecruiting: communityTable.isRecruiting,
-        memberCount: count(
-          sql`DISTINCT CASE WHEN ${membershipTable.activatedAt} IS NOT NULL THEN ${membershipTable.id} END`,
-        ),
-        postCount: count(
-          sql`DISTINCT CASE WHEN ${postTable.id} IS NOT NULL AND ${postTable.createdAt} > ${since} THEN ${postTable.id} END`,
-        ),
-        ownerUserId: userTable.id,
-        ownerLoginName: userTable.loginName,
+        memberCount: memberCountExpr,
+        postCount: postCountExpr,
+        ownerUserId: ownerSubquery.userId,
+        ownerLoginName: ownerSubquery.loginName,
       })
       .from(communityTable)
       .leftJoin(
@@ -71,30 +90,15 @@ export const consoleAdminCommunitiesRouter = new Hono<{
           isNull(postTable.deletedAt),
         ),
       )
-      .leftJoin(
-        userTable,
-        and(
-          eq(userTable.id, membershipTable.userId),
-          eq(membershipTable.role, "owner"),
-          sql`${membershipTable.activatedAt} IS NOT NULL`,
-        ),
-      )
+      .leftJoin(ownerSubquery, eq(ownerSubquery.communityId, communityTable.id))
       .where(isNull(communityTable.deletedAt))
-      .groupBy(communityTable.id, userTable.id, userTable.loginName)
+      .groupBy(communityTable.id, ownerSubquery.userId, ownerSubquery.loginName)
       .orderBy(
         sort === "members"
-          ? desc(
-              count(
-                sql`DISTINCT CASE WHEN ${membershipTable.activatedAt} IS NOT NULL THEN ${membershipTable.id} END`,
-              ),
-            )
+          ? desc(memberCountExpr)
           : sort === "created"
             ? desc(communityTable.createdAt)
-            : desc(
-                count(
-                  sql`DISTINCT CASE WHEN ${postTable.id} IS NOT NULL AND ${postTable.createdAt} > ${since} THEN ${postTable.id} END`,
-                ),
-              ),
+            : desc(postCountExpr),
       );
 
     return c.json({
