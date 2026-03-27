@@ -12,6 +12,7 @@ import {
   PenSquare,
   Search,
   Settings,
+  User,
   UserCheck,
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
@@ -19,6 +20,7 @@ import { ProfileSwitcher } from "~/components/profile-switcher";
 import { ThemeToggle } from "~/components/ThemeToggle";
 import { Button } from "~/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "~/components/ui/sheet";
+import { useAuth } from "~/hooks/useAuth";
 
 interface MobileNavDrawerProps {
   communityName: string;
@@ -35,6 +37,7 @@ export function MobileNavDrawer({
 }: MobileNavDrawerProps) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const { currentProfile } = useAuth();
 
   const getNavLinkClasses = (path: string) => {
     const isActive =
@@ -53,6 +56,15 @@ export function MobileNavDrawer({
   };
 
   const navigationItems = [
+    ...(currentProfile
+      ? [
+          {
+            to: `/@${currentProfile.username}`,
+            icon: User,
+            label: "프로필",
+          },
+        ]
+      : []),
     { to: "/", icon: Home, label: "홈" },
     {
       to: "/notifications",
