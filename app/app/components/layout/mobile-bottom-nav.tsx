@@ -1,6 +1,5 @@
-import { Bell, Home, MessageCircle, Search, User } from "lucide-react";
+import { Bell, Home, LayoutGrid, Megaphone, MessageCircle } from "lucide-react";
 import { Link, useLocation } from "react-router";
-import { useAuth } from "~/hooks/useAuth";
 
 interface MobileBottomNavProps {
   unreadCount: number;
@@ -12,7 +11,6 @@ export function MobileBottomNav({
   unreadMessageCount,
 }: MobileBottomNavProps) {
   const location = useLocation();
-  const { currentProfile } = useAuth();
 
   const getNavClasses = (path: string) => {
     const isActive =
@@ -27,7 +25,8 @@ export function MobileBottomNav({
 
   const navItems = [
     { to: "/", icon: Home },
-    { to: "/search", icon: Search },
+    { to: "/boards", icon: LayoutGrid },
+    { to: "/announcements", icon: Megaphone },
     {
       to: "/notifications",
       icon: Bell,
@@ -37,10 +36,6 @@ export function MobileBottomNav({
       to: "/messages",
       icon: MessageCircle,
       badge: unreadMessageCount,
-    },
-    {
-      to: currentProfile ? `/@${currentProfile.username}` : "/settings",
-      icon: User,
     },
   ];
 
