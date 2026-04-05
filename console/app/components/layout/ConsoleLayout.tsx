@@ -1,5 +1,5 @@
 import { Menu, X } from "lucide-react";
-import { type MouseEvent, useState } from "react";
+import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Sidebar } from "./Sidebar";
 
@@ -9,12 +9,6 @@ interface ConsoleLayoutProps {
 
 export function ConsoleLayout({ children }: ConsoleLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const handleSidebarClick = (e: MouseEvent) => {
-    if ((e.target as HTMLElement).closest("a")) {
-      setSidebarOpen(false);
-    }
-  };
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -32,13 +26,8 @@ export function ConsoleLayout({ children }: ConsoleLayoutProps) {
             onClick={() => setSidebarOpen(false)}
             aria-label="Close sidebar"
           />
-          {/* biome-ignore lint/a11y/useKeyWithClickEvents: event delegation to close sidebar on link click */}
-          {/* biome-ignore lint/a11y/noStaticElementInteractions: event delegation to close sidebar on link click */}
-          <div
-            className="fixed inset-y-0 left-0 z-50 w-52"
-            onClick={handleSidebarClick}
-          >
-            <Sidebar />
+          <div className="fixed inset-y-0 left-0 z-50 w-52">
+            <Sidebar onNavigate={() => setSidebarOpen(false)} />
           </div>
         </div>
       )}

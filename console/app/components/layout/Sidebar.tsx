@@ -59,9 +59,10 @@ interface NavLinkProps {
   icon: React.ReactNode;
   children: React.ReactNode;
   badge?: number;
+  onClick?: () => void;
 }
 
-function NavLink({ to, icon, children, badge }: NavLinkProps) {
+function NavLink({ to, icon, children, badge, onClick }: NavLinkProps) {
   const location = useLocation();
   const isActive =
     location.pathname === to || location.pathname.startsWith(`${to}/`);
@@ -69,6 +70,7 @@ function NavLink({ to, icon, children, badge }: NavLinkProps) {
   return (
     <Link
       to={to}
+      onClick={onClick}
       className={cn(
         "flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors",
         isActive
@@ -104,7 +106,11 @@ function NavSection({
   );
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  onNavigate?: () => void;
+}
+
+export function Sidebar({ onNavigate }: SidebarProps) {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
 
@@ -136,7 +142,7 @@ export function Sidebar() {
     <aside className="w-52 border-r border-border bg-card flex flex-col h-screen sticky top-0">
       {/* Logo */}
       <div className="p-4 border-b border-border">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2" onClick={onNavigate}>
           <span className="commu-ng">
             <Star className="h-8 w-8" />
           </span>
@@ -162,7 +168,11 @@ export function Sidebar() {
                   <AlertCircle className="h-3 w-3" />
                   이메일 인증 필요
                 </div>
-                <Link to="/account" className="text-destructive underline">
+                <Link
+                  to="/account"
+                  className="text-destructive underline"
+                  onClick={onNavigate}
+                >
                   계정 설정에서 인증하세요
                 </Link>
               </div>
@@ -173,15 +183,21 @@ export function Sidebar() {
                 to="/communities/mine"
                 icon={<Home className="h-4 w-4" />}
                 badge={totalPendingApplications}
+                onClick={onNavigate}
               >
                 내 커뮤
               </NavLink>
-              <NavLink to="/communities" icon={<Search className="h-4 w-4" />}>
+              <NavLink
+                to="/communities"
+                icon={<Search className="h-4 w-4" />}
+                onClick={onNavigate}
+              >
                 커뮤 둘러보기
               </NavLink>
               <NavLink
                 to="/applications"
                 icon={<FileText className="h-4 w-4" />}
+                onClick={onNavigate}
               >
                 내 지원서
               </NavLink>
@@ -194,6 +210,7 @@ export function Sidebar() {
                     key={board.id}
                     to={`/boards/${board.slug}`}
                     icon={<MessageSquare className="h-4 w-4" />}
+                    onClick={onNavigate}
                   >
                     {board.name}
                   </NavLink>
@@ -206,18 +223,21 @@ export function Sidebar() {
                 <NavLink
                   to="/admin/communities"
                   icon={<Globe className="h-4 w-4" />}
+                  onClick={onNavigate}
                 >
                   커뮤니티 관리
                 </NavLink>
                 <NavLink
                   to="/admin/boards"
                   icon={<Settings className="h-4 w-4" />}
+                  onClick={onNavigate}
                 >
                   게시판 관리
                 </NavLink>
                 <NavLink
                   to="/admin/masquerade"
                   icon={<UserCog className="h-4 w-4" />}
+                  onClick={onNavigate}
                 >
                   사용자 전환
                 </NavLink>
@@ -227,7 +247,11 @@ export function Sidebar() {
         ) : (
           <>
             <NavSection title="둘러보기">
-              <NavLink to="/communities" icon={<Search className="h-4 w-4" />}>
+              <NavLink
+                to="/communities"
+                icon={<Search className="h-4 w-4" />}
+                onClick={onNavigate}
+              >
                 커뮤 둘러보기
               </NavLink>
             </NavSection>
@@ -239,6 +263,7 @@ export function Sidebar() {
                     key={board.id}
                     to={`/boards/${board.slug}`}
                     icon={<MessageSquare className="h-4 w-4" />}
+                    onClick={onNavigate}
                   >
                     {board.name}
                   </NavLink>
@@ -248,10 +273,18 @@ export function Sidebar() {
 
             {!isAuthPage && (
               <NavSection title="계정">
-                <NavLink to="/login" icon={<LogIn className="h-4 w-4" />}>
+                <NavLink
+                  to="/login"
+                  icon={<LogIn className="h-4 w-4" />}
+                  onClick={onNavigate}
+                >
                   로그인
                 </NavLink>
-                <NavLink to="/signup" icon={<UserPlus className="h-4 w-4" />}>
+                <NavLink
+                  to="/signup"
+                  icon={<UserPlus className="h-4 w-4" />}
+                  onClick={onNavigate}
+                >
                   회원가입
                 </NavLink>
               </NavSection>
@@ -270,7 +303,7 @@ export function Sidebar() {
               asChild
               className="flex-1 justify-start"
             >
-              <Link to="/account">
+              <Link to="/account" onClick={onNavigate}>
                 <UserIcon className="h-4 w-4 mr-2" />
                 <span className="truncate">
                   {user?.login_name || user?.email}
