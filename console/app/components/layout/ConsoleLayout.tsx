@@ -1,5 +1,6 @@
 import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router";
 import { Button } from "~/components/ui/button";
 import { Sidebar } from "./Sidebar";
 
@@ -9,6 +10,12 @@ interface ConsoleLayoutProps {
 
 export function ConsoleLayout({ children }: ConsoleLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: close sidebar on navigation
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
 
   return (
     <div className="flex min-h-screen bg-background">
