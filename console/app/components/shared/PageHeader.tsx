@@ -60,7 +60,7 @@ export function PageHeader({
   const t = TONES[tone];
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-card/70 backdrop-blur-sm shadow-marsh px-6 sm:px-8 py-7 mb-6">
+    <section className="relative isolate transform-gpu overflow-hidden rounded-3xl border border-border/70 bg-card/70 backdrop-blur-sm shadow-marsh px-6 sm:px-8 py-7 mb-6">
       <div
         className={`pointer-events-none absolute -top-20 -right-16 h-56 w-56 rounded-full bg-gradient-to-br ${t.blob} blur-2xl`}
       />
