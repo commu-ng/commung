@@ -102,7 +102,7 @@ export function CommunityCard({ community }: CommunityCardProps) {
             </Badge>
           )}
           {community.is_recruiting && (
-            <Badge className="bg-mint/40 dark:bg-mint/25 text-mint-ink border border-mint/60 shadow-marsh">
+            <Badge className="bg-card/85 backdrop-blur-md text-mint-ink border border-mint/40 shadow-marsh">
               <Sparkles className="h-3 w-3 mr-1" />
               모집 중
             </Badge>
