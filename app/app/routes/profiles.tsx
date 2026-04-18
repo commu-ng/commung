@@ -49,7 +49,7 @@ export default function Profiles() {
         <main className="max-w-4xl mx-auto px-4 py-8">
           <div className="mb-6">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="이름이나 사용자명으로 검색..."
@@ -72,8 +72,8 @@ export default function Profiles() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Users className="h-8 w-8 text-red-500" />
+          <div className="w-16 h-16 bg-destructive/15 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Users className="h-8 w-8 text-destructive" />
           </div>
           <h1 className="text-xl font-semibold text-foreground mb-2">
             {error instanceof Error
@@ -82,7 +82,7 @@ export default function Profiles() {
           </h1>
           <Link
             to="/"
-            className="text-blue-600 hover:text-blue-700 font-medium"
+            className="text-primary hover:text-primary/90 font-medium"
           >
             홈으로 돌아가기
           </Link>
@@ -98,24 +98,24 @@ export default function Profiles() {
         {/* Search Bar */}
         <div className="mb-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <input
               type="text"
               placeholder="이름이나 사용자명으로 검색..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+              className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
             />
           </div>
         </div>
 
         {/* Profiles Grid */}
         {filteredProfiles.length === 0 ? (
-          <div className="bg-card rounded-2xl shadow-sm border border-border p-12 text-center">
+          <div className="bg-card rounded-2xl shadow-marsh border border-border p-12 text-center">
             {searchQuery ? (
               <>
                 <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Search className="h-8 w-8 text-gray-400" />
+                  <Search className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground mb-2">
                   검색 결과가 없습니다
@@ -126,15 +126,15 @@ export default function Profiles() {
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-primary hover:text-primary/90 font-medium"
                 >
                   모든 멤버 보기
                 </button>
               </>
             ) : (
               <>
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <UserPlus className="h-8 w-8 text-blue-500" />
+                <div className="w-16 h-16 bg-primary/15 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <UserPlus className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground mb-2">
                   아직 멤버가 없습니다
@@ -151,7 +151,7 @@ export default function Profiles() {
               <Link
                 key={profile.id}
                 to={`/@${profile.username}`}
-                className="bg-card rounded-2xl shadow-sm border border-border p-6 hover:shadow-md hover:border-border transition-all duration-200 group"
+                className="bg-card rounded-2xl shadow-marsh border border-border p-6 hover:shadow-marsh-lg hover:border-border transition-all duration-200 group"
               >
                 <div className="flex items-start gap-4">
                   <ProfileAvatar
@@ -163,7 +163,7 @@ export default function Profiles() {
                     showOnlineStatus={true}
                   />
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-foreground group-hover:text-blue-600 transition-colors truncate">
+                    <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors truncate">
                       {profile.name}
                     </h3>
                     <p className="text-sm text-muted-foreground mb-2">
@@ -174,7 +174,7 @@ export default function Profiles() {
                         {profile.bio}
                       </p>
                     )}
-                    <p className="text-xs text-gray-400 mt-3">
+                    <p className="text-xs text-muted-foreground mt-3">
                       가입일:{" "}
                       {new Date(profile.created_at).toLocaleDateString("ko-KR")}
                     </p>

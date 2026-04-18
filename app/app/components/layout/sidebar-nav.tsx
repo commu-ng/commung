@@ -2,7 +2,7 @@ import {
   Bell,
   Bookmark,
   ExternalLink,
-  Hash,
+  Heart,
   Home,
   LayoutList,
   Megaphone,
@@ -44,14 +44,14 @@ export function SidebarNav({
       (path !== "/" && location.pathname.startsWith(path));
 
     const baseClasses = collapsed
-      ? "flex items-center justify-center p-3 rounded-full transition-colors"
-      : "flex items-center gap-3 px-4 py-3 text-base rounded-full transition-colors w-full";
+      ? "flex items-center justify-center p-3 rounded-2xl transition-all duration-200"
+      : "flex items-center gap-3 px-4 py-2.5 text-base rounded-2xl transition-all duration-200 w-full";
 
     if (isActive) {
-      return `${baseClasses} text-foreground bg-accent font-bold`;
+      return `${baseClasses} text-primary bg-primary/12 font-bold shadow-marsh`;
     }
 
-    return `${baseClasses} text-foreground hover:bg-accent`;
+    return `${baseClasses} text-foreground/80 hover:text-foreground hover:bg-accent/70 hover:-translate-y-px`;
   };
 
   const navigationItems = [
@@ -91,7 +91,7 @@ export function SidebarNav({
 
   return (
     <aside
-      className={`flex flex-col h-screen sticky top-0 ${collapsed ? "w-[72px] items-center" : "w-[280px]"} py-2 px-3`}
+      className={`flex flex-col h-screen sticky top-0 ${collapsed ? "w-[72px] items-center" : "w-[280px]"} py-3 px-3`}
     >
       {/* Community Logo/Name */}
       <div
@@ -99,19 +99,24 @@ export function SidebarNav({
       >
         <Link
           to="/"
-          className="w-10 h-10 bg-primary rounded-full flex items-center justify-center flex-shrink-0"
+          aria-label="홈"
+          className="bg-logo relative w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-marsh transition-transform duration-300 hover:rotate-[-6deg] hover:scale-105"
         >
-          <Hash className="h-5 w-5 text-primary-foreground" />
+          <Heart
+            className="h-5 w-5 text-primary-foreground"
+            fill="currentColor"
+            strokeWidth={1.5}
+          />
         </Link>
         {!collapsed && (
-          <h1 className="font-bold text-xl text-foreground truncate">
-            {communityName || "커뮤"}
+          <h1 className="font-display font-bold text-2xl text-foreground truncate tracking-tight">
+            {communityName || "커뮹"}
           </h1>
         )}
       </div>
 
       {/* Profile Switcher */}
-      <div className={`${collapsed ? "mt-2" : "mt-2 px-2"}`}>
+      <div className={`${collapsed ? "mt-2" : "mt-3 px-1"}`}>
         <ProfileSwitcher compact={collapsed} />
       </div>
 
@@ -127,16 +132,16 @@ export function SidebarNav({
               title={item.label}
             >
               <div className="relative">
-                <Icon className="h-6 w-6" />
+                <Icon className="h-[22px] w-[22px]" strokeWidth={2} />
                 {item.badge !== undefined && item.badge > 0 && (
-                  <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center px-1">
-                    <span className="text-[10px] text-white font-bold">
-                      {item.badge > 99 ? "99+" : item.badge}
-                    </span>
+                  <div className="marsh-badge">
+                    <span>{item.badge > 99 ? "99+" : item.badge}</span>
                   </div>
                 )}
               </div>
-              {!collapsed && <span className="text-lg">{item.label}</span>}
+              {!collapsed && (
+                <span className="text-[15px] tracking-tight">{item.label}</span>
+              )}
             </Link>
           );
         })}
@@ -144,10 +149,10 @@ export function SidebarNav({
         {/* Compose Button */}
         <Link to="/" className="mt-4">
           <Button
-            className={`${collapsed ? "w-12 h-12 p-0 rounded-full" : "w-full py-3 text-lg font-bold rounded-full"}`}
+            className={`${collapsed ? "w-12 h-12 p-0" : "w-full py-3 text-[15px]"}`}
             size={collapsed ? "icon" : "lg"}
           >
-            <PenSquare className={collapsed ? "h-5 w-5" : "h-5 w-5 mr-2"} />
+            <PenSquare className={collapsed ? "h-5 w-5" : "h-5 w-5"} />
             {!collapsed && "새 글"}
           </Button>
         </Link>
@@ -162,11 +167,11 @@ export function SidebarNav({
           <a
             target="_blank"
             href={consoleUrl}
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-full transition-colors"
             title="콘솔로 이동"
             rel="noreferrer"
           >
-            <ExternalLink className="h-4 w-4" />
+            <ExternalLink className="h-3.5 w-3.5" />
             <span>콘솔</span>
           </a>
         )}

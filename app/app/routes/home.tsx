@@ -93,7 +93,7 @@ export default function Home() {
             actions={
               <a
                 href={applyUrl}
-                className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center justify-center px-7 py-3 bg-primary text-primary-foreground font-semibold rounded-full shadow-marsh hover:shadow-marsh-lg hover:-translate-y-px transition-all"
               >
                 가입 신청하기
               </a>
@@ -108,7 +108,7 @@ export default function Home() {
     <main className="py-4">
       <div className="space-y-0">
         {/* Message Composer */}
-        <div className="border-b border-border">
+        <div className="border-b border-border/70">
           <MessageSender
             key={currentProfile?.id || "no-profile"}
             onPostSuccess={handlePostSuccess}

@@ -120,8 +120,8 @@ export function Header({
         <div className="relative">
           <Icon className="h-4 w-4" />
           {item.badge !== undefined && item.badge > 0 && (
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-              <span className="text-[8px] text-white font-bold">
+            <div className="marsh-badge w-3.5 h-3.5 min-w-0 -top-1 -right-1">
+              <span className="text-[8px] font-bold">
                 {item.badge > 9 ? "9+" : item.badge}
               </span>
             </div>

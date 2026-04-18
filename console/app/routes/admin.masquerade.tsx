@@ -216,9 +216,9 @@ export default function AdminMasquerade() {
         </p>
       </div>
 
-      <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6 flex gap-3">
-        <Shield className="h-5 w-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-amber-800 dark:text-amber-200">
+      <div className="bg-butter/40 border border-butter/60 rounded-lg p-4 mb-6 flex gap-3">
+        <Shield className="h-5 w-5 text-butter-ink flex-shrink-0 mt-0.5" />
+        <div className="text-sm text-butter-ink">
           <p className="font-semibold mb-1">보안 안내</p>
           <ul className="list-disc list-inside space-y-1">
             <li>모든 전환 활동은 감사 로그에 기록됩니다</li>
@@ -254,7 +254,10 @@ export default function AdminMasquerade() {
                   setCommunityOwnersOnly(checked === true)
                 }
               />
-              <label htmlFor={communityOwnersCheckboxId} className="cursor-pointer">
+              <label
+                htmlFor={communityOwnersCheckboxId}
+                className="cursor-pointer"
+              >
                 커뮤니티 소유자만
               </label>
             </div>
@@ -302,7 +305,7 @@ export default function AdminMasquerade() {
                     <TableCell>{targetUser.email || "-"}</TableCell>
                     <TableCell>
                       {targetUser.is_admin ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/50 px-2 py-1 rounded">
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-butter-ink bg-butter/40 px-2 py-1 rounded">
                           <Shield className="h-3 w-3" />
                           관리자
                         </span>

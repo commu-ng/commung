@@ -228,11 +228,11 @@ export default function Account() {
                   <div className="flex items-center gap-2">
                     <span>{user.email}</span>
                     {user.email_verified ? (
-                      <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-0.5 rounded">
+                      <span className="text-xs bg-mint/40 text-mint-ink px-2 py-0.5 rounded">
                         인증됨
                       </span>
                     ) : (
-                      <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 px-2 py-0.5 rounded">
+                      <span className="text-xs bg-butter/40 text-butter-ink px-2 py-0.5 rounded">
                         미인증
                       </span>
                     )}
@@ -283,7 +283,7 @@ export default function Account() {
               </FieldGroup>
 
               {emailMessage && (
-                <div className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 p-3 rounded mt-4">
+                <div className="text-sm text-mint-ink bg-mint/40 p-3 rounded mt-4">
                   {emailMessage}
                 </div>
               )}
@@ -344,7 +344,7 @@ export default function Account() {
               </FieldGroup>
 
               {message && (
-                <div className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 p-3 rounded mt-4">
+                <div className="text-sm text-mint-ink bg-mint/40 p-3 rounded mt-4">
                   {message}
                 </div>
               )}
@@ -393,15 +393,13 @@ export default function Account() {
         </Card>
 
         {/* Delete Account */}
-        <Card className="border-red-200 dark:border-red-800">
+        <Card className="border-destructive/30">
           <CardHeader>
-            <CardTitle className="text-red-600 dark:text-red-400">
-              계정 삭제
-            </CardTitle>
+            <CardTitle className="text-destructive">계정 삭제</CardTitle>
             <CardDescription>
               계정을 완전히 삭제합니다. 이 작업은 되돌릴 수 없습니다.
               <br />
-              <span className="font-medium text-red-600 dark:text-red-400">
+              <span className="font-medium text-destructive">
                 주의: 커뮤를 소유하고 있다면 먼저 커뮤를 삭제하거나 양도해야
                 합니다.
               </span>
@@ -426,13 +424,13 @@ export default function Account() {
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                  <DialogTitle className="text-red-600 dark:text-red-400">
+                  <DialogTitle className="text-destructive">
                     계정 삭제 확인
                   </DialogTitle>
                   <DialogDescription asChild>
                     <div className="space-y-2">
                       <p>정말로 계정을 삭제하시겠습니까?</p>
-                      <p className="font-medium text-red-600 dark:text-red-400">
+                      <p className="font-medium text-destructive">
                         이 작업은 되돌릴 수 없으며, 다음과 같은 결과가
                         발생합니다:
                       </p>
@@ -449,7 +447,7 @@ export default function Account() {
                 </DialogHeader>
 
                 {deleteEmailSent ? (
-                  <div className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 p-4 rounded">
+                  <div className="text-sm text-mint-ink bg-mint/40 p-4 rounded">
                     <p className="font-medium mb-2">
                       계정 삭제 확인 이메일이 전송되었습니다!
                     </p>
@@ -477,7 +475,7 @@ export default function Account() {
                     </FieldGroup>
 
                     {user?.email_verified && user?.email && (
-                      <div className="text-sm text-muted-foreground bg-blue-50 dark:bg-blue-900/20 p-3 rounded">
+                      <div className="text-sm text-muted-foreground bg-primary/15 p-3 rounded">
                         <p>
                           인증된 이메일 주소로 확인 링크가 전송됩니다:{" "}
                           <strong>{user.email}</strong>

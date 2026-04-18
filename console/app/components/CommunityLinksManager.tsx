@@ -269,11 +269,11 @@ export function CommunityLinksManager({
         {/* Links list */}
         {links.length === 0 && !isCreating ? (
           <div className="text-center py-8">
-            <LinkIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <h4 className="text-lg font-medium text-gray-900 mb-2">
+            <LinkIcon className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
+            <h4 className="text-lg font-medium text-foreground mb-2">
               아직 링크가 없습니다
             </h4>
-            <p className="text-gray-500 mb-4">
+            <p className="text-muted-foreground mb-4">
               첫 번째 커뮤 링크를 추가해보세요
             </p>
             <Button onClick={() => setIsCreating(true)}>
@@ -338,14 +338,16 @@ export function CommunityLinksManager({
                             href={link.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                            className="flex items-center gap-2 text-primary hover:text-primary/80 font-medium transition-colors"
                           >
                             <span>{link.title}</span>
                             <ExternalLink className="h-4 w-4" />
                           </a>
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">{link.url}</p>
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {link.url}
+                        </p>
+                        <p className="text-xs text-muted-foreground/80 mt-1">
                           생성일:{" "}
                           {new Date(link.created_at).toLocaleString("ko-KR")}
                         </p>
@@ -365,7 +367,7 @@ export function CommunityLinksManager({
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -385,7 +387,7 @@ export function CommunityLinksManager({
                               <DialogClose asChild>
                                 <Button
                                   onClick={() => deleteLink(link.id)}
-                                  className="bg-red-600 hover:bg-red-700"
+                                  className="bg-destructive text-white hover:bg-destructive/90"
                                 >
                                   삭제
                                 </Button>

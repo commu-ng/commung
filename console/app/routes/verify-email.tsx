@@ -86,7 +86,7 @@ export default function VerifyEmail() {
 
           {verificationStatus === "success" && (
             <div className="space-y-4">
-              <div className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/50 p-4 rounded-lg">
+              <div className="text-sm text-mint-ink bg-mint/40 p-4 rounded-lg">
                 <div className="font-medium mb-1">{message}</div>
                 {verifiedEmail && (
                   <div className="text-xs">인증된 이메일: {verifiedEmail}</div>
@@ -109,7 +109,7 @@ export default function VerifyEmail() {
 
           {verificationStatus === "error" && (
             <div className="space-y-4">
-              <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 p-4 rounded-lg">
+              <div className="text-sm text-destructive bg-destructive/15 p-4 rounded-lg">
                 {message}
               </div>
               <div className="flex flex-col gap-2">

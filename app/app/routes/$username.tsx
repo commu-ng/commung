@@ -173,7 +173,7 @@ export default function ProfileProfile() {
           <button
             type="button"
             onClick={() => navigate("/")}
-            className="text-blue-600 hover:text-blue-700 font-medium"
+            className="text-primary hover:text-primary/90 font-medium"
           >
             홈으로 돌아가기
           </button>
@@ -213,7 +213,7 @@ export default function ProfileProfile() {
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Profile Card */}
-          <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
+          <div className="bg-card rounded-2xl shadow-marsh border border-border overflow-hidden">
             {/* Profile Header */}
             <div
               className={`bg-gradient-to-r ${getGradientForUser(
@@ -227,21 +227,21 @@ export default function ProfileProfile() {
                   name={profile.name}
                   username={profile.username}
                   size="xl"
-                  className="bg-white bg-opacity-20"
+                  className="bg-white/20 backdrop-blur"
                 />
                 <div className="text-white">
                   <h2 className="text-2xl font-bold">{profile.name}</h2>
-                  <p className="text-blue-100 text-lg">@{profile.username}</p>
+                  <p className="text-white/90 text-lg">@{profile.username}</p>
                   {profile.bio && (
                     <div
-                      className="prose prose-sm dark:prose-invert text-blue-50 mt-2 leading-relaxed max-w-md prose-headings:text-white prose-a:text-blue-100 prose-a:hover:text-white prose-strong:text-white prose-code:text-blue-100"
+                      className="prose prose-sm dark:prose-invert text-white/95 mt-2 leading-relaxed max-w-md prose-headings:text-white prose-a:text-white/90 prose-a:hover:text-white prose-strong:text-white prose-code:text-white/90"
                       // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized html
                       dangerouslySetInnerHTML={{
                         __html: md.render(profile.bio),
                       }}
                     />
                   )}
-                  <div className="flex items-center gap-2 mt-3 text-blue-100">
+                  <div className="flex items-center gap-2 mt-3 text-white/90">
                     <Calendar className="h-4 w-4" />
                     <span className="text-sm">
                       {new Date(profile.created_at).toLocaleDateString("ko-KR")}
@@ -252,7 +252,7 @@ export default function ProfileProfile() {
                     <div className="mt-4">
                       <Link
                         to={`/messages/${profile.username}`}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 text-sm font-medium shadow-sm"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-card text-primary rounded-lg hover:bg-primary/15 hover:text-primary transition-all duration-200 text-sm font-medium shadow-marsh"
                       >
                         <MessageCircle className="h-4 w-4" />
                         메시지 보내기

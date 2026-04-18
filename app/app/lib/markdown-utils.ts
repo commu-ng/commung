@@ -36,7 +36,7 @@ export function getReadOnlyMarkdownInstance(): MarkdownIt {
       return `/@${username}`;
     },
     linkAttributes: () => ({
-      class: "text-blue-600 hover:text-blue-700 font-medium",
+      class: "text-primary hover:text-primary/80 font-medium",
     }),
   });
 
@@ -185,7 +185,7 @@ export function createMarkdownInstance(
       return exists ? `/@${username}` : null;
     },
     linkAttributes: () => ({
-      class: "text-blue-600 hover:text-blue-700 font-medium",
+      class: "text-primary hover:text-primary/80 font-medium",
     }),
   });
 }

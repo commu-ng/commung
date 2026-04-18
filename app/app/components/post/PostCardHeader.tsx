@@ -105,13 +105,13 @@ export function PostCardHeader({
               </span>
             </Link>
             {isAnnouncement && (
-              <div className="flex items-center gap-1 bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 px-2 py-1 rounded-full text-xs font-medium">
+              <div className="flex items-center gap-1 bg-butter/40 text-butter-ink dark:bg-butter/25 px-2.5 py-0.5 rounded-full text-xs font-semibold">
                 <Megaphone className="h-3 w-3" />
                 <span>공지사항</span>
               </div>
             )}
             {isPinned && (
-              <div className="flex items-center gap-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded-full text-xs font-medium">
+              <div className="flex items-center gap-1 bg-lilac/40 text-lilac-ink dark:bg-lilac/25 px-2.5 py-0.5 rounded-full text-xs font-semibold">
                 <Pin className="h-3 w-3" />
                 <span>고정됨</span>
               </div>
@@ -135,7 +135,7 @@ export function PostCardHeader({
           <button
             type="button"
             onClick={onReport}
-            className="text-muted-foreground hover:text-orange-500 p-2 rounded-lg hover:bg-background transition-colors"
+            className="text-muted-foreground hover:text-destructive p-2 rounded-full hover:bg-destructive/10 transition-colors"
             title="게시물 신고"
           >
             <Flag className="h-4 w-4" />
@@ -145,7 +145,7 @@ export function PostCardHeader({
           <button
             type="button"
             onClick={onEdit}
-            className="text-muted-foreground hover:text-blue-500 p-2 rounded-lg hover:bg-background transition-colors"
+            className="text-muted-foreground hover:text-primary p-2 rounded-full hover:bg-primary/10 transition-colors"
             title="게시물 수정"
           >
             <Edit className="h-4 w-4" />
@@ -156,7 +156,7 @@ export function PostCardHeader({
             <AlertDialogTrigger asChild>
               <button
                 type="button"
-                className="text-muted-foreground hover:text-red-500 p-2 rounded-lg hover:bg-background transition-colors"
+                className="text-muted-foreground hover:text-destructive p-2 rounded-full hover:bg-destructive/10 transition-colors"
                 title={isOwnPost ? "게시물 삭제" : "모더레이션 삭제"}
               >
                 {isOwnPost ? (
@@ -177,7 +177,7 @@ export function PostCardHeader({
                 <AlertDialogCancel>취소</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={onDelete}
-                  className="bg-red-600 hover:bg-red-700"
+                  className="bg-destructive text-white hover:bg-destructive/90"
                 >
                   삭제
                 </AlertDialogAction>

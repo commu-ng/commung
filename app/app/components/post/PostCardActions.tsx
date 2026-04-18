@@ -147,7 +147,7 @@ export function PostCardActions({
         onClick={onToggleReply}
         className={`inline-flex items-center gap-1 ${
           isReply ? "text-xs" : "text-sm"
-        } text-muted-foreground hover:text-blue-600 transition-colors`}
+        } text-muted-foreground hover:text-primary transition-colors`}
       >
         <MessageCircle className={isReply ? "h-3 w-3" : "h-4 w-4"} />
         <span>
@@ -168,8 +168,8 @@ export function PostCardActions({
             isReply ? "text-xs" : "text-sm"
           } ${
             isBookmarked
-              ? "text-blue-600"
-              : "text-muted-foreground hover:text-blue-600"
+              ? "text-primary"
+              : "text-muted-foreground hover:text-primary"
           } transition-colors disabled:opacity-50`}
         >
           <Bookmark
@@ -186,7 +186,7 @@ export function PostCardActions({
           onClick={onOpenDMModal}
           className={`inline-flex items-center gap-1 ${
             isReply ? "text-xs" : "text-sm"
-          } text-muted-foreground hover:text-blue-600 transition-colors`}
+          } text-muted-foreground hover:text-primary transition-colors`}
         >
           <SendIcon className={isReply ? "h-3 w-3" : "h-4 w-4"} />
           <span>메시지</span>
@@ -201,8 +201,8 @@ export function PostCardActions({
             isReply ? "text-xs" : "text-sm"
           } ${
             isPinned
-              ? "text-blue-600 dark:text-blue-400"
-              : "text-muted-foreground hover:text-blue-600 dark:hover:text-blue-400"
+              ? "text-primary"
+              : "text-muted-foreground hover:text-primary"
           } transition-colors disabled:opacity-50`}
         >
           <Pin

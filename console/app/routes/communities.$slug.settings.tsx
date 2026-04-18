@@ -417,7 +417,7 @@ export default function CommunityManagement() {
         <div className="max-w-4xl mx-auto">
           <Card>
             <CardContent className="p-6 text-center">
-              <div className="text-red-600 mb-4">
+              <div className="text-destructive mb-4">
                 {error ||
                   (communityError as Error)?.message ||
                   "오류가 발생했습니다"}
@@ -537,11 +537,13 @@ export default function CommunityManagement() {
               </div>
 
               {error && (
-                <div className="text-sm text-red-600 text-center">{error}</div>
+                <div className="text-sm text-destructive text-center">
+                  {error}
+                </div>
               )}
 
               {success && (
-                <div className="text-sm text-green-600 text-center">
+                <div className="text-sm text-mint-ink text-center">
                   {success}
                 </div>
               )}
@@ -602,7 +604,7 @@ export default function CommunityManagement() {
                 />
               </div>
 
-              {error && <div className="text-sm text-red-600">{error}</div>}
+              {error && <div className="text-sm text-destructive">{error}</div>}
             </div>
 
             <DialogFooter>

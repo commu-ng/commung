@@ -156,7 +156,7 @@ export default function Bookmarks() {
           </EmptyHeader>
           <Link
             to="/profiles"
-            className="text-blue-600 hover:text-blue-700 font-medium"
+            className="text-primary hover:text-primary/90 font-medium"
           >
             프로필 관리
           </Link>
@@ -177,8 +177,8 @@ export default function Bookmarks() {
             </div>
           ) : isError ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Bookmark className="h-8 w-8 text-red-400" />
+              <div className="w-16 h-16 bg-destructive/15 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Bookmark className="h-8 w-8 text-destructive" />
               </div>
               <h2 className="text-lg font-semibold text-foreground mb-2">
                 오류가 발생했습니다
@@ -189,7 +189,7 @@ export default function Bookmarks() {
               <button
                 type="button"
                 onClick={() => refetch()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
               >
                 다시 시도
               </button>
@@ -207,14 +207,14 @@ export default function Bookmarks() {
               </EmptyHeader>
               <Link
                 to="/"
-                className="text-blue-600 hover:text-blue-700 font-medium"
+                className="text-primary hover:text-primary/90 font-medium"
               >
                 홈으로 이동
               </Link>
             </Empty>
           ) : (
             <div className="space-y-4">
-              <div className="bg-card rounded-2xl shadow-sm border border-border p-4 mb-6">
+              <div className="bg-card rounded-2xl shadow-marsh border border-border p-4 mb-6">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Bookmark className="h-4 w-4" />
                   <span>총 {bookmarks.length}개의 저장된 게시물</span>

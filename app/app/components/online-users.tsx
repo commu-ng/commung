@@ -42,14 +42,14 @@ export function OnlineUsers() {
   }
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-border p-3">
+    <div className="bg-card rounded-2xl shadow-marsh border border-border p-3">
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-2 h-2 rounded-full bg-green-500" />
+        <div className="w-2 h-2 rounded-full bg-online" />
         <h2 className="text-xs font-semibold text-foreground">
           온라인 ({onlineProfiles.length})
         </h2>
       </div>
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
         {onlineProfiles.map((profile) => (
           <Link
             key={profile.id}
@@ -64,9 +64,9 @@ export function OnlineUsers() {
               profileId={profile.id}
               size="md"
               showOnlineStatus={true}
-              className="ring-2 ring-green-500/20 group-hover:ring-green-500/40 transition-all"
+              className="ring-2 ring-online/30 group-hover:ring-online/50 transition-all"
             />
-            <span className="text-xs text-muted-foreground truncate max-w-[60px] group-hover:text-blue-600 transition-colors">
+            <span className="text-xs text-muted-foreground truncate max-w-[60px] group-hover:text-primary transition-colors">
               {profile.name}
             </span>
           </Link>

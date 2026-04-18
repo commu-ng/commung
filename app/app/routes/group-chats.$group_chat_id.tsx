@@ -512,9 +512,9 @@ export default function GroupChatDetail() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="max-w-md mx-auto px-4">
-          <div className="bg-card rounded-2xl shadow-sm border border-border p-8 text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Users className="h-8 w-8 text-blue-600" />
+          <div className="bg-card rounded-2xl shadow-marsh border border-border p-8 text-center">
+            <div className="w-16 h-16 bg-primary/15 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Users className="h-8 w-8 text-primary" />
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-3">
               로그인이 필요합니다
@@ -550,9 +550,9 @@ export default function GroupChatDetail() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="max-w-md mx-auto px-4">
-          <div className="bg-card rounded-2xl shadow-sm border border-border p-8 text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <MessageCircle className="h-8 w-8 text-red-600" />
+          <div className="bg-card rounded-2xl shadow-marsh border border-border p-8 text-center">
+            <div className="w-16 h-16 bg-destructive/15 rounded-full flex items-center justify-center mx-auto mb-6">
+              <MessageCircle className="h-8 w-8 text-destructive" />
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-3">
               오류가 발생했습니다
@@ -560,7 +560,7 @@ export default function GroupChatDetail() {
             <p className="text-muted-foreground mb-6">{error}</p>
             <Link
               to="/group-chats"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
               그룹 채팅 목록으로
@@ -694,7 +694,7 @@ export default function GroupChatDetail() {
                               {member.name}
                             </span>
                             {member.id === groupChat.created_by_id && (
-                              <Shield className="h-4 w-4 text-blue-600" />
+                              <Shield className="h-4 w-4 text-primary" />
                             )}
                           </div>
                           <span className="text-sm text-muted-foreground">
@@ -713,7 +713,7 @@ export default function GroupChatDetail() {
 
       {/* Messages */}
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-4 overflow-hidden">
-        <div className="bg-card rounded-lg shadow-sm border border-border h-full flex flex-col">
+        <div className="bg-card rounded-lg shadow-marsh border border-border h-full flex flex-col">
           <div
             ref={messagesContainerRef}
             className="flex-1 overflow-y-auto p-4 space-y-4"
@@ -810,7 +810,7 @@ export default function GroupChatDetail() {
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1 hover:bg-destructive/90"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -843,7 +843,7 @@ export default function GroupChatDetail() {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="메시지를 입력하세요..."
-                className="flex-1 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="flex-1 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                 disabled={isSending}
               />
               <button
@@ -852,7 +852,7 @@ export default function GroupChatDetail() {
                   (!newMessage.trim() && uploadedImageIds.length === 0) ||
                   isSending
                 }
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isSending ? (
                   <Spinner className="h-5 w-5 text-white" />
@@ -870,8 +870,8 @@ export default function GroupChatDetail() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-2xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                <Trash2 className="h-5 w-5 text-red-600" />
+              <div className="w-10 h-10 bg-destructive/15 rounded-full flex items-center justify-center">
+                <Trash2 className="h-5 w-5 text-destructive" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-foreground">
@@ -915,7 +915,7 @@ export default function GroupChatDetail() {
                     deleteMessage(confirmDeleteMessageId, "for_all")
                   }
                   disabled={deletingMessageId !== null}
-                  className="w-full px-4 py-3 text-left text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="w-full px-4 py-3 text-left text-destructive bg-destructive/15 hover:bg-destructive/25 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {deletingMessageId === confirmDeleteMessageId ? (
                     <Spinner className="h-4 w-4" />

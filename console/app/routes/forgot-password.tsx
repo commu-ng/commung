@@ -79,7 +79,7 @@ export default function ForgotPassword() {
         </CardHeader>
         <CardContent className="space-y-4">
           {success ? (
-            <div className="text-sm text-green-600 bg-green-50 p-4 rounded">
+            <div className="text-sm text-mint-ink bg-mint/40 p-4 rounded">
               <p className="font-medium mb-2">
                 비밀번호 재설정 이메일이 전송되었습니다!
               </p>

@@ -143,7 +143,7 @@ function PendingApplications({ communities }: { communities: Community[] }) {
   );
 
   return (
-    <Card className="border-yellow-200 dark:border-yellow-800 bg-yellow-50/50 dark:bg-yellow-950/20">
+    <Card className="border-[var(--butter)]/60 bg-[var(--butter)]/40">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -160,7 +160,7 @@ function PendingApplications({ communities }: { communities: Community[] }) {
             <Link
               key={community.id}
               to={`/communities/${community.slug}/applications`}
-              className="flex items-center justify-between p-3 rounded-lg border border-yellow-200 dark:border-yellow-800 bg-white dark:bg-background hover:bg-yellow-50 dark:hover:bg-yellow-950/30 transition-colors"
+              className="flex items-center justify-between p-3 rounded-lg border border-[var(--butter)]/60 bg-card hover:bg-[var(--butter)]/40 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center overflow-hidden">
@@ -176,7 +176,7 @@ function PendingApplications({ communities }: { communities: Community[] }) {
                 </div>
                 <span className="font-medium">{community.name}</span>
               </div>
-              <span className="text-sm font-medium text-yellow-700 dark:text-yellow-300">
+              <span className="text-sm font-medium text-butter-ink">
                 {community.pending_application_count}건
               </span>
             </Link>

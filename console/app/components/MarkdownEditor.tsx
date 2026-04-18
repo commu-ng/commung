@@ -75,7 +75,7 @@ export function MarkdownEditor({
     try {
       return md.render(value);
     } catch (error) {
-      return `<p class="text-red-500">마크다운 렌더링 오류: ${error instanceof Error ? error.message : "알 수 없는 오류"}</p>`;
+      return `<p class="text-destructive">마크다운 렌더링 오류: ${error instanceof Error ? error.message : "알 수 없는 오류"}</p>`;
     }
   };
 

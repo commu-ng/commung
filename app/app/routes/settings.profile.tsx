@@ -341,7 +341,7 @@ export default function ProfileSettings() {
               className={`bg-gradient-to-r ${
                 profile
                   ? getGradientForUser(profile.username, profile.name)
-                  : "from-blue-500 to-purple-600"
+                  : "from-[var(--blossom)] to-[var(--lilac)]"
               } px-6 py-8`}
             >
               <div className="flex items-center gap-4">
@@ -350,11 +350,11 @@ export default function ProfileSettings() {
                   name={profile?.name || "사용자"}
                   username={profile?.username}
                   size="xl"
-                  className="bg-white bg-opacity-20"
+                  className="bg-white/20 backdrop-blur"
                 />
                 <div className="text-white">
                   <h2 className="text-xl font-bold">프로필 설정</h2>
-                  <p className="text-blue-100">
+                  <p className="text-white/90">
                     커뮤에서 표시될 정보를 수정하세요
                   </p>
                 </div>
@@ -453,7 +453,7 @@ export default function ProfileSettings() {
                     placeholder="사용자명을 입력하세요"
                     className={`w-full h-12 pl-8 text-base ${
                       usernameError
-                        ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                        ? "border-destructive focus:border-destructive focus:ring-destructive"
                         : ""
                     }`}
                   />
@@ -488,7 +488,9 @@ export default function ProfileSettings() {
                 />
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>자신을 간단히 소개해보세요.</span>
-                  <span className={newBio.length > 450 ? "text-red-500" : ""}>
+                  <span
+                    className={newBio.length > 450 ? "text-destructive" : ""}
+                  >
                     {newBio.length}/500
                   </span>
                 </div>
@@ -521,7 +523,7 @@ export default function ProfileSettings() {
                       handleOnlineStatusToggle(!onlineStatusVisible)
                     }
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                      onlineStatusVisible ? "bg-blue-600" : "bg-gray-300"
+                      onlineStatusVisible ? "bg-primary" : "bg-muted"
                     }`}
                   >
                     <span
@@ -592,7 +594,7 @@ export default function ProfileSettings() {
                               alt="현재 프로필 사진"
                               className="w-6 h-6 rounded-full object-cover border"
                             />
-                            <span className="text-green-600 font-medium">
+                            <span className="text-mint-ink font-medium">
                               설정됨
                             </span>
                           </>

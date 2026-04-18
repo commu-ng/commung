@@ -105,7 +105,7 @@ export default function AuthCallback() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <div className="text-center space-y-4 max-w-md">
-        <div className="text-red-500 text-4xl">✗</div>
+        <div className="text-destructive text-4xl">✗</div>
         <p className="text-foreground font-semibold">로그인에 실패했습니다</p>
         <p className="text-muted-foreground">{error}</p>
         <button

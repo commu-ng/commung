@@ -214,7 +214,7 @@ export default function Communities() {
       <div className="container mx-auto py-8 px-4 max-w-4xl">
         <Empty>
           <EmptyHeader>
-            <EmptyTitle className="text-red-600">오류 발생</EmptyTitle>
+            <EmptyTitle className="text-destructive">오류 발생</EmptyTitle>
             <EmptyDescription>커뮤 목록을 불러올 수 없습니다</EmptyDescription>
           </EmptyHeader>
           <Button
@@ -278,7 +278,7 @@ export default function Communities() {
                 }
                 className={`cursor-pointer transition-colors ${
                   selectedHashtags.includes(hashtag)
-                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    ? "bg-primary hover:bg-primary/90 text-primary-foreground"
                     : "hover:bg-accent"
                 }`}
                 onClick={() => toggleHashtag(hashtag)}
@@ -310,7 +310,7 @@ export default function Communities() {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1 ml-2"
+                className="text-sm text-destructive hover:text-destructive/90 flex items-center gap-1 ml-2"
               >
                 <X className="h-3 w-3" />
                 필터 초기화
@@ -325,20 +325,20 @@ export default function Communities() {
         <TabsList className="w-full justify-start mb-6">
           <TabsTrigger value="recruiting" className="flex-1 sm:flex-none">
             모집 중
-            <span className="ml-1.5 text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 px-1.5 py-0.5 rounded-full">
+            <span className="ml-1.5 text-xs bg-mint/40 text-mint-ink px-1.5 py-0.5 rounded-full">
               {filteredRecruiting.length}
             </span>
           </TabsTrigger>
           <TabsTrigger value="ongoing" className="flex-1 sm:flex-none">
             진행 중
-            <span className="ml-1.5 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-1.5 py-0.5 rounded-full">
+            <span className="ml-1.5 text-xs bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">
               {filteredOngoing.length}
             </span>
           </TabsTrigger>
           {isAuthenticated && (
             <TabsTrigger value="mine" className="flex-1 sm:flex-none">
               내 커뮤
-              <span className="ml-1.5 text-xs bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300 px-1.5 py-0.5 rounded-full">
+              <span className="ml-1.5 text-xs bg-blossom/40 text-blossom-ink px-1.5 py-0.5 rounded-full">
                 {isLoadingMine ? "..." : filteredMine.length}
               </span>
             </TabsTrigger>

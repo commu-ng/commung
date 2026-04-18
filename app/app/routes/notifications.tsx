@@ -239,11 +239,11 @@ export default function Notifications() {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "reply":
-        return <MessageCircle className="h-5 w-5 text-blue-600" />;
+        return <MessageCircle className="h-5 w-5 text-primary" />;
       case "mention":
-        return <AtSign className="h-5 w-5 text-green-600" />;
+        return <AtSign className="h-5 w-5 text-mint-ink" />;
       case "message":
-        return <MessageCircle className="h-5 w-5 text-purple-600" />;
+        return <MessageCircle className="h-5 w-5 text-lilac-ink" />;
       default:
         return <Bell className="h-5 w-5 text-muted-foreground" />;
     }
@@ -284,9 +284,9 @@ export default function Notifications() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="max-w-md mx-auto px-4">
-          <div className="bg-card rounded-2xl shadow-sm border border-border p-8 text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Bell className="h-8 w-8 text-blue-600" />
+          <div className="bg-card rounded-2xl shadow-marsh border border-border p-8 text-center">
+            <div className="w-16 h-16 bg-primary/15 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Bell className="h-8 w-8 text-primary" />
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-3">
               로그인이 필요합니다
@@ -318,8 +318,8 @@ export default function Notifications() {
           )}
 
           {isError && (
-            <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-4">
-              <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
+            <div className="bg-destructive/15 border border-destructive/30 rounded-lg p-3 mb-4">
+              <div className="flex items-center gap-2 text-destructive">
                 <Bell className="h-4 w-4" />
                 <span className="text-sm font-medium">
                   알림을 불러오는 중 오류가 발생했습니다
@@ -336,7 +336,7 @@ export default function Notifications() {
                   type="button"
                   onClick={markAllAsRead}
                   disabled={isMarkingAllRead}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground text-sm font-medium rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <CheckCheck className="h-3 w-3" />
                   {isMarkingAllRead ? "처리 중..." : "모든 알림 읽음 처리"}
@@ -363,9 +363,9 @@ export default function Notifications() {
 
                 const cardContent = (
                   <Card
-                    className={`transition-all hover:shadow-lg ${
+                    className={`transition-all hover:shadow-marsh-lg ${
                       notification.read_at === null
-                        ? "bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700"
+                        ? "bg-primary/15 border-primary/30"
                         : ""
                     }`}
                   >
@@ -384,8 +384,8 @@ export default function Notifications() {
                                 <div
                                   className={`w-2 h-2 rounded-full flex-shrink-0 ${
                                     notification.read_at !== null
-                                      ? "bg-gray-300 dark:bg-gray-600"
-                                      : "bg-blue-500 dark:bg-blue-400"
+                                      ? "bg-muted"
+                                      : "bg-primary"
                                   }`}
                                 />
                               </div>
@@ -395,7 +395,7 @@ export default function Notifications() {
                                     {notification.sender.name}
                                   </span>
                                   {notification.sender.username && (
-                                    <span className="text-gray-400">
+                                    <span className="text-muted-foreground">
                                       @{notification.sender.username}
                                     </span>
                                   )}
@@ -415,7 +415,7 @@ export default function Notifications() {
                                     e.stopPropagation();
                                     markAsRead(notification.id);
                                   }}
-                                  className="inline-flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded-md border border-transparent hover:border-blue-200 transition-all"
+                                  className="inline-flex items-center gap-1 px-2 py-1 text-xs text-primary hover:text-primary hover:bg-primary/15 rounded-md border border-transparent hover:border-primary/30 transition-all"
                                   title="읽음으로 표시"
                                 >
                                   <Check className="h-3 w-3" />
@@ -456,7 +456,7 @@ export default function Notifications() {
                           </div>
                         )}
                         {notification.directMessage && (
-                          <div className="bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800 rounded-md p-2 text-sm text-foreground">
+                          <div className="bg-[var(--lilac)]/40 dark:bg-[var(--lilac)]/25 border border-[var(--lilac)]/60 rounded-md p-2 text-sm text-foreground">
                             <div
                               className="prose prose-sm dark:prose-invert max-w-none line-clamp-3"
                               // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized markdown

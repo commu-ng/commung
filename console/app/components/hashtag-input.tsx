@@ -215,7 +215,7 @@ export function HashtagInput({
                 <button
                   type="button"
                   onClick={() => removeHashtag(tag)}
-                  className="ml-1 hover:bg-gray-200 rounded-full p-0.5 transition-colors"
+                  className="ml-1 hover:bg-accent rounded-full p-0.5 transition-colors"
                   title="해시태그 제거"
                 >
                   <X className="h-3 w-3" />
@@ -249,29 +249,29 @@ export function HashtagInput({
 
         {/* Suggestions dropdown */}
         {showSuggestions && suggestions.length > 0 && !disabled && (
-          <div className="hashtag-suggestions absolute z-10 w-full bg-white border border-t-0 border-gray-200 rounded-b-md shadow-lg max-h-48 overflow-y-auto">
+          <div className="hashtag-suggestions absolute z-10 w-full bg-popover border border-t-0 border-border rounded-b-2xl shadow-marsh-lg max-h-48 overflow-y-auto">
             {suggestions.map((suggestion, index) => (
               <button
                 type="button"
                 key={suggestion.id}
                 className={`px-3 py-2 cursor-pointer w-full text-left flex items-center gap-2 transition-colors ${
                   index === selectedSuggestionIndex
-                    ? "bg-blue-50 text-blue-700"
-                    : "hover:bg-gray-50"
+                    ? "bg-primary/15 text-primary"
+                    : "hover:bg-accent"
                 }`}
                 onClick={() => selectSuggestion(suggestion)}
               >
-                <Hash className="h-4 w-4 text-gray-400" />
+                <Hash className="h-4 w-4 text-muted-foreground" />
                 <span className="flex-1">{suggestion.tag}</span>
                 {index === selectedSuggestionIndex && (
-                  <div className="text-xs text-blue-600 font-medium">Tab</div>
+                  <div className="text-xs text-primary font-medium">Tab</div>
                 )}
               </button>
             ))}
 
             {/* Help text */}
-            <div className="px-3 py-2 bg-gray-50 border-t border-gray-100">
-              <div className="flex items-center justify-between text-xs text-gray-500">
+            <div className="px-3 py-2 bg-muted border-t border-border">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>↑↓ 선택</span>
                 <span>Tab/Enter 확인</span>
               </div>
@@ -288,7 +288,7 @@ export function HashtagInput({
       </div>
 
       {/* Help text */}
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-muted-foreground">
         Enter 키로 해시태그를 추가하세요. 최대 {maxTags}개까지 가능합니다.
       </p>
     </div>

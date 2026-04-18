@@ -43,9 +43,9 @@ const ROLE_DESCRIPTIONS = {
 } as const;
 
 const ROLE_COLORS = {
-  owner: "bg-red-100 text-red-800",
-  moderator: "bg-blue-100 text-blue-800",
-  member: "bg-gray-100 text-gray-800",
+  owner: "bg-destructive/15 text-destructive",
+  moderator: "bg-primary/15 text-primary",
+  member: "bg-muted text-muted-foreground",
 } as const;
 
 export function RoleUpdateDialog({
@@ -201,14 +201,14 @@ export function RoleUpdateDialog({
           )}
 
           {selectedRole !== member.role && (
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-              <p className="text-sm text-yellow-800">
+            <div className="p-3 bg-butter/40 border border-butter/60 rounded-md">
+              <p className="text-sm text-butter-ink">
                 <strong>{displayName}</strong>님의 역할이{" "}
                 <strong>{ROLE_LABELS[member.role]}</strong>에서{" "}
                 <strong>{ROLE_LABELS[selectedRole]}</strong>로 변경됩니다.
               </p>
               {selectedRole === "owner" && (
-                <p className="text-xs text-yellow-700 mt-1">
+                <p className="text-xs text-butter-ink mt-1">
                   ⚠️ 소유자 권한을 양도하면 되돌릴 수 없습니다.
                 </p>
               )}
@@ -216,7 +216,7 @@ export function RoleUpdateDialog({
           )}
 
           {error && (
-            <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
+            <div className="text-sm text-destructive bg-destructive/15 p-2 rounded">
               {error}
             </div>
           )}

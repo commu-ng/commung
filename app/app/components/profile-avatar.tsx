@@ -72,7 +72,7 @@ export function ProfileAvatar({
       {showOnlineStatus && isOnline && (
         <div
           className={cn(
-            "absolute bottom-0 right-0 rounded-full bg-green-500 border-white",
+            "absolute bottom-0 right-0 rounded-full bg-online border-2 border-background",
             onlineIndicatorSizeClass,
           )}
           title="온라인"

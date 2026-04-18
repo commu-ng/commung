@@ -167,7 +167,7 @@ export const PostList = forwardRef<PostListRef>((_props, ref) => {
       <div className="space-y-4">
         <EmptyState
           iconElement={
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-destructive/15 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl">❌</span>
             </div>
           }
@@ -181,7 +181,7 @@ export const PostList = forwardRef<PostListRef>((_props, ref) => {
             <button
               type="button"
               onClick={() => refetch()}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               다시 시도
             </button>

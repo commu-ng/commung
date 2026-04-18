@@ -699,10 +699,8 @@ export default function Messages() {
 
               {/* Error Message */}
               {createError && (
-                <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                  <div className="text-red-700 dark:text-red-300 text-sm">
-                    {createError}
-                  </div>
+                <div className="bg-destructive/15 border border-destructive/30 rounded-lg p-3">
+                  <div className="text-destructive text-sm">{createError}</div>
                 </div>
               )}
 

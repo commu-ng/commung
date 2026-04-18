@@ -81,9 +81,7 @@ function NavLink({ to, icon, children, badge, onClick }: NavLinkProps) {
       {icon}
       <span className="flex-1">{children}</span>
       {badge !== undefined && badge > 0 && (
-        <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-          {badge}
-        </Badge>
+        <Badge className="bg-butter/40 text-butter-ink">{badge}</Badge>
       )}
     </Link>
   );

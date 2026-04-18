@@ -41,19 +41,21 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div
-      className={`bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center ${className}`}
+      className={`bg-card rounded-3xl shadow-marsh border border-border p-12 text-center ${className}`}
     >
-      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+      <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
         {iconElement ? (
           iconElement
         ) : Icon ? (
-          <Icon className="h-8 w-8 text-gray-400" />
+          <Icon className="h-8 w-8 text-muted-foreground" />
         ) : (
           <span className="text-2xl">📝</span>
         )}
       </div>
-      <h2 className="text-xl font-bold text-gray-900 mb-3">{title}</h2>
-      {description && <p className="text-gray-600 mb-6">{description}</p>}
+      <h2 className="text-xl font-bold text-foreground mb-3">{title}</h2>
+      {description && (
+        <p className="text-muted-foreground mb-6">{description}</p>
+      )}
       {actions && (
         <div className="flex items-center justify-center gap-3">{actions}</div>
       )}

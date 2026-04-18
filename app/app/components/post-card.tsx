@@ -270,22 +270,22 @@ export const PostCard = memo(function PostCard({
     <div
       className={`${
         post.announcement
-          ? "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-l-4 border-l-amber-500 dark:border-l-amber-600 shadow-lg"
+          ? "bg-announce border-l-4 border-l-butter shadow-marsh"
           : isReply
-            ? "bg-background"
-            : `bg-card ${!hideBorder ? "border-b border-border" : ""}`
-      } ${isReply ? "" : ""} ${!hideBorder && !isReply ? "" : ""} overflow-hidden ${
+            ? "bg-background/40"
+            : `bg-card/80 ${!hideBorder ? "border-b border-border/70" : ""}`
+      } overflow-hidden ${
         isReply && !isContinuation
-          ? `border-l-4 ${
+          ? `border-l-[3px] ${
               depth === 1
-                ? "border-l-blue-300 dark:border-l-blue-600"
+                ? "border-l-blossom"
                 : depth === 2
-                  ? "border-l-blue-400 dark:border-l-blue-500"
+                  ? "border-l-lilac"
                   : depth === 3
-                    ? "border-l-blue-500 dark:border-l-blue-400"
+                    ? "border-l-mint"
                     : depth === 4
-                      ? "border-l-blue-600 dark:border-l-blue-300"
-                      : "border-l-blue-700 dark:border-l-blue-200"
+                      ? "border-l-sky-soft"
+                      : "border-l-butter"
             }`
           : ""
       } ${cardSize}`}
@@ -396,7 +396,7 @@ export const PostCard = memo(function PostCard({
           <div
             className={`${
               isReply ? "mt-2 pl-2" : "mt-4 pl-4"
-            } border-l-2 border-blue-200`}
+            } border-l-2 border-blossom/60`}
           >
             <MessageSender
               key={currentProfile?.id || "no-profile"}
@@ -476,7 +476,7 @@ export const PostCard = memo(function PostCard({
                 {post.has_more_replies && (
                   <Link
                     to={`/@${post.author.username}/${post.root_post_id ?? post.id}`}
-                    className="block mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                    className="block mt-2 text-xs text-primary hover:underline font-medium"
                   >
                     답글 {totalReplyCount}개 모두 보기
                   </Link>

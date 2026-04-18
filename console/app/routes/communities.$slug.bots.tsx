@@ -444,8 +444,8 @@ function BotCard({ bot, slug }: { bot: BotData; slug: string }) {
       </CardHeader>
       <CardContent className="space-y-4">
         {newToken && (
-          <div className="p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg space-y-2">
-            <p className="text-sm font-medium text-green-800 dark:text-green-200">
+          <div className="p-4 bg-mint/40 border border-mint/60 rounded-lg space-y-2">
+            <p className="text-sm font-medium text-mint-ink">
               새 토큰이 생성되었습니다. 이 토큰은 다시 볼 수 없으니 안전하게
               저장하세요.
             </p>
@@ -677,7 +677,7 @@ export default function CommunityBots() {
                     href={`${env.apiBaseUrl}/bot/docs`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 dark:text-blue-400 hover:underline"
+                    className="text-primary hover:underline"
                   >
                     {env.apiBaseUrl}/bot/docs
                   </a>

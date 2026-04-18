@@ -304,7 +304,7 @@ export default function ApplicationView() {
       <div className="container mx-auto py-8 px-4 max-w-4xl">
         <Card>
           <CardHeader>
-            <CardTitle className="text-red-600">오류 발생</CardTitle>
+            <CardTitle className="text-destructive">오류 발생</CardTitle>
           </CardHeader>
           <CardContent>
             <p>잘못된 URL입니다</p>
@@ -320,7 +320,9 @@ export default function ApplicationView() {
         <div className="flex items-center justify-center min-h-64">
           <div className="flex items-center gap-3">
             <Spinner className="h-6 w-6" />
-            <span className="text-gray-600">신청서를 불러오는 중...</span>
+            <span className="text-muted-foreground">
+              신청서를 불러오는 중...
+            </span>
           </div>
         </div>
       </div>
@@ -332,7 +334,7 @@ export default function ApplicationView() {
       <div className="container mx-auto py-8 px-4 max-w-4xl">
         <Card>
           <CardHeader>
-            <CardTitle className="text-red-600">오류 발생</CardTitle>
+            <CardTitle className="text-destructive">오류 발생</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p>신청서를 불러올 수 없습니다</p>
@@ -351,17 +353,17 @@ export default function ApplicationView() {
   const statusConfig = {
     pending: {
       label: "대기중",
-      className: "bg-yellow-100 text-yellow-800",
+      className: "bg-butter/40 text-butter-ink",
       icon: null,
     },
     approved: {
       label: "승인됨",
-      className: "bg-green-100 text-green-800",
+      className: "bg-mint/40 text-mint-ink",
       icon: <CheckCircle className="h-4 w-4" />,
     },
     rejected: {
       label: "거절됨",
-      className: "bg-red-100 text-red-800",
+      className: "bg-destructive/15 text-destructive",
       icon: <XCircle className="h-4 w-4" />,
     },
   };

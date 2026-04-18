@@ -154,7 +154,7 @@ export default function SearchPage() {
             actions={
               <a
                 href={applyUrl}
-                className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
               >
                 가입 신청하기
               </a>
@@ -170,7 +170,7 @@ export default function SearchPage() {
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
           {/* Search Input */}
-          <div className="bg-card rounded-2xl shadow-sm border border-border p-4 mb-6">
+          <div className="bg-card rounded-2xl shadow-marsh border border-border p-4 mb-6">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <input
@@ -178,7 +178,7 @@ export default function SearchPage() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="게시물 검색..."
-                className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-foreground placeholder:text-muted-foreground"
+                className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground"
               />
             </div>
             {debouncedQuery && (
@@ -203,8 +203,8 @@ export default function SearchPage() {
             </div>
           ) : isError ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Search className="h-8 w-8 text-red-400" />
+              <div className="w-16 h-16 bg-destructive/15 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="h-8 w-8 text-destructive" />
               </div>
               <h2 className="text-lg font-semibold text-foreground mb-2">
                 오류가 발생했습니다
@@ -215,7 +215,7 @@ export default function SearchPage() {
               <button
                 type="button"
                 onClick={() => refetch()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
               >
                 다시 시도
               </button>
@@ -228,7 +228,7 @@ export default function SearchPage() {
               actions={
                 <Link
                   to="/"
-                  className="text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-primary hover:text-primary/90 font-medium"
                 >
                   홈으로 이동
                 </Link>
@@ -236,7 +236,7 @@ export default function SearchPage() {
             />
           ) : (
             <div className="space-y-4">
-              <div className="bg-card rounded-2xl shadow-sm border border-border p-4 mb-6">
+              <div className="bg-card rounded-2xl shadow-marsh border border-border p-4 mb-6">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Search className="h-4 w-4" />
                   <span>검색 결과 {searchResults.length}개</span>

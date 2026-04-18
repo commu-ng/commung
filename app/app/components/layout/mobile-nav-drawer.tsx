@@ -3,11 +3,11 @@ import {
   Bell,
   Bookmark,
   ExternalLink,
-  Hash,
+  Heart,
   Home,
   LayoutList,
-  Menu,
   Megaphone,
+  Menu,
   MessageCircle,
   PenSquare,
   Search,
@@ -46,13 +46,13 @@ export function MobileNavDrawer({
       (path !== "/" && location.pathname.startsWith(path));
 
     const baseClasses =
-      "flex items-center gap-3 px-4 py-3 text-base rounded-full transition-colors w-full";
+      "flex items-center gap-3 px-4 py-2.5 text-base rounded-2xl transition-all duration-200 w-full";
 
     if (isActive) {
-      return `${baseClasses} text-foreground bg-accent font-bold`;
+      return `${baseClasses} text-primary bg-primary/12 font-bold shadow-marsh`;
     }
 
-    return `${baseClasses} text-foreground hover:bg-accent`;
+    return `${baseClasses} text-foreground/80 hover:text-foreground hover:bg-accent/70`;
   };
 
   const navigationItems = [
@@ -95,27 +95,35 @@ export function MobileNavDrawer({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="p-1 -ml-1 text-foreground"
+        className="p-2 -ml-2 rounded-full text-foreground hover:bg-accent/60 transition-colors"
         aria-label="메뉴 열기"
       >
-        <Menu className="h-6 w-6" />
+        <Menu className="h-5 w-5" />
       </button>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" className="w-[280px] p-0">
+        <SheetContent
+          side="left"
+          className="w-[290px] p-0 border-r border-border/70 bg-sidebar"
+        >
           <SheetTitle className="sr-only">메뉴</SheetTitle>
-          <div className="flex flex-col h-full py-2 px-3">
+          <div className="flex flex-col h-full py-3 px-3">
             {/* Community Logo/Name */}
             <div className="flex items-center gap-3 py-3 px-2">
               <Link
                 to="/"
                 onClick={() => setOpen(false)}
-                className="w-10 h-10 bg-primary rounded-full flex items-center justify-center flex-shrink-0"
+                aria-label="홈"
+                className="bg-logo relative w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-marsh"
               >
-                <Hash className="h-5 w-5 text-primary-foreground" />
+                <Heart
+                  className="h-5 w-5 text-primary-foreground"
+                  fill="currentColor"
+                  strokeWidth={1.5}
+                />
               </Link>
-              <h2 className="font-bold text-xl text-foreground truncate">
-                {communityName || "커뮤"}
+              <h2 className="font-display font-bold text-2xl text-foreground truncate tracking-tight">
+                {communityName || "커뮹"}
               </h2>
             </div>
 
@@ -136,27 +144,24 @@ export function MobileNavDrawer({
                     onClick={() => setOpen(false)}
                   >
                     <div className="relative">
-                      <Icon className="h-6 w-6" />
+                      <Icon className="h-[22px] w-[22px]" strokeWidth={2} />
                       {item.badge !== undefined && item.badge > 0 && (
-                        <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center px-1">
-                          <span className="text-[10px] text-white font-bold">
-                            {item.badge > 99 ? "99+" : item.badge}
-                          </span>
+                        <div className="marsh-badge">
+                          <span>{item.badge > 99 ? "99+" : item.badge}</span>
                         </div>
                       )}
                     </div>
-                    <span className="text-lg">{item.label}</span>
+                    <span className="text-[15px] tracking-tight">
+                      {item.label}
+                    </span>
                   </Link>
                 );
               })}
 
               {/* Compose Button */}
               <Link to="/" onClick={() => setOpen(false)} className="mt-4">
-                <Button
-                  className="w-full py-3 text-lg font-bold rounded-full"
-                  size="lg"
-                >
-                  <PenSquare className="h-5 w-5 mr-2" />새 글
+                <Button className="w-full py-3 text-[15px]" size="lg">
+                  <PenSquare className="h-5 w-5" />새 글
                 </Button>
               </Link>
             </nav>
@@ -167,11 +172,11 @@ export function MobileNavDrawer({
               <a
                 target="_blank"
                 href={consoleUrl}
-                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-full transition-colors"
                 title="콘솔로 이동"
                 rel="noreferrer"
               >
-                <ExternalLink className="h-4 w-4" />
+                <ExternalLink className="h-3.5 w-3.5" />
                 <span>콘솔</span>
               </a>
             </div>

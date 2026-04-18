@@ -60,8 +60,8 @@ export function HashtagFilter({
                   }
                   className={`cursor-pointer transition-colors ${
                     selectedHashtags.includes(hashtag)
-                      ? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
-                      : "hover:bg-blue-50 hover:border-blue-300 dark:hover:bg-blue-950 dark:hover:border-blue-700"
+                      ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                      : "hover:bg-primary/15 hover:border-primary/30"
                   }`}
                   onClick={() => onToggleHashtag(hashtag)}
                 >

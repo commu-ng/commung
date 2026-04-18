@@ -136,12 +136,12 @@ export function ProfileSwitcher({ compact = false }: ProfileSwitcherProps) {
                             </span>
                             {profile.is_primary && (
                               <div title="메인 프로필">
-                                <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                                <Star className="h-3 w-3 text-star fill-current" />
                               </div>
                             )}
                             {profile.id === currentProfile.id && (
                               <div
-                                className="h-2 w-2 bg-green-500 rounded-full"
+                                className="h-2 w-2 bg-mint rounded-full"
                                 title="현재 프로필"
                               />
                             )}
@@ -194,7 +194,7 @@ export function ProfileSwitcher({ compact = false }: ProfileSwitcherProps) {
                             </Badge>
                             {profile.id === currentProfile.id && (
                               <div
-                                className="h-2 w-2 bg-green-500 rounded-full"
+                                className="h-2 w-2 bg-mint rounded-full"
                                 title="현재 프로필"
                               />
                             )}

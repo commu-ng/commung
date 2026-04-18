@@ -23,17 +23,17 @@ const ROLE_CONFIG = {
   owner: {
     label: "소유자",
     icon: Crown,
-    className: "bg-red-100 text-red-800",
+    className: "bg-destructive/15 text-destructive",
   },
   moderator: {
     label: "모더레이터",
     icon: Shield,
-    className: "bg-blue-100 text-blue-800",
+    className: "bg-primary/15 text-primary",
   },
   member: {
     label: "멤버",
     icon: User,
-    className: "bg-gray-100 text-gray-800",
+    className: "bg-muted text-muted-foreground",
   },
 };
 

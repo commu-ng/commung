@@ -104,15 +104,15 @@ export const ScheduledPostsList = forwardRef<ScheduledPostsListRef>(
         {/* Section Header */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
-              <Clock className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-lilac/30 dark:bg-lilac/20">
+              <Clock className="h-4 w-4 text-lilac-ink" />
             </div>
             <h2 className="text-lg font-semibold text-foreground">
               예약된 게시물
             </h2>
           </div>
-          <div className="flex h-6 min-w-6 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30 px-2">
-            <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">
+          <div className="flex h-6 min-w-6 items-center justify-center rounded-full bg-lilac/30 dark:bg-lilac/20 px-2">
+            <span className="text-xs font-semibold text-lilac-ink">
               {scheduledPosts.length}
             </span>
           </div>
@@ -123,14 +123,14 @@ export const ScheduledPostsList = forwardRef<ScheduledPostsListRef>(
           {scheduledPosts.map((post) => (
             <div
               key={post.id}
-              className="overflow-hidden border-b-2 border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20"
+              className="overflow-hidden border-b-2 border-lilac/40 bg-lilac/10 dark:bg-lilac/15"
             >
               {/* Scheduled Time */}
               {post.scheduled_at && (
-                <div className="flex items-center justify-between border-b border-purple-200 dark:border-purple-800 bg-purple-100/50 dark:bg-purple-900/20 px-4 py-3">
+                <div className="flex items-center justify-between border-b border-lilac/40 bg-lilac/15 dark:bg-lilac/20 px-4 py-3">
                   <div className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                    <span className="font-medium text-purple-900 dark:text-purple-200">
+                    <Clock className="h-4 w-4 text-lilac-ink" />
+                    <span className="font-medium text-lilac-ink">
                       {new Date(post.scheduled_at).toLocaleString("ko-KR", {
                         year: "numeric",
                         month: "long",
@@ -141,7 +141,7 @@ export const ScheduledPostsList = forwardRef<ScheduledPostsListRef>(
                       에 게시 예정
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 rounded-full bg-purple-600 dark:bg-purple-700 px-3 py-1 text-xs font-semibold text-white shadow-sm">
+                  <div className="flex items-center gap-1.5 rounded-full bg-lilac-strong px-3 py-1 text-xs font-semibold text-white shadow-marsh">
                     <Clock className="h-3 w-3" />
                     예약됨
                   </div>

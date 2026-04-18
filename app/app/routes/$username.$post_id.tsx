@@ -190,7 +190,7 @@ export default function PostDetail() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-            <MessageCircle className="h-8 w-8 text-gray-400" />
+            <MessageCircle className="h-8 w-8 text-muted-foreground" />
           </div>
           <h1 className="text-xl font-semibold text-foreground mb-2">
             {error || "게시물을 찾을 수 없습니다"}
@@ -198,7 +198,7 @@ export default function PostDetail() {
           <button
             type="button"
             onClick={() => navigate("/")}
-            className="text-blue-600 hover:text-blue-700 font-medium"
+            className="text-primary hover:text-primary/90 font-medium"
           >
             홈으로 돌아가기
           </button>
@@ -221,7 +221,7 @@ export default function PostDetail() {
             >
               <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </button>
-            <div className="h-4 w-px bg-gray-300" />
+            <div className="h-4 w-px bg-border" />
             <div>
               <h1 className="text-xl font-bold text-foreground">게시물</h1>
               <p className="text-sm text-muted-foreground">
@@ -313,7 +313,7 @@ export default function PostDetail() {
                               <button
                                 key={user.id}
                                 type="button"
-                                className="inline-flex items-center px-2 py-1 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-sm rounded-full hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors cursor-pointer"
+                                className="inline-flex items-center px-2 py-1 bg-primary/15 text-primary text-sm rounded-full hover:bg-primary/25 transition-colors cursor-pointer"
                                 onClick={() => navigate(`/@${user.username}`)}
                               >
                                 {user.name} (@{user.username})
@@ -340,9 +340,9 @@ export default function PostDetail() {
                 <Spinner className="h-6 w-6" />
               </div>
             ) : allReplies.length === 0 ? (
-              <div className="bg-card rounded-2xl shadow-sm border border-border p-8 text-center">
+              <div className="bg-card rounded-2xl shadow-marsh border border-border p-8 text-center">
                 <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageCircle className="h-8 w-8 text-gray-400" />
+                  <MessageCircle className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <h4 className="text-lg font-semibold text-foreground mb-2">
                   아직 답글이 없습니다

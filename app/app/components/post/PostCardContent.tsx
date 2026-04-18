@@ -38,7 +38,7 @@ export function PostCardContent({
         } bg-accent border border-border rounded-lg p-4 text-center`}
       >
         <div className="flex items-center justify-center gap-2 mb-3">
-          <AlertTriangle className="h-5 w-5 text-amber-600" />
+          <AlertTriangle className="h-5 w-5 text-warning" />
           <span
             className={`${isReply ? "text-xs" : "text-sm"} font-medium text-foreground`}
           >

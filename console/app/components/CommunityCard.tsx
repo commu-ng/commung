@@ -92,17 +92,14 @@ export function CommunityCard({ community }: CommunityCardProps) {
               {isUpcoming && (
                 <Badge
                   variant="secondary"
-                  className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                  className="bg-primary/15 text-primary"
                 >
                   <Clock className="h-3 w-3 mr-1" />
                   예정
                 </Badge>
               )}
               {isActive && (
-                <Badge
-                  variant="secondary"
-                  className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                >
+                <Badge variant="secondary" className="bg-mint/40 text-mint-ink">
                   <Activity className="h-3 w-3 mr-1" />
                   진행 중
                 </Badge>
@@ -110,7 +107,7 @@ export function CommunityCard({ community }: CommunityCardProps) {
               {isEnded && (
                 <Badge
                   variant="secondary"
-                  className="bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                  className="bg-muted text-muted-foreground"
                 >
                   <CheckCircle className="h-3 w-3 mr-1" />
                   종료
@@ -137,10 +134,10 @@ export function CommunityCard({ community }: CommunityCardProps) {
                 variant="secondary"
                 className={
                   community.role === "owner"
-                    ? "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300"
+                    ? "bg-blossom/40 text-blossom-ink"
                     : community.role === "moderator"
-                      ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                      : "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                      ? "bg-lilac/40 text-lilac-ink"
+                      : "bg-primary/15 text-primary"
                 }
               >
                 {community.role === "owner"
@@ -153,10 +150,7 @@ export function CommunityCard({ community }: CommunityCardProps) {
 
             {/* Recruiting Badge */}
             {community.is_recruiting && (
-              <Badge
-                variant="secondary"
-                className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-              >
+              <Badge variant="secondary" className="bg-mint/40 text-mint-ink">
                 <UsersIcon className="h-3 w-3 mr-1" />
                 모집 중
               </Badge>
@@ -168,8 +162,8 @@ export function CommunityCard({ community }: CommunityCardProps) {
                 variant="secondary"
                 className={
                   community.application_status === "rejected"
-                    ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
-                    : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                    ? "bg-destructive/15 text-destructive"
+                    : "bg-muted text-muted-foreground"
                 }
               >
                 {community.application_status === "rejected"
@@ -184,7 +178,7 @@ export function CommunityCard({ community }: CommunityCardProps) {
               community.pending_application_count > 0 && (
                 <Badge
                   variant="secondary"
-                  className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+                  className="bg-butter/40 text-butter-ink"
                 >
                   신청 {community.pending_application_count}
                 </Badge>

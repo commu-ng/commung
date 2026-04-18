@@ -24,42 +24,38 @@ const APPLICATION_STATUS_CONFIG = {
     label: "대기 중",
     variant: "secondary" as const,
     icon: ClockIcon,
-    className:
-      "bg-yellow-100 text-yellow-900 dark:bg-yellow-900 dark:text-yellow-100",
+    className: "bg-butter/40 text-butter-ink dark:bg-butter/25",
   },
   approved: {
     label: "승인됨",
     variant: "default" as const,
     icon: CheckIcon,
-    className:
-      "bg-green-100 text-green-900 dark:bg-green-900 dark:text-green-100",
+    className: "bg-mint/40 text-mint-ink dark:bg-mint/25",
   },
   rejected: {
     label: "거절됨",
     variant: "destructive" as const,
     icon: XIcon,
-    className: "bg-red-100 text-red-900 dark:bg-red-900 dark:text-red-100",
+    className: "bg-destructive/15 text-destructive",
   },
 };
 
 const COMMUNITY_STATUS_CONFIG = {
   active: {
     label: "진행 중",
-    className:
-      "bg-green-100 text-green-900 dark:bg-green-900 dark:text-green-100",
+    className: "bg-mint/40 text-mint-ink dark:bg-mint/25",
   },
   upcoming: {
     label: "시작 예정",
-    className: "bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100",
+    className: "bg-primary/15 text-primary",
   },
   ended: {
     label: "종료됨",
-    className: "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100",
+    className: "bg-muted text-muted-foreground",
   },
   recruiting: {
     label: "모집 중",
-    className:
-      "bg-purple-100 text-purple-900 dark:bg-purple-900 dark:text-purple-100",
+    className: "bg-lilac/40 text-lilac-ink dark:bg-lilac/25",
   },
 };
 

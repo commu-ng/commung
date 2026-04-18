@@ -216,19 +216,17 @@ export default function CommunityAnalytics() {
     max: number,
     type: "posts" | "dms" | "groupMessages",
   ) => {
-    if (value === 0) return "rgba(128, 128, 128, 0.1)"; // Light gray for zero values
+    if (value === 0)
+      return "color-mix(in oklch, var(--muted-foreground) 10%, transparent)";
     const intensity = value / max;
-    const opacity = 0.3 + intensity * 0.7; // Range from 0.3 to 1.0
-
-    // Use RGB values from hex colors: #3b82f6 (blue), #8b5cf6 (purple), #10b981 (green)
-    const rgb =
+    const opacity = 0.3 + intensity * 0.7;
+    const colorVar =
       type === "posts"
-        ? "59, 130, 246" // Blue
+        ? "var(--chart-5)"
         : type === "dms"
-          ? "139, 92, 246" // Purple
-          : "16, 185, 129"; // Green
-
-    return `rgba(${rgb}, ${opacity})`;
+          ? "var(--chart-3)"
+          : "var(--chart-2)";
+    return `color-mix(in oklch, ${colorVar} ${Math.round(opacity * 100)}%, transparent)`;
   };
 
   // Scroll to the end of the timeline chart to show latest data
@@ -326,15 +324,15 @@ export default function CommunityAnalytics() {
               config={{
                 posts: {
                   label: "게시글",
-                  color: "#3b82f6", // Blue
+                  color: "var(--chart-5)",
                 },
                 directMessages: {
                   label: "DM",
-                  color: "#8b5cf6", // Purple
+                  color: "var(--chart-3)",
                 },
                 groupMessages: {
                   label: "그룹 DM",
-                  color: "#10b981", // Green
+                  color: "var(--chart-2)",
                 },
               }}
               className="h-[400px]"
@@ -388,19 +386,19 @@ export default function CommunityAnalytics() {
                 <Bar
                   dataKey="posts"
                   stackId="1"
-                  fill="#3b82f6"
+                  fill="var(--chart-5)"
                   radius={[0, 0, 4, 4]}
                 />
                 <Bar
                   dataKey="directMessages"
                   stackId="1"
-                  fill="#8b5cf6"
+                  fill="var(--chart-3)"
                   radius={[0, 0, 0, 0]}
                 />
                 <Bar
                   dataKey="groupMessages"
                   stackId="1"
-                  fill="#10b981"
+                  fill="var(--chart-2)"
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
@@ -417,21 +415,21 @@ export default function CommunityAnalytics() {
           <div className="flex items-center gap-2">
             <div
               className="w-3 h-3 rounded-sm"
-              style={{ backgroundColor: "#3b82f6" }}
+              style={{ backgroundColor: "var(--chart-5)" }}
             />
             <span className="text-sm">게시글</span>
           </div>
           <div className="flex items-center gap-2">
             <div
               className="w-3 h-3 rounded-sm"
-              style={{ backgroundColor: "#8b5cf6" }}
+              style={{ backgroundColor: "var(--chart-3)" }}
             />
             <span className="text-sm">DM</span>
           </div>
           <div className="flex items-center gap-2">
             <div
               className="w-3 h-3 rounded-sm"
-              style={{ backgroundColor: "#10b981" }}
+              style={{ backgroundColor: "var(--chart-2)" }}
             />
             <span className="text-sm">그룹 DM</span>
           </div>

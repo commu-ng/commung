@@ -125,12 +125,12 @@ export default function ConfirmDeleteAccount() {
 
           {!isLoadingUserInfo && confirmationStatus === "idle" && (
             <div className="space-y-4">
-              <div className="text-sm bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                <p className="font-medium text-yellow-900 mb-2">
+              <div className="text-sm bg-butter/40 p-4 rounded-lg border border-butter/60">
+                <p className="font-medium text-butter-ink mb-2">
                   ⚠️ 계정을 정말로 삭제하시겠습니까?
                 </p>
                 {userInfo && (
-                  <div className="text-yellow-800 text-xs mb-2 space-y-1">
+                  <div className="text-butter-ink text-xs mb-2 space-y-1">
                     <p>
                       <strong>아이디:</strong> {userInfo.login_name}
                     </p>
@@ -139,7 +139,7 @@ export default function ConfirmDeleteAccount() {
                     </p>
                   </div>
                 )}
-                <p className="text-yellow-800 text-xs">
+                <p className="text-butter-ink text-xs">
                   이 작업은 되돌릴 수 없으며, 모든 데이터가 영구적으로
                   삭제됩니다.
                 </p>
@@ -167,7 +167,7 @@ export default function ConfirmDeleteAccount() {
 
           {confirmationStatus === "success" && (
             <div className="space-y-4">
-              <div className="text-sm text-green-600 bg-green-50 p-4 rounded-lg">
+              <div className="text-sm text-mint-ink bg-mint/40 p-4 rounded-lg">
                 <div className="font-medium mb-1">{message}</div>
                 <div className="text-xs">잠시 후 홈으로 이동합니다...</div>
               </div>
@@ -176,7 +176,7 @@ export default function ConfirmDeleteAccount() {
 
           {confirmationStatus === "error" && (
             <div className="space-y-4">
-              <div className="text-sm text-red-600 bg-red-50 p-4 rounded-lg">
+              <div className="text-sm text-destructive bg-destructive/15 p-4 rounded-lg">
                 {message}
               </div>
               <div className="flex flex-col gap-2">

@@ -97,7 +97,7 @@ export function PostPreview({ postUrl, currentProfileId }: PostPreviewProps) {
           href={postUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm text-blue-600 hover:underline inline-flex items-center gap-1 mt-1"
+          className="text-sm text-primary hover:underline inline-flex items-center gap-1 mt-1"
         >
           링크에서 보기
           <ExternalLink className="h-3 w-3" />
@@ -149,7 +149,7 @@ export function PostPreview({ postUrl, currentProfileId }: PostPreviewProps) {
           <p className="text-sm text-foreground mt-1 whitespace-pre-wrap break-words">
             {truncateContent(post.content, 150)}
           </p>
-          <div className="mt-2 flex items-center gap-1 text-xs text-blue-600">
+          <div className="mt-2 flex items-center gap-1 text-xs text-primary">
             <span>게시물 보기</span>
             <ExternalLink className="h-3 w-3" />
           </div>

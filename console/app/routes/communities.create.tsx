@@ -210,7 +210,7 @@ export default function CreateCommunity() {
         <div className="container mx-auto py-8 px-4 max-w-2xl">
           <Card className="w-full max-w-md mx-auto">
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold text-green-600">
+              <CardTitle className="text-2xl font-bold text-mint-ink">
                 커뮤 생성 완료
               </CardTitle>
               <CardDescription>
@@ -263,7 +263,9 @@ export default function CreateCommunity() {
               />
 
               {error && (
-                <div className="text-sm text-red-600 text-center">{error}</div>
+                <div className="text-sm text-destructive text-center">
+                  {error}
+                </div>
               )}
 
               <Button type="submit" className="w-full" disabled={isLoading}>

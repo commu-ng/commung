@@ -62,9 +62,9 @@ export function FormField(props: FormFieldProps) {
 
   return (
     <div className="space-y-1">
-      <Label htmlFor={id} className="text-sm font-medium text-gray-700">
+      <Label htmlFor={id} className="text-sm font-medium text-foreground">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <span className="text-destructive ml-1">*</span>}
       </Label>
 
       {props.type === "custom" ? (
@@ -77,7 +77,7 @@ export function FormField(props: FormFieldProps) {
           placeholder={props.placeholder}
           disabled={props.disabled}
           rows={props.rows}
-          className={error ? "border-red-500" : ""}
+          className={error ? "border-destructive" : ""}
         />
       ) : (
         <Input
@@ -88,13 +88,13 @@ export function FormField(props: FormFieldProps) {
           placeholder={props.placeholder}
           disabled={props.disabled}
           required={required}
-          className={error ? "border-red-500" : ""}
+          className={error ? "border-destructive" : ""}
         />
       )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
       {helpText && !error && (
-        <p className="text-sm text-gray-500">{helpText}</p>
+        <p className="text-sm text-muted-foreground">{helpText}</p>
       )}
     </div>
   );

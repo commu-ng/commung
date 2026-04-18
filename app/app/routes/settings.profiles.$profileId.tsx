@@ -123,7 +123,7 @@ export default function ProfileSharingSettings() {
                   name={profile.name}
                   username={profile.username}
                   size="xl"
-                  className="bg-white bg-opacity-20"
+                  className="bg-white/20 backdrop-blur"
                 />
                 <div className="text-white">
                   <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -133,11 +133,11 @@ export default function ProfileSharingSettings() {
                   <div className="mt-2">
                     <p className="text-xl font-semibold">{profile.name}</p>
                     {profile.username && (
-                      <p className="text-blue-100">@{profile.username}</p>
+                      <p className="text-white/90">@{profile.username}</p>
                     )}
                   </div>
                   {profile.bio && (
-                    <p className="text-blue-100 text-sm mt-2 max-w-md">
+                    <p className="text-white/90 text-sm mt-2 max-w-md">
                       {profile.bio}
                     </p>
                   )}

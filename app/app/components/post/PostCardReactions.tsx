@@ -88,14 +88,14 @@ export function PostCardReactions({
             onClick={() => setOpenReactionSelector(!openReactionSelector)}
             className={`reaction-selector inline-flex items-center gap-1 ${
               isReply ? "text-xs" : "text-sm"
-            } text-muted-foreground hover:text-blue-600 transition-colors`}
+            } text-muted-foreground hover:text-primary transition-colors`}
           >
             <Smile className={isReply ? "h-3 w-3" : "h-4 w-4"} />
             <span>반응</span>
           </button>
 
           {openReactionSelector && (
-            <div className="reaction-selector basis-full bg-popover border border-border rounded-lg shadow-lg p-2 flex flex-wrap gap-1">
+            <div className="reaction-selector basis-full bg-popover border border-border/80 rounded-2xl shadow-marsh-lg p-2 flex flex-wrap gap-1">
               {AVAILABLE_REACTIONS.map(({ emoji, label }) => (
                 <button
                   type="button"
@@ -135,8 +135,8 @@ export function PostCardReactions({
                 }}
                 className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs border transition-colors ${
                   hasCurrentUserReaction
-                    ? "bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900"
-                    : "bg-background border-border text-foreground hover:bg-accent"
+                    ? "bg-primary/15 border-primary/30 text-primary hover:bg-primary/25"
+                    : "bg-card/70 border-border text-foreground hover:bg-accent/70"
                 }`}
                 title={`${users.map((u) => `${u.name} (@${u.username})`).join(", ")}`}
               >

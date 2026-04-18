@@ -95,7 +95,7 @@ export default function CommunityBoards() {
         <div className="max-w-4xl mx-auto">
           <Card>
             <CardContent className="p-6 text-center">
-              <div className="text-red-600 mb-4">{error}</div>
+              <div className="text-destructive mb-4">{error}</div>
               <Link to="/communities/mine">
                 <Button variant="outline">내 커뮤로 돌아가기</Button>
               </Link>

@@ -118,7 +118,7 @@ export function MuteProfileDialog({
           <Button
             onClick={handleMute}
             disabled={isMuting}
-            className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-700 dark:hover:bg-orange-800"
+            className="bg-mute-strong text-white hover:bg-mute-strong-hover"
           >
             {isMuting ? "음소거 중..." : "음소거"}
           </Button>

@@ -311,8 +311,8 @@ export default function CommunityDetails() {
           <div className="max-w-2xl mx-auto">
             <Card className="w-full max-w-md mx-auto">
               <CardHeader className="text-center">
-                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FileText className="h-8 w-8 text-gray-400" />
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FileText className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <CardTitle>커뮤를 찾을 수 없습니다</CardTitle>
                 <CardDescription>
@@ -341,7 +341,7 @@ export default function CommunityDetails() {
         <div className="max-w-2xl mx-auto">
           <Card className="w-full max-w-md mx-auto">
             <CardHeader className="text-center">
-              <CardTitle className="text-red-600">오류 발생</CardTitle>
+              <CardTitle className="text-destructive">오류 발생</CardTitle>
               <CardDescription>
                 {error || "커뮤 정보를 불러올 수 없습니다"}
               </CardDescription>
@@ -431,7 +431,7 @@ export default function CommunityDetails() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-red-600 hover:text-red-700"
+                  className="text-destructive hover:text-destructive/90"
                   onClick={() => setShowLeaveDialog(true)}
                 >
                   <LogOut className="h-4 w-4" />
@@ -443,7 +443,7 @@ export default function CommunityDetails() {
 
         {/* Community Banner Image */}
         {community.banner_image_url && (
-          <div className="relative overflow-hidden rounded-lg bg-gray-100">
+          <div className="relative overflow-hidden rounded-lg bg-muted">
             <div
               className="w-full flex items-center justify-center"
               style={{
@@ -467,7 +467,7 @@ export default function CommunityDetails() {
                   href={`https://${community.slug}.${env.domain}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-2xl font-bold hover:text-gray-200 transition-colors"
+                  className="inline-flex items-center gap-2 text-2xl font-bold hover:text-white/80 transition-colors"
                 >
                   {community.name}
                   <ExternalLink className="w-5 h-5" />
@@ -484,7 +484,7 @@ export default function CommunityDetails() {
               href={`https://${community.slug}.${env.domain}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-3 text-3xl font-bold text-gray-900 dark:text-gray-100 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              className="inline-flex items-center gap-3 text-3xl font-bold text-foreground hover:text-muted-foreground transition-colors"
             >
               {community.name}
               <ExternalLink className="w-6 h-6" />
@@ -507,7 +507,7 @@ export default function CommunityDetails() {
                   <Badge
                     key={hashtag.id}
                     variant="outline"
-                    className="px-3 py-1.5 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 text-sm"
+                    className="px-3 py-1.5 bg-primary/15 text-primary border-primary/30 text-sm"
                   >
                     <Hash className="h-3.5 w-3.5 mr-1.5" />
                     {hashtag.tag}
@@ -594,39 +594,39 @@ export default function CommunityDetails() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-yellow-600" />
+                    <Clock className="h-5 w-5 text-butter-ink" />
                     <div>
                       <p className="font-medium">대기 중</p>
                       <p className="text-sm text-muted-foreground">검토 대기</p>
                     </div>
                   </div>
-                  <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                  <Badge className="bg-butter/40 text-butter-ink">
                     {stats.applications.pending}
                   </Badge>
                 </div>
 
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <CheckCircle className="h-5 w-5 text-mint-ink" />
                     <div>
                       <p className="font-medium">승인됨</p>
                       <p className="text-sm text-muted-foreground">가입 완료</p>
                     </div>
                   </div>
-                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                  <Badge className="bg-mint/40 text-mint-ink">
                     {stats.applications.approved}
                   </Badge>
                 </div>
 
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center gap-3">
-                    <XCircle className="h-5 w-5 text-red-600" />
+                    <XCircle className="h-5 w-5 text-destructive" />
                     <div>
                       <p className="font-medium">거절됨</p>
                       <p className="text-sm text-muted-foreground">가입 거절</p>
                     </div>
                   </div>
-                  <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                  <Badge className="bg-destructive/15 text-destructive">
                     {stats.applications.rejected}
                   </Badge>
                 </div>
@@ -655,13 +655,13 @@ export default function CommunityDetails() {
           <CardContent>
             {links.length === 0 ? (
               <div className="text-center py-8">
-                <ExternalLink className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                <ExternalLink className="h-12 w-12 text-muted-foreground/60 mx-auto mb-3" />
+                <h4 className="text-lg font-medium text-foreground mb-2">
                   등록된 링크가 없습니다
                 </h4>
                 {userRole === "owner" ? (
                   <>
-                    <p className="text-gray-500 dark:text-gray-400 mb-4">
+                    <p className="text-muted-foreground mb-4">
                       커뮤 관리 페이지에서 링크를 추가해보세요
                     </p>
                     <Link to={`/communities/${slug}/links`}>
@@ -669,7 +669,7 @@ export default function CommunityDetails() {
                     </Link>
                   </>
                 ) : (
-                  <p className="text-gray-500 dark:text-gray-400">
+                  <p className="text-muted-foreground">
                     아직 등록된 링크가 없습니다
                   </p>
                 )}
@@ -679,7 +679,7 @@ export default function CommunityDetails() {
                 {links.map((link) => (
                   <div
                     key={link.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted transition-colors"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
@@ -687,16 +687,16 @@ export default function CommunityDetails() {
                           href={link.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+                          className="flex items-center gap-2 text-primary hover:text-primary/90 font-medium transition-colors"
                         >
                           <span>{link.title}</span>
                           <ExternalLink className="h-4 w-4" />
                         </a>
                       </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         {link.url}
                       </p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         생성일:{" "}
                         {new Date(link.created_at).toLocaleString("ko-KR")}
                       </p>
@@ -723,17 +723,17 @@ export default function CommunityDetails() {
                   <Link
                     key={application.id}
                     to={`/communities/${slug}/applications/${application.id}`}
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted transition-colors"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <Badge
                           className={
                             application.status === "pending"
-                              ? "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200"
+                              ? "bg-butter/40 text-butter-ink"
                               : application.status === "approved"
-                                ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
-                                : "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
+                                ? "bg-mint/40 text-mint-ink"
+                                : "bg-destructive/15 text-destructive"
                           }
                         >
                           {application.status === "pending"
@@ -742,18 +742,18 @@ export default function CommunityDetails() {
                               ? "승인됨"
                               : "거절됨"}
                         </Badge>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                        <span className="text-sm text-muted-foreground">
                           {new Date(application.created_at).toLocaleDateString(
                             "ko-KR",
                           )}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                      <p className="text-sm text-foreground mt-1">
                         {application.profile_name} (@
                         {application.profile_username})
                       </p>
                       {application.rejection_reason && (
-                        <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                        <p className="text-xs text-destructive mt-1">
                           거절 사유: {application.rejection_reason}
                         </p>
                       )}
@@ -801,7 +801,7 @@ export default function CommunityDetails() {
             <AlertDialogAction
               onClick={handleLeaveCommunity}
               disabled={leaveMutation.isPending}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive hover:bg-destructive/90"
             >
               {leaveMutation.isPending && <Spinner />}
               {leaveMutation.isPending ? "나가는 중..." : "나가기"}

@@ -383,7 +383,7 @@ function ApplicationsTable({ communityId }: { communityId: string }) {
                             disabled={
                               processingApplicationId === application.id
                             }
-                            className="text-green-600 border-green-600 hover:bg-green-50 flex-1"
+                            className="text-mint-ink border-mint/60 hover:bg-mint/40 flex-1"
                           >
                             {processingApplicationId === application.id ? (
                               <Spinner />
@@ -401,7 +401,7 @@ function ApplicationsTable({ communityId }: { communityId: string }) {
                             disabled={
                               processingApplicationId === application.id
                             }
-                            className="text-red-600 border-red-600 hover:bg-red-50 flex-1"
+                            className="text-destructive border-destructive/30 hover:bg-destructive/10 flex-1"
                           >
                             {processingApplicationId === application.id ? (
                               <Spinner />

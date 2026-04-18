@@ -98,7 +98,7 @@ export function GroupChatMessageReactions({
             }}
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors ${
               hasCurrentUserReaction
-                ? "bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900"
+                ? "bg-primary/15 border-primary/30 text-primary hover:bg-primary/25"
                 : "bg-card border-border text-foreground hover:bg-accent"
             }`}
             title={reaction.profiles
@@ -124,7 +124,7 @@ export function GroupChatMessageReactions({
 
           {openReactionSelector && (
             <div
-              className={`absolute bottom-full mb-2 bg-popover border border-border rounded-lg shadow-lg p-2 flex gap-1 z-10 ${
+              className={`absolute bottom-full mb-2 bg-popover border border-border rounded-lg shadow-marsh-lg p-2 flex gap-1 z-10 ${
                 isFromMe ? "right-0" : "left-0"
               }`}
             >
@@ -201,7 +201,7 @@ export function GroupChatMessageReactions({
                               onRemoveReaction(reaction.emoji);
                               onModalClose();
                             }}
-                            className="text-xs text-red-600 hover:text-red-700 font-medium"
+                            className="text-xs text-destructive hover:text-destructive/80 font-medium"
                           >
                             제거
                           </button>

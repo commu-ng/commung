@@ -36,7 +36,7 @@ export function MastodonLayout({
       {/* Mobile Header */}
       {showAuthenticatedLayout && (
         <header
-          className={`sticky top-0 z-40 bg-card border-b border-border px-4 h-14 flex items-center gap-3 md:hidden transition-transform duration-300 ${headerHidden ? "-translate-y-full" : "translate-y-0"}`}
+          className={`sticky top-0 z-40 bg-card/85 backdrop-blur-xl border-b border-border/70 px-4 h-14 flex items-center gap-3 md:hidden transition-transform duration-300 ${headerHidden ? "-translate-y-full" : "translate-y-0"}`}
         >
           <MobileNavDrawer
             communityName={communityName}
@@ -44,7 +44,7 @@ export function MastodonLayout({
             unreadCount={unreadCount}
             unreadMessageCount={unreadMessageCount}
           />
-          <h1 className="font-bold text-lg text-foreground">
+          <h1 className="font-display font-bold text-xl text-foreground tracking-tight">
             {communityName || "\u00A0"}
           </h1>
         </header>
@@ -87,7 +87,7 @@ export function MastodonLayout({
         <main
           className={
             showAuthenticatedLayout
-              ? "min-h-screen md:border-x md:border-border pb-14 md:pb-0"
+              ? "min-h-screen md:border-x md:border-border/70 md:bg-card/40 md:backdrop-blur-sm pb-24 md:pb-0"
               : "min-h-screen"
           }
         >

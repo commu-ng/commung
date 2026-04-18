@@ -111,8 +111,10 @@ export function MessageBubble({
           <button
             type="button"
             onClick={handleBubbleTap}
-            className={`rounded-lg px-4 py-2 text-left ${
-              isFromMe ? "bg-blue-600 text-white" : "bg-accent text-foreground"
+            className={`rounded-2xl px-4 py-2 text-left shadow-marsh transition-shadow hover:shadow-marsh-lg ${
+              isFromMe
+                ? "bg-primary text-primary-foreground rounded-br-md"
+                : "bg-card border border-border/70 text-foreground rounded-bl-md"
             } cursor-pointer`}
           >
             {/* Images */}
@@ -155,7 +157,7 @@ export function MessageBubble({
         {/* Action menu popover */}
         {showMenu && (
           <div
-            className={`absolute z-20 ${isFromMe ? "right-0" : "left-0"} bottom-full mb-1 bg-popover border border-border rounded-lg shadow-lg overflow-hidden`}
+            className={`absolute z-20 ${isFromMe ? "right-0" : "left-0"} bottom-full mb-1 bg-popover border border-border/80 rounded-2xl shadow-marsh-lg overflow-hidden`}
           >
             <button
               type="button"
@@ -176,7 +178,7 @@ export function MessageBubble({
                   setShowMenu(false);
                   onDelete();
                 }}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-accent transition-colors whitespace-nowrap w-full"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors whitespace-nowrap w-full"
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 삭제

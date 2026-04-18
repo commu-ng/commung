@@ -565,7 +565,7 @@ export function MessageComposer({
                   type="button"
                   onClick={() => removeImageFromHook(index)}
                   disabled={isDisabled}
-                  className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 disabled:opacity-50"
+                  className="absolute -top-1 -right-1 h-5 w-5 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90 disabled:opacity-50 shadow-marsh"
                   title="이미지 제거"
                 >
                   <X className="h-3 w-3" />
@@ -733,7 +733,7 @@ export function MessageComposer({
           <div
             className={`text-xs ${
               isOverLimit
-                ? "text-red-600 dark:text-red-400 font-semibold"
+                ? "text-destructive font-semibold"
                 : "text-muted-foreground"
             }`}
           >

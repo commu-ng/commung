@@ -237,10 +237,10 @@ export function MemberCard({
                               profile.primary
                                 ? "border-primary"
                                 : "border-muted"
-                            } ${profile.muted_at ? "bg-orange-50 border-orange-300 dark:bg-orange-950 dark:border-orange-700" : ""}`}
+                            } ${profile.muted_at ? "bg-mute/15 border-mute/40" : ""}`}
                           >
                             {profile.muted_at && (
-                              <VolumeX className="w-3 h-3 mr-1 text-orange-600 dark:text-orange-400" />
+                              <VolumeX className="w-3 h-3 mr-1 text-mute" />
                             )}
                             {profile.name} (@{profile.username})
                             {profile.primary && " ★"}
@@ -277,7 +277,7 @@ export function MemberCard({
                                         profile.name,
                                       )
                                     }
-                                    className="text-orange-600 dark:text-orange-400"
+                                    className="text-mute"
                                   >
                                     <VolumeX className="w-4 h-4 mr-2" />
                                     음소거
@@ -324,7 +324,7 @@ export function MemberCard({
                   {canRemove && (
                     <DropdownMenuItem
                       onClick={() => setShowRemoveDialog(true)}
-                      className="text-red-600"
+                      className="text-destructive"
                     >
                       <UserMinus className="w-4 h-4 mr-2" />
                       멤버 제거
@@ -333,7 +333,7 @@ export function MemberCard({
                   {canLeave && (
                     <DropdownMenuItem
                       onClick={() => setShowRemoveDialog(true)}
-                      className="text-red-600"
+                      className="text-destructive"
                     >
                       <UserMinus className="w-4 h-4 mr-2" />
                       커뮤 나가기
@@ -419,7 +419,7 @@ export function MemberCard({
             <AlertDialogAction
               onClick={handleRemoveMember}
               disabled={isRemoving}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive text-white hover:bg-destructive/90"
             >
               {isRemoving
                 ? isCurrentUser

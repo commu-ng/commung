@@ -75,7 +75,7 @@ export function MasqueradeBanner() {
       <div className="h-[52px]" />
 
       {/* Fixed banner at the top */}
-      <div className="bg-amber-500 dark:bg-amber-600 text-white px-4 py-3 shadow-lg fixed top-0 left-0 right-0 z-50">
+      <div className="bg-masquerade text-white px-4 py-3 shadow-marsh-lg fixed top-0 left-0 right-0 z-50">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 flex-shrink-0" />
@@ -85,7 +85,7 @@ export function MasqueradeBanner() {
                 {status.targetUser?.login_name} 사용자로 전환 중입니다
               </span>
               {status.adminUser && (
-                <span className="ml-2 text-amber-100 dark:text-amber-200">
+                <span className="ml-2 text-white/80">
                   (관리자: {status.adminUser.login_name})
                 </span>
               )}
@@ -96,7 +96,7 @@ export function MasqueradeBanner() {
             size="sm"
             onClick={handleEndMasquerade}
             disabled={endMasqueradeMutation.isPending}
-            className="text-white hover:bg-amber-600 dark:hover:bg-amber-700 hover:text-white flex items-center gap-2"
+            className="text-white hover:bg-white/15 hover:text-white flex items-center gap-2"
           >
             <X className="h-4 w-4" />
             전환 종료

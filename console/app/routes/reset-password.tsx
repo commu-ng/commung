@@ -143,12 +143,12 @@ export default function ResetPassword() {
       <div className="flex items-center justify-center bg-background">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-red-600">
+            <CardTitle className="text-2xl font-bold text-destructive">
               유효하지 않은 링크
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="text-sm text-red-600 bg-red-50 p-4 rounded">
+            <div className="text-sm text-destructive bg-destructive/15 p-4 rounded">
               <p className="font-medium mb-2">{tokenError}</p>
               <p>
                 재설정 링크가 만료되었거나 유효하지 않습니다. 비밀번호 찾기를
@@ -173,7 +173,7 @@ export default function ResetPassword() {
         </CardHeader>
         <CardContent className="space-y-4">
           {success ? (
-            <div className="text-sm text-green-600 bg-green-50 p-4 rounded">
+            <div className="text-sm text-mint-ink bg-mint/40 p-4 rounded">
               <p className="font-medium mb-2">
                 비밀번호가 성공적으로 재설정되었습니다!
               </p>

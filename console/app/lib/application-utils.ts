@@ -55,12 +55,12 @@ export function getStatusText(status: ApplicationStatus): string {
  */
 export function getStatusColor(status: ApplicationStatus): string {
   const colorMap: Record<ApplicationStatus, string> = {
-    pending: "text-yellow-600 bg-yellow-50 border-yellow-200",
-    approved: "text-green-600 bg-green-50 border-green-200",
-    rejected: "text-red-600 bg-red-50 border-red-200",
+    pending: "text-butter-ink bg-butter/40 border-butter/60",
+    approved: "text-mint-ink bg-mint/40 border-mint/60",
+    rejected: "text-destructive bg-destructive/15 border-destructive/30",
   };
 
-  return colorMap[status] || "text-gray-600 bg-gray-50 border-gray-200";
+  return colorMap[status] || "text-muted-foreground bg-muted border-border";
 }
 
 /**

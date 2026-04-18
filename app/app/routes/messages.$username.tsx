@@ -554,9 +554,9 @@ export default function MessageConversation() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="max-w-md mx-auto px-4">
-          <div className="bg-card rounded-2xl shadow-sm border border-border p-8 text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <MessageCircle className="h-8 w-8 text-blue-600" />
+          <div className="bg-card rounded-2xl shadow-marsh border border-border p-8 text-center">
+            <div className="w-16 h-16 bg-primary/15 rounded-full flex items-center justify-center mx-auto mb-6">
+              <MessageCircle className="h-8 w-8 text-primary" />
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-3">
               로그인이 필요합니다
@@ -592,9 +592,9 @@ export default function MessageConversation() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="max-w-md mx-auto px-4">
-          <div className="bg-card rounded-2xl shadow-sm border border-border p-8 text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <MessageCircle className="h-8 w-8 text-red-600" />
+          <div className="bg-card rounded-2xl shadow-marsh border border-border p-8 text-center">
+            <div className="w-16 h-16 bg-destructive/15 rounded-full flex items-center justify-center mx-auto mb-6">
+              <MessageCircle className="h-8 w-8 text-destructive" />
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-3">
               오류가 발생했습니다
@@ -602,7 +602,7 @@ export default function MessageConversation() {
             <p className="text-muted-foreground mb-6">{error}</p>
             <Link
               to="/messages"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
               메시지 목록으로
@@ -729,7 +729,7 @@ export default function MessageConversation() {
           </div>
 
           {/* Message Input */}
-          <div className="bg-card border border-border rounded-2xl p-4 shadow-sm">
+          <div className="bg-card border border-border rounded-2xl p-4 shadow-marsh">
             {/* Image previews */}
             {images.length > 0 && (
               <div className="mb-3 pb-3 border-b border-border">
@@ -745,7 +745,7 @@ export default function MessageConversation() {
                         type="button"
                         onClick={() => removeImage(image.tempId)}
                         disabled={isUploadingImages || isSending}
-                        className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 disabled:opacity-50"
+                        className="absolute -top-1 -right-1 h-5 w-5 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90 disabled:opacity-50"
                         title="이미지 제거"
                       >
                         <X className="h-3 w-3" />
@@ -767,7 +767,7 @@ export default function MessageConversation() {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploadingImages || isSending}
-                className="flex-shrink-0 w-10 h-10 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                className="flex-shrink-0 w-10 h-10 text-muted-foreground hover:text-foreground hover:bg-accent rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
                 title="이미지 첨부"
               >
                 <Paperclip className="h-4 w-4" />
@@ -777,7 +777,7 @@ export default function MessageConversation() {
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={handleKeyPress}
                 placeholder="메시지를 입력하세요..."
-                className="flex-1 resize-none border-0 focus:ring-0 p-0 text-sm placeholder-gray-500 max-h-32"
+                className="flex-1 resize-none border-0 focus:ring-0 p-0 text-sm placeholder:text-muted-foreground max-h-32"
                 rows={1}
                 disabled={isSending}
               />
@@ -790,7 +790,7 @@ export default function MessageConversation() {
                   isSending ||
                   isUploadingImages
                 }
-                className="flex-shrink-0 w-10 h-10 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                className="flex-shrink-0 w-10 h-10 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
               >
                 <Send className="h-4 w-4" />
               </button>
@@ -813,8 +813,8 @@ export default function MessageConversation() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-2xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                <Trash2 className="h-5 w-5 text-red-600" />
+              <div className="w-10 h-10 bg-destructive/15 rounded-full flex items-center justify-center">
+                <Trash2 className="h-5 w-5 text-destructive" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-foreground">
@@ -859,7 +859,7 @@ export default function MessageConversation() {
                     deleteMessage(confirmDeleteMessageId, "for_all")
                   }
                   disabled={deletingMessageId !== null}
-                  className="w-full px-4 py-3 text-left text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="w-full px-4 py-3 text-left text-destructive bg-destructive/15 hover:bg-destructive/25 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {deletingMessageId === confirmDeleteMessageId ? (
                     <Spinner className="h-4 w-4" />

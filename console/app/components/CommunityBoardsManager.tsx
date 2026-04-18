@@ -474,7 +474,7 @@ export function CommunityBoardsManager({
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -495,7 +495,7 @@ export function CommunityBoardsManager({
                               <DialogClose asChild>
                                 <Button
                                   onClick={() => deleteBoard(board.id)}
-                                  className="bg-red-600 hover:bg-red-700"
+                                  className="bg-destructive text-white hover:bg-destructive/90"
                                 >
                                   삭제
                                 </Button>

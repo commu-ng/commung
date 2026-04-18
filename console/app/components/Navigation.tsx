@@ -2,11 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   FileText,
+  Heart,
   Home,
   LogIn,
   MessageSquare,
   Search,
-  Star,
   UserIcon,
   UserPlus,
 } from "lucide-react";
@@ -89,12 +89,17 @@ export function Navigation() {
 
   return (
     <nav>
-      <div className="flex flex-col items-center justify-center bg-background space-y-6 py-8 px-4">
-        <h1 className="text-4xl font-bold text-foreground flex flex-col items-center gap-2">
-          <span className="text-6xl commu-ng">
-            <Star width={48} height={48} />
+      <div className="flex flex-col items-center justify-center space-y-6 py-10 px-4">
+        <h1 className="font-display text-5xl font-bold text-foreground flex flex-col items-center gap-3">
+          <span className="commu-ng">
+            <Heart
+              width={56}
+              height={56}
+              fill="currentColor"
+              strokeWidth={1.5}
+            />
           </span>
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2 tracking-tight">
             커뮹!
           </Link>
         </h1>
@@ -132,7 +137,7 @@ export function Navigation() {
                 <Link to="/communities/mine">
                   <Home className="h-4 w-4" />내 커뮤
                   {totalPendingApplications > 0 && (
-                    <Badge className="ml-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                    <Badge className="ml-1 bg-butter/40 text-butter-ink dark:bg-butter/25">
                       {totalPendingApplications}
                     </Badge>
                   )}
