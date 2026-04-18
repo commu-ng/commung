@@ -146,8 +146,8 @@ function WelcomeHero({
           <br className="hidden sm:block" /> 함께 가꿔봐요
         </h1>
         <p className="text-muted-foreground mt-3 max-w-lg leading-relaxed">
-          모든 일상과 자캐, 취향을 나눌 공간을 만들어보세요. 새 글, 새 친구, 새
-          이야기가 기다리고 있어요.
+          모든 일상과 자캐, 취향을 나눌 공간을 만들어보세요.
+          <br />새 글, 새 친구, 새 이야기가 기다리고 있어요.
         </p>
 
         <div className="flex flex-wrap items-center gap-2 mt-6">
