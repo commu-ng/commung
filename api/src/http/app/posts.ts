@@ -608,7 +608,26 @@ export const postsRouter = new Hono<{ Variables: AuthVariables }>()
       const user = c.get("user");
       const community = c.get("community");
 
-      await postService.pinPost(user.id, profileId, postId, community.id);
+      const profile = await profileService.validateAndGetProfile(
+        user.id,
+        profileId,
+        community.id,
+        true,
+      );
+
+      if (!profile) {
+        return c.json(
+          {
+            error: {
+              code: GeneralErrorCode.PROFILE_NOT_FOUND,
+              message: "프로필을 찾을 수 없거나 귀하의 소유가 아닙니다",
+            },
+          },
+          404,
+        );
+      }
+
+      await postService.pinPost(user.id, profile.id, postId, community.id);
       return c.json({
         data: {
           post_id: postId,
@@ -631,7 +650,26 @@ export const postsRouter = new Hono<{ Variables: AuthVariables }>()
       const user = c.get("user");
       const community = c.get("community");
 
-      await postService.unpinPost(user.id, profileId, postId, community.id);
+      const profile = await profileService.validateAndGetProfile(
+        user.id,
+        profileId,
+        community.id,
+        true,
+      );
+
+      if (!profile) {
+        return c.json(
+          {
+            error: {
+              code: GeneralErrorCode.PROFILE_NOT_FOUND,
+              message: "프로필을 찾을 수 없거나 귀하의 소유가 아닙니다",
+            },
+          },
+          404,
+        );
+      }
+
+      await postService.unpinPost(user.id, profile.id, postId, community.id);
       return c.json({ data: { post_id: postId, pinned: false } });
     },
   )
