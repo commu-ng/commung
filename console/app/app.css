@@ -230,6 +230,8 @@ body {
 
   body {
     @apply bg-background text-foreground antialiased;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
     background-image:
       radial-gradient(
         circle at 8% 4%,
