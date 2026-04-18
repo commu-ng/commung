@@ -1,11 +1,12 @@
 import { useEffect, useId, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
+import { AuthShell } from "~/components/shared/AuthShell";
 import { LoadingState } from "~/components/shared/LoadingState";
 import { Button } from "~/components/ui/button";
-import { Spinner } from "~/components/ui/spinner";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardContent } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
+import { Spinner } from "~/components/ui/spinner";
 import {
   Field,
   FieldDescription,
@@ -128,12 +129,13 @@ export default function Signup() {
   }
 
   return (
-    <div className="flex items-center justify-center bg-background">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">회원가입</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+    <AuthShell
+      eyebrow="환영해요"
+      title="처음 오셨군요!"
+      description="짧은 정보만 입력하면 바로 시작할 수 있어요."
+    >
+      <Card>
+        <CardContent className="space-y-4 pt-6">
           <form onSubmit={handleSubmit}>
             <FieldGroup>
               <Field>
@@ -228,17 +230,17 @@ export default function Signup() {
               </Field>
             </FieldGroup>
           </form>
-          <div className="text-center text-sm">
+          <div className="text-center text-sm text-muted-foreground">
             이미 계정이 있으신가요?{" "}
             <Link
               to={`/login${searchParams.get("next") ? `?next=${encodeURIComponent(searchParams.get("next") || "")}` : ""}`}
-              className="text-primary hover:underline"
+              className="text-primary hover:underline font-medium"
             >
               로그인
             </Link>
           </div>
         </CardContent>
       </Card>
-    </div>
+    </AuthShell>
   );
 }

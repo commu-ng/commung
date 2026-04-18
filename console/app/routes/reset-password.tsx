@@ -1,14 +1,9 @@
 import { useEffect, useId, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
+import { AuthShell } from "~/components/shared/AuthShell";
 import { LoadingState } from "~/components/shared/LoadingState";
 import { Button } from "~/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent } from "~/components/ui/card";
 import {
   Field,
   FieldError,
@@ -140,14 +135,13 @@ export default function ResetPassword() {
 
   if (!isValidToken) {
     return (
-      <div className="flex items-center justify-center bg-background">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-destructive">
-              유효하지 않은 링크
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      <AuthShell
+        eyebrow="비밀번호 재설정"
+        title="유효하지 않은 링크"
+        description="링크가 만료되었거나 사용할 수 없어요."
+      >
+        <Card>
+          <CardContent className="space-y-4 pt-6">
             <div className="text-sm text-destructive bg-destructive/15 p-4 rounded">
               <p className="font-medium mb-2">{tokenError}</p>
               <p>
@@ -160,18 +154,18 @@ export default function ResetPassword() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="flex items-center justify-center bg-background">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">비밀번호 재설정</CardTitle>
-          <CardDescription>새 비밀번호를 입력하세요</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+    <AuthShell
+      eyebrow="비밀번호 재설정"
+      title="새 비밀번호를 만들어요"
+      description="안전한 비밀번호로 다시 시작해요."
+    >
+      <Card>
+        <CardContent className="space-y-4 pt-6">
           {success ? (
             <div className="text-sm text-mint-ink bg-mint/40 p-4 rounded">
               <p className="font-medium mb-2">
@@ -224,6 +218,6 @@ export default function ResetPassword() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </AuthShell>
   );
 }

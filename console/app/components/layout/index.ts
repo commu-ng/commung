@@ -1,2 +1,2 @@
 export { ConsoleLayout } from "./ConsoleLayout";
-export { Sidebar } from "./Sidebar";
+export { TopNav } from "./TopNav";

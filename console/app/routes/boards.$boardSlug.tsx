@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { AlertCircle, Plus } from "lucide-react";
+import { AlertCircle, MessageSquare, Plus } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { BoardPostList } from "~/components/BoardPostList";
 import { HashtagFilter } from "~/components/HashtagFilter";
 import { LoadingState } from "~/components/shared/LoadingState";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { Button } from "~/components/ui/button";
 import {
   Empty,
@@ -110,24 +111,23 @@ export default function BoardDetail({ params }: Route.ComponentProps) {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <div className="mb-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">{board.name}</h1>
-            {board.description && (
-              <p className="text-muted-foreground mt-2">{board.description}</p>
-            )}
-          </div>
-          {isAuthenticated && (
-            <Button asChild>
+      <PageHeader
+        eyebrow="게시판"
+        icon={MessageSquare}
+        title={board.name}
+        description={board.description ?? undefined}
+        tone="lilac"
+        actions={
+          isAuthenticated ? (
+            <Button asChild className="rounded-full">
               <Link to={`/boards/${boardSlug}/create`}>
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="h-4 w-4" />
                 게시물 작성
               </Link>
             </Button>
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+      />
 
       <HashtagFilter
         allHashtags={allHashtags}

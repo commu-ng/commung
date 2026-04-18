@@ -3,6 +3,7 @@ import {
   CommunityFormFields,
 } from "~/components/CommunityFormFields";
 import { MarkdownEditor } from "~/components/MarkdownEditor";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -465,8 +466,8 @@ export default function CommunityManagement() {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-2">
           <Link to={`/communities/${slug}`}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -475,17 +476,16 @@ export default function CommunityManagement() {
           </Link>
         </div>
 
+        <PageHeader
+          eyebrow="설정"
+          icon={Settings}
+          title="커뮤 설정"
+          description="커뮤 정보와 운영 옵션을 조정해요"
+          tone="lilac"
+        />
+
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="w-5 h-5" />
-              커뮤 설정
-            </CardTitle>
-            <CardDescription>
-              {community?.name} 커뮤의 설정을 변경할 수 있습니다
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <form onSubmit={handleUpdate} className="space-y-4">
               <CommunityFormFields
                 formData={{

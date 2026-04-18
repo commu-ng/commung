@@ -162,7 +162,7 @@ export function CommunityList({
       {ownedCommunities.length > 0 && (
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">내가 만든 커뮤</h2>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {ownedCommunities.map((community) => (
               <CommunityCard key={community.id} community={community} />
             ))}
@@ -173,7 +173,7 @@ export function CommunityList({
       {joinedCommunities.length > 0 && (
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">참여 중인 커뮤</h2>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {joinedCommunities.map((community) => (
               <CommunityCard key={community.id} community={community} />
             ))}
@@ -194,7 +194,7 @@ export function CommunityList({
               <h3 className="text-lg font-medium mb-3 text-muted-foreground">
                 내가 만든 커뮤
               </h3>
-              <div className="space-y-4 opacity-60">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 opacity-60">
                 {finishedOwnedCommunities.map((community) => (
                   <CommunityCard key={community.id} community={community} />
                 ))}
@@ -207,7 +207,7 @@ export function CommunityList({
               <h3 className="text-lg font-medium mb-3 text-muted-foreground">
                 참여했던 커뮤
               </h3>
-              <div className="space-y-4 opacity-60">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 opacity-60">
                 {finishedJoinedCommunities.map((community) => (
                   <CommunityCard key={community.id} community={community} />
                 ))}

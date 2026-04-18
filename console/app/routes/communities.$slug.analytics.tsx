@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { eachDayOfInterval, format, parseISO } from "date-fns";
 import { ko } from "date-fns/locale";
+import { BarChart3 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { Button } from "~/components/ui/button";
 import {
   ChartContainer,
@@ -253,26 +255,27 @@ export default function CommunityAnalytics() {
 
   return (
     <div className="w-full py-8 px-6 space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">활동 분석</h1>
-          <p className="text-muted-foreground mt-2">
-            커뮤니티의 게시글 및 DM 활동 통계
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {TIME_RANGES.map((range) => (
-            <Button
-              key={range.value}
-              variant={days === range.value ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDays(range.value)}
-            >
-              {range.label}
-            </Button>
-          ))}
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="운영"
+        icon={BarChart3}
+        title="활동 분석"
+        description="커뮤니티의 게시글 및 DM 활동 통계"
+        tone="mint"
+        actions={
+          <div className="flex gap-2">
+            {TIME_RANGES.map((range) => (
+              <Button
+                key={range.value}
+                variant={days === range.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => setDays(range.value)}
+              >
+                {range.label}
+              </Button>
+            ))}
+          </div>
+        }
+      />
 
       {/* Summary Stats */}
       <div className="grid gap-4 md:grid-cols-3">

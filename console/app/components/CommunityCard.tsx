@@ -7,7 +7,9 @@ import {
   Clock,
   ExternalLink,
   Hash,
+  Heart,
   ImageIcon,
+  Sparkles,
   UsersIcon,
 } from "lucide-react";
 import { Link } from "react-router";
@@ -63,165 +65,148 @@ export function CommunityCard({ community }: CommunityCardProps) {
   return (
     <Link
       to={`/communities/${community.slug}`}
-      className="block border border-border bg-card hover:bg-accent/50 transition-colors"
+      className="group block overflow-hidden rounded-3xl border border-border/70 bg-card shadow-marsh transition-all duration-300 hover:-translate-y-1 hover:shadow-marsh-lg"
     >
-      <div className="flex">
-        {/* Banner Image Thumbnail */}
-        <div className="w-28 sm:w-36 flex-shrink-0 bg-muted">
-          {community.banner_image_url ? (
-            <img
-              src={community.banner_image_url}
-              alt=""
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <ImageIcon className="h-8 w-8 text-muted-foreground/50" />
-            </div>
+      {/* Banner */}
+      <div className="relative aspect-[16/9] bg-gradient-to-br from-blossom/40 via-lilac/30 to-mint/30 overflow-hidden">
+        {community.banner_image_url ? (
+          <img
+            src={community.banner_image_url}
+            alt=""
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <ImageIcon className="h-10 w-10 text-foreground/30" />
+          </div>
+        )}
+
+        {/* Status pill (top-left) */}
+        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+          {isUpcoming && (
+            <Badge className="bg-card/85 backdrop-blur-md text-primary border border-primary/20 shadow-marsh">
+              <Clock className="h-3 w-3 mr-1" />
+              예정
+            </Badge>
+          )}
+          {isActive && (
+            <Badge className="bg-card/85 backdrop-blur-md text-mint-ink border border-mint/40 shadow-marsh">
+              <Activity className="h-3 w-3 mr-1" />
+              진행 중
+            </Badge>
+          )}
+          {isEnded && (
+            <Badge className="bg-card/85 backdrop-blur-md text-muted-foreground border border-border shadow-marsh">
+              <CheckCircle className="h-3 w-3 mr-1" />
+              종료
+            </Badge>
+          )}
+          {community.is_recruiting && (
+            <Badge className="bg-mint text-mint-ink border border-mint/60 shadow-marsh">
+              <Sparkles className="h-3 w-3 mr-1" />
+              모집 중
+            </Badge>
           )}
         </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0 p-4">
-          {/* Title and Status */}
-          <div className="flex items-start justify-between gap-3 mb-2">
-            <h3 className="font-semibold text-foreground truncate">
-              {community.name}
-            </h3>
-            <div className="flex-shrink-0">
-              {isUpcoming && (
-                <Badge
-                  variant="secondary"
-                  className="bg-primary/15 text-primary"
-                >
-                  <Clock className="h-3 w-3 mr-1" />
-                  예정
-                </Badge>
-              )}
-              {isActive && (
-                <Badge variant="secondary" className="bg-mint/40 text-mint-ink">
-                  <Activity className="h-3 w-3 mr-1" />
-                  진행 중
-                </Badge>
-              )}
-              {isEnded && (
-                <Badge
-                  variant="secondary"
-                  className="bg-muted text-muted-foreground"
-                >
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  종료
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          {/* Date */}
-          <div className="flex items-center text-sm text-muted-foreground mb-3">
-            <CalendarIcon className="h-3.5 w-3.5 mr-1.5" />
-            {isValidStartDate
-              ? format(startDate, "yy.MM.dd", { locale: ko })
-              : "?"}{" "}
-            —{" "}
-            {isValidEndDate ? format(endDate, "yy.MM.dd", { locale: ko }) : "?"}
-          </div>
-
-          {/* Badges Row */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {/* Role Badge */}
-            {community.role && (
-              <Badge
-                variant="secondary"
-                className={
-                  community.role === "owner"
-                    ? "bg-blossom/40 text-blossom-ink"
-                    : community.role === "moderator"
-                      ? "bg-lilac/40 text-lilac-ink"
-                      : "bg-primary/15 text-primary"
-                }
-              >
-                {community.role === "owner"
-                  ? "내가 만든"
+        {/* Role pill (top-right) */}
+        {community.role && (
+          <div className="absolute top-3 right-3">
+            <Badge
+              className={
+                community.role === "owner"
+                  ? "bg-blossom text-blossom-ink border border-blossom/60 shadow-marsh"
                   : community.role === "moderator"
-                    ? "모더레이터"
-                    : "참여 중"}
-              </Badge>
-            )}
-
-            {/* Recruiting Badge */}
-            {community.is_recruiting && (
-              <Badge variant="secondary" className="bg-mint/40 text-mint-ink">
-                <UsersIcon className="h-3 w-3 mr-1" />
-                모집 중
-              </Badge>
-            )}
-
-            {/* Application Status */}
-            {!community.role && community.has_applied && (
-              <Badge
-                variant="secondary"
-                className={
-                  community.application_status === "rejected"
-                    ? "bg-destructive/15 text-destructive"
-                    : "bg-muted text-muted-foreground"
-                }
-              >
-                {community.application_status === "rejected"
-                  ? "거부됨"
-                  : "신청 완료"}
-              </Badge>
-            )}
-
-            {/* Pending Applications */}
-            {(community.role === "owner" || community.role === "moderator") &&
-              community.pending_application_count !== undefined &&
-              community.pending_application_count > 0 && (
-                <Badge
-                  variant="secondary"
-                  className="bg-butter/40 text-butter-ink"
-                >
-                  신청 {community.pending_application_count}
-                </Badge>
-              )}
-
-            {/* Birth Year Requirement */}
-            {community.minimum_birth_year && (
-              <Badge variant="outline" className="text-muted-foreground">
-                {community.minimum_birth_year}년생+
-              </Badge>
-            )}
-
-            {/* Hashtags */}
-            {community.hashtags?.slice(0, 3).map((hashtag) => (
-              <Badge
-                key={hashtag.id}
-                variant="outline"
-                className="text-muted-foreground"
-              >
-                <Hash className="h-2.5 w-2.5 mr-0.5" />
-                {hashtag.tag}
-              </Badge>
-            ))}
-            {community.hashtags && community.hashtags.length > 3 && (
-              <span className="text-xs text-muted-foreground">
-                +{community.hashtags.length - 3}
-              </span>
-            )}
-          </div>
-
-          {/* Community URL */}
-          <div className="mt-3 pt-3 border-t border-border">
-            <a
-              href={`https://${communityUrl}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center text-xs text-muted-foreground font-mono hover:text-foreground"
+                    ? "bg-lilac text-lilac-ink border border-lilac/60 shadow-marsh"
+                    : "bg-card/85 backdrop-blur-md text-primary border border-primary/30 shadow-marsh"
+              }
             >
-              <ExternalLink className="h-3 w-3 mr-1.5" />
-              {communityUrl}
-            </a>
+              {community.role === "owner" ? (
+                <Heart className="h-3 w-3 mr-1" fill="currentColor" />
+              ) : null}
+              {community.role === "owner"
+                ? "내가 만든"
+                : community.role === "moderator"
+                  ? "모더레이터"
+                  : "참여 중"}
+            </Badge>
           </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <h3 className="font-display text-xl font-bold text-foreground truncate">
+            {community.name}
+          </h3>
+          {(community.role === "owner" || community.role === "moderator") &&
+            community.pending_application_count !== undefined &&
+            community.pending_application_count > 0 && (
+              <Badge className="bg-butter/40 text-butter-ink dark:bg-butter/25 flex-shrink-0">
+                지원 {community.pending_application_count}
+              </Badge>
+            )}
+        </div>
+
+        <div className="flex items-center text-xs text-muted-foreground mb-3">
+          <CalendarIcon className="h-3.5 w-3.5 mr-1.5" />
+          {isValidStartDate
+            ? format(startDate, "yyyy.MM.dd", { locale: ko })
+            : "?"}{" "}
+          —{" "}
+          {isValidEndDate ? format(endDate, "yyyy.MM.dd", { locale: ko }) : "?"}
+        </div>
+
+        {/* Footer row */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {!community.role && community.has_applied && (
+            <Badge
+              className={
+                community.application_status === "rejected"
+                  ? "bg-destructive/15 text-destructive"
+                  : "bg-muted text-muted-foreground"
+              }
+            >
+              {community.application_status === "rejected"
+                ? "거부됨"
+                : "신청 완료"}
+            </Badge>
+          )}
+
+          {community.minimum_birth_year && (
+            <Badge variant="outline" className="text-muted-foreground">
+              {community.minimum_birth_year}년생+
+            </Badge>
+          )}
+
+          {community.hashtags?.slice(0, 3).map((hashtag) => (
+            <Badge
+              key={hashtag.id}
+              variant="outline"
+              className="text-muted-foreground"
+            >
+              <Hash className="h-2.5 w-2.5 mr-0.5" />
+              {hashtag.tag}
+            </Badge>
+          ))}
+          {community.hashtags && community.hashtags.length > 3 && (
+            <span className="text-xs text-muted-foreground">
+              +{community.hashtags.length - 3}
+            </span>
+          )}
+
+          {community.banner_image_url && community.hashtags?.length === 0 && (
+            <UsersIcon className="h-3 w-3 text-muted-foreground/60" />
+          )}
+        </div>
+
+        {/* Subtle URL */}
+        <div className="mt-3 pt-3 border-t border-border/70">
+          <span className="inline-flex items-center text-[11px] text-muted-foreground/80 font-mono">
+            <ExternalLink className="h-3 w-3 mr-1.5" />
+            {communityUrl}
+          </span>
         </div>
       </div>
     </Link>

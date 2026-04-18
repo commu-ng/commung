@@ -12,6 +12,7 @@ import {
 import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -200,15 +201,13 @@ export default function AdminCommunities() {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Globe className="h-8 w-8" />
-          커뮤니티 관리
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          전체 커뮤니티 목록 및 활동 현황
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="관리자"
+        icon={Globe}
+        title="커뮤니티 관리"
+        description="전체 커뮤니티 활동을 확인해요"
+        tone="primary"
+      />
 
       <Card>
         <CardHeader>

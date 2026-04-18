@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { AlertCircle, ArrowLeft } from "lucide-react";
+import { AlertCircle, ArrowLeft, Plus } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { BoardPostForm } from "~/components/BoardPostForm";
 import { LoadingState } from "~/components/shared/LoadingState";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardContent } from "~/components/ui/card";
 import {
   Empty,
   EmptyDescription,
@@ -108,24 +109,25 @@ export default function CreateBoardPost({ params }: Route.ComponentProps) {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <div className="mb-6">
-        <Button variant="ghost" asChild className="mb-4">
+      <div className="mb-2">
+        <Button variant="ghost" asChild>
           <Link to={`/boards/${boardSlug}`}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             {board.name}로 돌아가기
           </Link>
         </Button>
-        <h1 className="text-3xl font-bold">게시물 작성</h1>
-        {board.description && (
-          <p className="text-muted-foreground mt-2">{board.description}</p>
-        )}
       </div>
 
+      <PageHeader
+        eyebrow="글쓰기"
+        icon={Plus}
+        title="새 게시글"
+        description={`${board.name}에 글을 올려요`}
+        tone="lilac"
+      />
+
       <Card>
-        <CardHeader>
-          <CardTitle>새 게시물</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <BoardPostForm boardSlug={boardSlug} onSuccess={handleSuccess} />
         </CardContent>
       </Card>

@@ -1,10 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import {
   type CommunityFormData,
   CommunityFormFields,
 } from "~/components/CommunityFormFields";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import {
@@ -234,12 +236,15 @@ export default function CreateCommunity() {
   return (
     <div className="bg-background">
       <div className="container mx-auto py-8 px-4 max-w-2xl">
+        <PageHeader
+          eyebrow="새 커뮤"
+          icon={Plus}
+          title="커뮤를 만들어요"
+          description="새로운 작은 공간을 가꿔봐요"
+          tone="mint"
+        />
         <Card className="w-full">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">커뮤 생성</CardTitle>
-            <CardDescription>새로운 커뮤를 만들어보세요</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <CommunityFormFields
                 formData={formData}

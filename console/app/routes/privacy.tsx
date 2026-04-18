@@ -1,3 +1,5 @@
+import { BookOpen } from "lucide-react";
+import { PageHeader } from "~/components/shared/PageHeader";
 import type { Route } from "./+types/privacy";
 
 export function meta(_args: Route.MetaArgs) {
@@ -13,9 +15,14 @@ export function meta(_args: Route.MetaArgs) {
 export default function Privacy() {
   return (
     <div className="flex flex-col gap-12 px-4 py-8 max-w-4xl mx-auto">
+      <PageHeader
+        eyebrow="정책"
+        icon={BookOpen}
+        title="개인정보 처리방침"
+        description="여러분의 정보를 어떻게 다루는지 알려드려요"
+        tone="mint"
+      />
       <section className="space-y-6">
-        <h1 className="text-3xl font-bold">개인정보 처리방침</h1>
-
         <p className="text-lg">
           커뮹!은 회원님의 개인정보를 소중히 다룹니다. 기본적으로 커뮹! 이용 시
           개인정보를 수집하지 않습니다.

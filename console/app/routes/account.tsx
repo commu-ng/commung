@@ -1,9 +1,10 @@
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import { UserMinus } from "lucide-react";
+import { User as UserIcon, UserMinus } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { LoadingState } from "~/components/shared/LoadingState";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -205,10 +206,15 @@ export default function Account() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-2xl">
+    <div className="container mx-auto py-8 px-4 max-w-5xl">
+      <PageHeader
+        eyebrow="내 계정"
+        icon={UserIcon}
+        title="계정 설정"
+        description="계정 정보와 보안 설정을 관리해요"
+        tone="primary"
+      />
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">계정 설정</h1>
-
         {/* User Information */}
         <Card>
           <CardHeader>

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Users } from "lucide-react";
 import { Link, useParams } from "react-router";
 import { CommunityMemberManagement } from "~/components/CommunityMemberManagement";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
 import {
@@ -150,8 +151,8 @@ export default function CommunityMembers() {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-2">
           <Link to={`/communities/${slug}`}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -160,17 +161,16 @@ export default function CommunityMembers() {
           </Link>
         </div>
 
+        <PageHeader
+          eyebrow="운영"
+          icon={Users}
+          title="멤버 관리"
+          description="커뮤 멤버를 살펴보고 역할을 조정해요"
+          tone="lilac"
+        />
+
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              멤버 관리
-            </CardTitle>
-            <CardDescription>
-              {community?.name} 커뮤의 멤버를 관리할 수 있습니다
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             {currentUser && slug && (
               <CommunityMemberManagement
                 communityId={slug}

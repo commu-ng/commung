@@ -3,6 +3,7 @@ import {
   AlertCircle,
   ArrowLeft,
   Edit,
+  LayoutList,
   Plus,
   Settings,
   Trash2,
@@ -11,6 +12,7 @@ import { useId, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { LoadingState } from "~/components/shared/LoadingState";
+import { PageHeader } from "~/components/shared/PageHeader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -298,21 +300,19 @@ export default function AdminBoards() {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
-      <div className="mb-8 flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Settings className="h-8 w-8" />
-            게시판 관리
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            게시판을 생성하고 관리할 수 있습니다
-          </p>
-        </div>
-        <Button onClick={handleCreateClick}>
-          <Plus className="h-4 w-4 mr-2" />
-          게시판 생성
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow="관리자"
+        icon={LayoutList}
+        title="게시판 관리"
+        description="전체 게시판을 관리해요"
+        tone="primary"
+        actions={
+          <Button onClick={handleCreateClick} className="rounded-full">
+            <Plus className="h-4 w-4" />
+            게시판 생성
+          </Button>
+        }
+      />
 
       {!boards || boards.length === 0 ? (
         <Card>

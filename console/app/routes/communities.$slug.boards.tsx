@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, LayoutList } from "lucide-react";
 import { Link, useParams } from "react-router";
 import { CommunityBoardsManager } from "~/components/CommunityBoardsManager";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
 import {
@@ -139,8 +140,8 @@ export default function CommunityBoards() {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-2">
           <Link to={`/communities/${slug}`}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -149,17 +150,16 @@ export default function CommunityBoards() {
           </Link>
         </div>
 
+        <PageHeader
+          eyebrow="운영"
+          icon={LayoutList}
+          title="게시판 관리"
+          description="커뮤 내 게시판을 만들고 정리해요"
+          tone="lilac"
+        />
+
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <LayoutList className="w-5 h-5" />
-              게시판 관리
-            </CardTitle>
-            <CardDescription>
-              {community?.name} 커뮤의 게시판을 관리할 수 있습니다
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             {slug && <CommunityBoardsManager communitySlug={slug} />}
           </CardContent>
         </Card>

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Link as LinkIcon } from "lucide-react";
 import { Link, useParams } from "react-router";
 import { CommunityLinksManager } from "~/components/CommunityLinksManager";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
 import {
@@ -141,8 +142,8 @@ export default function CommunityLinks() {
 
   return (
     <div className="min-h-screen bg-muted p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-2">
           <Link to={`/communities/${slug}`}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -151,17 +152,16 @@ export default function CommunityLinks() {
           </Link>
         </div>
 
+        <PageHeader
+          eyebrow="운영"
+          icon={LinkIcon}
+          title="커뮤 링크"
+          description="유용한 외부 링크를 등록해요"
+          tone="lilac"
+        />
+
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <LinkIcon className="w-5 h-5" />
-              링크 관리
-            </CardTitle>
-            <CardDescription>
-              {community?.name} 커뮤의 링크를 관리할 수 있습니다
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             {slug && <CommunityLinksManager communityId={slug} />}
           </CardContent>
         </Card>

@@ -1,13 +1,8 @@
 import { useId, useState } from "react";
 import { Link } from "react-router";
+import { AuthShell } from "~/components/shared/AuthShell";
 import { Button } from "~/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent } from "~/components/ui/card";
 import {
   Field,
   FieldError,
@@ -68,16 +63,13 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="flex items-center justify-center bg-background">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">비밀번호 찾기</CardTitle>
-          <CardDescription>
-            가입 시 등록한 이메일 주소를 입력하세요. 비밀번호 재설정 링크를
-            보내드립니다.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+    <AuthShell
+      eyebrow="괜찮아요, 다시 만들어요"
+      title="비밀번호 찾기"
+      description="가입 시 등록한 이메일로 재설정 링크를 보내드려요."
+    >
+      <Card>
+        <CardContent className="space-y-4 pt-6">
           {success ? (
             <div className="text-sm text-mint-ink bg-mint/40 p-4 rounded">
               <p className="font-medium mb-2">
@@ -119,15 +111,18 @@ export default function ForgotPassword() {
                 로그인으로 돌아가기
               </Link>
             </div>
-            <div>
+            <div className="text-muted-foreground">
               계정이 없으신가요?{" "}
-              <Link to="/signup" className="text-primary hover:underline">
+              <Link
+                to="/signup"
+                className="text-primary hover:underline font-medium"
+              >
                 회원가입
               </Link>
             </div>
           </div>
         </CardContent>
       </Card>
-    </div>
+    </AuthShell>
   );
 }

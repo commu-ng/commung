@@ -28,6 +28,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Skeleton } from "~/components/ui/skeleton";
@@ -613,7 +614,7 @@ export default function CommunityBots() {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <Link to={`/communities/${slug}`}>
             <Button variant="outline" size="sm">
@@ -629,19 +630,18 @@ export default function CommunityBots() {
           />
         </div>
 
+        <PageHeader
+          eyebrow="운영"
+          icon={Bot}
+          title="봇 토큰"
+          description="API로 자동화할 수 있는 봇 토큰을 관리해요"
+          tone="lilac"
+        />
+
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bot className="w-5 h-5" />봇 관리
-            </CardTitle>
-            <CardDescription>
-              {community?.name} 커뮤의 봇을 관리할 수 있습니다. 봇은 API를 통해
-              포스트를 읽고 작성할 수 있습니다.
-            </CardDescription>
-          </CardHeader>
           {community && (
-            <CardContent className="pt-0">
-              <div className="border-t pt-4">
+            <CardContent className="pt-6">
+              <div>
                 <h4 className="text-sm font-medium mb-2">API 엔드포인트</h4>
                 <div className="space-y-1 text-sm text-muted-foreground font-mono">
                   <p>

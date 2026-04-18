@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, MessageSquare } from "lucide-react";
 import { Link } from "react-router";
 import { LoadingState } from "~/components/shared/LoadingState";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -97,12 +98,13 @@ export default function Boards() {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">게시판</h1>
-        <p className="text-muted-foreground mt-2">
-          다양한 주제의 게시판을 둘러보세요
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="게시판"
+        icon={MessageSquare}
+        title="전체 게시판"
+        description="모든 게시판을 한자리에서 둘러봐요"
+        tone="lilac"
+      />
 
       <div className="grid gap-4 md:grid-cols-2">
         {boards.map((board) => (

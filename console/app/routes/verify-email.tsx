@@ -1,13 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
+import { AuthShell } from "~/components/shared/AuthShell";
 import { Button } from "~/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent } from "~/components/ui/card";
 import { api, getErrorMessage } from "~/lib/api-client";
 import type { Route } from "./+types/verify-email";
 
@@ -71,13 +66,9 @@ export default function VerifyEmail() {
   }, [token, verificationStatus, verifyEmail]);
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-md">
+    <AuthShell eyebrow="이메일 인증" title="이메일을 확인할게요">
       <Card>
-        <CardHeader>
-          <CardTitle>이메일 인증</CardTitle>
-          <CardDescription>이메일 주소를 인증하고 있습니다.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           {isVerifying && (
             <div className="text-center py-8">
               <div className="text-lg font-medium">인증 중...</div>
@@ -128,6 +119,6 @@ export default function VerifyEmail() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </AuthShell>
   );
 }

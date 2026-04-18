@@ -1,9 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, CheckCircle, FileText, Hash, LogIn } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle,
+  FileText,
+  Hash,
+  LogIn,
+  Sparkles,
+} from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { MarkdownEditor } from "~/components/MarkdownEditor";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -619,61 +627,57 @@ export default function CommunityApply({ params }: Route.ComponentProps) {
   return (
     <div className="container mx-auto py-8 px-4 max-w-2xl">
       <div className="space-y-8">
-        {/* Community Header */}
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-4 mb-6">
-            <Link to="/communities">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                뒤로
-              </Button>
-            </Link>
-          </div>
-
-          {/* Banner Image */}
-          {community.banner_image_url && (
-            <div className="relative w-full rounded-xl overflow-hidden bg-muted">
-              <div
-                className="w-full flex items-center justify-center"
-                style={{
-                  aspectRatio:
-                    community.banner_image_width &&
-                    community.banner_image_height
-                      ? `${community.banner_image_width} / ${community.banner_image_height}`
-                      : "16 / 9",
-                }}
-              >
-                <img
-                  src={community.banner_image_url}
-                  alt={`${community.name} 배너`}
-                  width={community.banner_image_width ?? undefined}
-                  height={community.banner_image_height ?? undefined}
-                  className="w-full h-full object-contain"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Community Info */}
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-foreground">
-              {community.name}
-            </h1>
-            <p className="text-muted-foreground">@{community.slug}</p>
-
-            {/* Hashtags */}
-            {community.hashtags && community.hashtags.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-2 mt-4">
-                {community.hashtags.map((hashtag) => (
-                  <Badge key={hashtag.id} variant="outline">
-                    <Hash className="h-3 w-3 mr-1" />
-                    {hashtag.tag}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="mb-2">
+          <Link to="/communities">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              뒤로
+            </Button>
+          </Link>
         </div>
+
+        <PageHeader
+          eyebrow="지원하기"
+          icon={Sparkles}
+          title="커뮤에 참여해요"
+          description={`${community.name} (@${community.slug})`}
+          tone="mint"
+        />
+
+        {/* Banner Image */}
+        {community.banner_image_url && (
+          <div className="relative w-full rounded-xl overflow-hidden bg-muted">
+            <div
+              className="w-full flex items-center justify-center"
+              style={{
+                aspectRatio:
+                  community.banner_image_width && community.banner_image_height
+                    ? `${community.banner_image_width} / ${community.banner_image_height}`
+                    : "16 / 9",
+              }}
+            >
+              <img
+                src={community.banner_image_url}
+                alt={`${community.name} 배너`}
+                width={community.banner_image_width ?? undefined}
+                height={community.banner_image_height ?? undefined}
+                className="w-full h-full object-contain"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Hashtags */}
+        {community.hashtags && community.hashtags.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-2">
+            {community.hashtags.map((hashtag) => (
+              <Badge key={hashtag.id} variant="outline">
+                <Hash className="h-3 w-3 mr-1" />
+                {hashtag.tag}
+              </Badge>
+            ))}
+          </div>
+        )}
 
         {/* Content based on user status */}
         {renderContent()}

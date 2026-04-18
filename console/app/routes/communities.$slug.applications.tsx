@@ -14,6 +14,7 @@ import { useId, useState } from "react";
 import { Link, useParams } from "react-router";
 import { toast } from "sonner";
 import { LoadingState } from "~/components/shared/LoadingState";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { StatusBadge } from "~/components/shared/StatusBadge";
 import { Button } from "~/components/ui/button";
 import {
@@ -538,22 +539,22 @@ export default function ApplicationsPage() {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <Link to={`/communities/${slug}`}>
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4" />
-              커뮤로 돌아가기
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold">지원서 관리</h1>
-            <p className="text-muted-foreground mt-2">
-              내 커뮤에 지원한 사용자들을 관리하세요
-            </p>
-          </div>
-        </div>
+      <div className="mb-2">
+        <Link to={`/communities/${slug}`}>
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="h-4 w-4" />
+            커뮤로 돌아가기
+          </Button>
+        </Link>
       </div>
+
+      <PageHeader
+        eyebrow="운영"
+        icon={FileText}
+        title="지원서 검토"
+        description="새 가입 지원서를 검토해요"
+        tone="butter"
+      />
 
       <ApplicationsTable communityId={slug} />
     </div>

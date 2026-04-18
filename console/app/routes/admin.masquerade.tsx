@@ -11,6 +11,7 @@ import {
 import { useEffect, useId, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -206,15 +207,13 @@ export default function AdminMasquerade() {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <UserCog className="h-8 w-8" />
-          사용자 전환 (Masquerade)
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          다른 사용자의 계정으로 전환하여 문제를 디버깅할 수 있습니다
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="관리자"
+        icon={UserCog}
+        title="사용자 전환"
+        description="다른 계정으로 전환해 디버깅해요"
+        tone="butter"
+      />
 
       <div className="bg-butter/40 border border-butter/60 rounded-lg p-4 mb-6 flex gap-3">
         <Shield className="h-5 w-5 text-butter-ink flex-shrink-0 mt-0.5" />

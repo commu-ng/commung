@@ -1,13 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
+import { AuthShell } from "~/components/shared/AuthShell";
 import { Button } from "~/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent } from "~/components/ui/card";
 import { useAuth } from "~/hooks/useAuth";
 import { api, getErrorMessage } from "~/lib/api-client";
 import type { Route } from "./+types/confirm-delete-account";
@@ -110,13 +105,9 @@ export default function ConfirmDeleteAccount() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-md">
+    <AuthShell eyebrow="계정 삭제 확인" title="정말 떠나시나요?">
       <Card>
-        <CardHeader>
-          <CardTitle>계정 삭제 확인</CardTitle>
-          <CardDescription>계정 삭제를 확인하고 있습니다.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           {isLoadingUserInfo && confirmationStatus === "idle" && (
             <div className="text-sm text-muted-foreground text-center py-4">
               계정 정보를 불러오는 중...
@@ -188,6 +179,6 @@ export default function ConfirmDeleteAccount() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </AuthShell>
   );
 }

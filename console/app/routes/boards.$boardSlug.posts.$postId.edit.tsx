@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { AlertCircle, ArrowLeft } from "lucide-react";
+import { AlertCircle, ArrowLeft, Edit2 } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { BoardPostForm } from "~/components/BoardPostForm";
 import { LoadingState } from "~/components/shared/LoadingState";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardContent } from "~/components/ui/card";
 import {
   Empty,
   EmptyDescription,
@@ -160,22 +161,25 @@ export default function EditBoardPost({ params }: Route.ComponentProps) {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <div className="mb-6">
-        <Button variant="ghost" asChild className="mb-4">
+      <div className="mb-2">
+        <Button variant="ghost" asChild>
           <Link to={`/boards/${boardSlug}`}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             게시판으로 돌아가기
           </Link>
         </Button>
-        <h1 className="text-3xl font-bold">게시물 수정</h1>
-        <p className="text-muted-foreground mt-2">게시물 정보를 수정합니다</p>
       </div>
 
+      <PageHeader
+        eyebrow="게시글 수정"
+        icon={Edit2}
+        title="게시글 수정"
+        description="내용을 다듬어요"
+        tone="lilac"
+      />
+
       <Card>
-        <CardHeader>
-          <CardTitle>게시물 편집</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <BoardPostForm
             boardSlug={boardSlug}
             postId={postId}

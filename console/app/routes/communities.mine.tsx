@@ -1,5 +1,7 @@
+import { Heart, Plus } from "lucide-react";
 import { Link } from "react-router";
 import { CommunityList } from "~/components/CommunityList";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useAuth } from "~/hooks/useAuth";
@@ -17,7 +19,7 @@ export default function MyCommunities() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-8 px-4 max-w-2xl">
+      <div className="container mx-auto py-8 px-4 max-w-5xl">
         <div className="mb-8">
           <Skeleton className="h-9 w-32 mb-2" />
           <Skeleton className="h-5 w-64" />
@@ -68,8 +70,23 @@ export default function MyCommunities() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-2xl">
-      <CommunityList />
+    <div className="container mx-auto py-8 px-4 max-w-5xl">
+      <PageHeader
+        eyebrow="내 커뮤"
+        icon={Heart}
+        title="내 커뮤"
+        description="참여 중인 커뮤를 한눈에 확인해요"
+        tone="blossom"
+        actions={
+          <Button asChild className="rounded-full">
+            <Link to="/communities/create">
+              <Plus className="h-4 w-4" />
+              커뮤 만들기
+            </Link>
+          </Button>
+        }
+      />
+      <CommunityList showHeader={false} />
     </div>
   );
 }

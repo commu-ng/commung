@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import { ArrowLeft, UserMinus } from "lucide-react";
+import { ArrowLeft, Ban, UserMinus } from "lucide-react";
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { LoadingState } from "~/components/shared/LoadingState";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -85,19 +86,25 @@ export default function BlockedUsers() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-2xl">
+    <div className="container mx-auto py-8 px-4 max-w-5xl">
+      <div className="mb-2">
+        <Button variant="ghost" size="sm" asChild>
+          <Link to="/account">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            계정 설정
+          </Link>
+        </Button>
+      </div>
+
+      <PageHeader
+        eyebrow="계정 설정"
+        icon={Ban}
+        title="차단한 사용자"
+        description="차단을 풀거나 목록을 확인해요"
+        tone="primary"
+      />
+
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/account">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              계정 설정
-            </Link>
-          </Button>
-        </div>
-
-        <h1 className="text-3xl font-bold">차단한 사용자</h1>
-
         <Card>
           <CardHeader>
             <CardTitle>차단 목록</CardTitle>

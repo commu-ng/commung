@@ -308,6 +308,9 @@ importers:
       hono:
         specifier: ^4.12.8
         version: 4.12.8
+      isbot:
+        specifier: ^5
+        version: 5.1.36
       lucide-react:
         specifier: ^0.544.0
         version: 0.544.0(react@19.1.1)

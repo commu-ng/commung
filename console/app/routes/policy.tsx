@@ -1,3 +1,5 @@
+import { BookOpen } from "lucide-react";
+import { PageHeader } from "~/components/shared/PageHeader";
 import type { Route } from "./+types/policy";
 
 export function meta(_args: Route.MetaArgs) {
@@ -13,9 +15,14 @@ export function meta(_args: Route.MetaArgs) {
 export default function Policy() {
   return (
     <div className="flex flex-col gap-12 px-4 py-8 max-w-4xl mx-auto">
+      <PageHeader
+        eyebrow="정책"
+        icon={BookOpen}
+        title="커뮤니티 가이드라인"
+        description="함께 안전한 공간을 만들기 위한 약속"
+        tone="mint"
+      />
       <section className="space-y-6">
-        <h1 className="text-3xl font-bold">커뮤니티 가이드라인</h1>
-
         <p className="text-lg">
           커뮹!은 모든 사용자에게 안전하고 환영받는 존중의 환경을 제공하기 위해
           노력합니다. 우리는 불쾌한 콘텐츠와 학대적 행동에 대해 무관용 원칙을

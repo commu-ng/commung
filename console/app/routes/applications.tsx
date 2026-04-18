@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { EmptyState } from "~/components/shared/EmptyState";
 import { LoadingState } from "~/components/shared/LoadingState";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { StatusBadge } from "~/components/shared/StatusBadge";
 import { Button } from "~/components/ui/button";
 import {
@@ -313,12 +314,13 @@ export default function ApplicationsPage() {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">내 지원서</h1>
-        <p className="text-muted-foreground mt-2">
-          내가 제출한 지원서를 확인하세요
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="내 활동"
+        icon={FileText}
+        title="내 지원서"
+        description="내가 제출한 지원서를 확인해요"
+        tone="primary"
+      />
 
       <ApplicationsTable />
     </div>

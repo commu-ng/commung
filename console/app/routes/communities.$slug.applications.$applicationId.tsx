@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import { ArrowLeft, CheckCircle, Edit2, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, Edit2, FileText, XCircle } from "lucide-react";
 import MarkdownIt from "markdown-it";
 import { useId, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import { MarkdownEditor } from "~/components/MarkdownEditor";
+import { PageHeader } from "~/components/shared/PageHeader";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -407,6 +408,14 @@ export default function ApplicationView() {
             </Badge>
           </div>
         </div>
+
+        <PageHeader
+          eyebrow="지원서 상세"
+          icon={FileText}
+          title="지원서"
+          description="지원서 내용을 확인해요"
+          tone="butter"
+        />
 
         {/* Application Details */}
         <Card>
