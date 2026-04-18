@@ -102,7 +102,7 @@ export function CommunityCard({ community }: CommunityCardProps) {
             </Badge>
           )}
           {community.is_recruiting && (
-            <Badge className="bg-mint text-mint-ink border border-mint/60 shadow-marsh">
+            <Badge className="bg-mint/40 dark:bg-mint/25 text-mint-ink border border-mint/60 shadow-marsh">
               <Sparkles className="h-3 w-3 mr-1" />
               모집 중
             </Badge>
@@ -115,9 +115,9 @@ export function CommunityCard({ community }: CommunityCardProps) {
             <Badge
               className={
                 community.role === "owner"
-                  ? "bg-blossom text-blossom-ink border border-blossom/60 shadow-marsh"
+                  ? "bg-blossom/40 dark:bg-blossom/25 text-blossom-ink border border-blossom/60 shadow-marsh"
                   : community.role === "moderator"
-                    ? "bg-lilac text-lilac-ink border border-lilac/60 shadow-marsh"
+                    ? "bg-lilac/40 dark:bg-lilac/25 text-lilac-ink border border-lilac/60 shadow-marsh"
                     : "bg-card/85 backdrop-blur-md text-primary border border-primary/30 shadow-marsh"
               }
             >
