@@ -142,12 +142,12 @@ function WelcomeHero({
         </p>
         <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight leading-tight">
           {userName ? `${userName}님, ` : ""}
-          <span className="text-primary">소소한 커뮤</span>를
+          <span className="text-primary">우리의 커뮤</span>를
           <br className="hidden sm:block" /> 함께 가꿔봐요
         </h1>
         <p className="text-muted-foreground mt-3 max-w-lg leading-relaxed">
-          모든 일상과 자캐, 취향을 나눌 작은 공간을 만들어보세요. 새 글, 새
-          친구, 새 이야기가 기다리고 있어요.
+          모든 일상과 자캐, 취향을 나눌 공간을 만들어보세요. 새 글, 새 친구, 새
+          이야기가 기다리고 있어요.
         </p>
 
         <div className="flex flex-wrap items-center gap-2 mt-6">
@@ -196,7 +196,7 @@ function MyCommunitiesGrid({ communities }: { communities: Community[] }) {
             첫 커뮤를 시작해볼까요?
           </h3>
           <p className="text-sm text-muted-foreground mb-5 max-w-sm mx-auto">
-            취향을 나눌 사람들과 작은 공간을 꾸려보세요.
+            취향을 나눌 사람들과 공간을 꾸려보세요.
           </p>
           <div className="flex justify-center gap-2">
             <Button asChild className="rounded-full">
@@ -559,7 +559,7 @@ function GuestHero() {
         <h1 className="font-display text-4xl sm:text-6xl font-bold mt-5 leading-[1.1] tracking-tight">
           <span className="text-primary">커뮹</span>에서
           <br />
-          작은 우리의 커뮤를 시작해요
+          우리의 커뮤를 시작해요
           <Heart
             className="inline-block ml-2 h-7 w-7 sm:h-10 sm:w-10 text-blossom align-middle"
             fill="currentColor"

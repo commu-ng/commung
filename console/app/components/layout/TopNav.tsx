@@ -254,7 +254,7 @@ export function TopNav() {
                   </span>
                   <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
                     <Sparkles className="h-3 w-3" />
-                    함께하는 작은 커뮤
+                    함께하는 우리의 커뮤
                   </span>
                 </div>
               </div>
