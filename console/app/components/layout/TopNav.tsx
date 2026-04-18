@@ -52,9 +52,15 @@ interface NavItem {
   adminOnly?: boolean;
 }
 
-function isPathActive(pathname: string, to: string) {
+function isPathActive(pathname: string, to: string, allPaths: string[]) {
   if (to === "/") return pathname === "/";
-  return pathname === to || pathname.startsWith(`${to}/`);
+  if (pathname !== to && !pathname.startsWith(`${to}/`)) return false;
+  return !allPaths.some(
+    (other) =>
+      other !== to &&
+      other.startsWith(`${to}/`) &&
+      (pathname === other || pathname.startsWith(`${other}/`)),
+  );
 }
 
 export function TopNav() {
@@ -124,12 +130,14 @@ export function TopNav() {
     return true;
   });
 
+  const allPaths = [...navItems, ...accountItems].map((item) => item.to);
+
   const renderNavLink = (
     item: NavItem,
     options: { onClick?: () => void; mobile?: boolean } = {},
   ) => {
     const Icon = item.icon;
-    const active = isPathActive(location.pathname, item.to);
+    const active = isPathActive(location.pathname, item.to, allPaths);
     return (
       <Link
         key={item.to}
