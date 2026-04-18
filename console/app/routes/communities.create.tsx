@@ -240,7 +240,7 @@ export default function CreateCommunity() {
           eyebrow="새 커뮤"
           icon={Plus}
           title="커뮤를 만들어요"
-          description="새로운 작은 공간을 가꿔봐요"
+          description="새로운 공간을 가꿔봐요"
           tone="mint"
         />
         <Card className="w-full">
