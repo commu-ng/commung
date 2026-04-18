@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   FileText,
+  Globe,
   Heart,
   Home,
+  LayoutList,
   LogIn,
   Menu,
   Search,
@@ -91,6 +93,18 @@ export function TopNav() {
 
   const accountItems: NavItem[] = [
     { to: "/account", label: "내 계정", icon: UserIcon, authOnly: true },
+    {
+      to: "/admin/communities",
+      label: "커뮤니티 관리",
+      icon: Globe,
+      adminOnly: true,
+    },
+    {
+      to: "/admin/boards",
+      label: "게시판 관리",
+      icon: LayoutList,
+      adminOnly: true,
+    },
     {
       to: "/admin/masquerade",
       label: "사용자 전환",
