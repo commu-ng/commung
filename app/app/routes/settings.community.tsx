@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, Palette, RotateCcw, Save, Trash2 } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
@@ -29,8 +29,14 @@ export default function CommunitySettings() {
   const [hexError, setHexError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
+  const savedColorRef = useRef<string | null>(null);
+  const hasHydratedRef = useRef(false);
 
   useEffect(() => {
+    if (instanceLoading) return;
+    if (hasHydratedRef.current) return;
+    hasHydratedRef.current = true;
+    savedColorRef.current = themeKeyColor;
     if (themeKeyColor) {
       setPickerValue(themeKeyColor);
       setHexValue(themeKeyColor);
@@ -38,7 +44,7 @@ export default function CommunitySettings() {
       setPickerValue(DEFAULT_PICKER);
       setHexValue("");
     }
-  }, [themeKeyColor]);
+  }, [instanceLoading, themeKeyColor]);
 
   const updateCacheThemeColor = (next: string | null) => {
     queryClient.setQueryData<{
@@ -80,18 +86,20 @@ export default function CommunitySettings() {
       setHexError("유효한 #RRGGBB 형식의 색상 코드를 입력하세요");
       return;
     }
+    const lower = normalized.toLowerCase();
     setIsSaving(true);
     try {
       const response = await client.app.me.instance.theme.$patch({
-        json: { theme_key_color: normalized.toLowerCase() },
+        json: { theme_key_color: lower },
       });
       if (!response.ok) throw new Error("저장에 실패했습니다");
+      savedColorRef.current = lower;
       await queryClient.invalidateQueries({ queryKey: ["current-instance"] });
       toast.success("테마 색상이 저장되었습니다");
     } catch (error) {
       console.error("Failed to save theme color:", error);
       toast.error("테마 색상 저장에 실패했습니다");
-      updateCacheThemeColor(themeKeyColor);
+      updateCacheThemeColor(savedColorRef.current);
     } finally {
       setIsSaving(false);
     }
@@ -104,6 +112,9 @@ export default function CommunitySettings() {
         json: { theme_key_color: null },
       });
       if (!response.ok) throw new Error("삭제에 실패했습니다");
+      savedColorRef.current = null;
+      setPickerValue(DEFAULT_PICKER);
+      setHexValue("");
       updateCacheThemeColor(null);
       await queryClient.invalidateQueries({ queryKey: ["current-instance"] });
       toast.success("사용자 지정 색상이 제거되었습니다");
@@ -116,15 +127,16 @@ export default function CommunitySettings() {
   };
 
   const handleReset = () => {
-    if (themeKeyColor) {
-      setPickerValue(themeKeyColor);
-      setHexValue(themeKeyColor);
+    const saved = savedColorRef.current;
+    if (saved) {
+      setPickerValue(saved);
+      setHexValue(saved);
     } else {
       setPickerValue(DEFAULT_PICKER);
       setHexValue("");
     }
     setHexError("");
-    updateCacheThemeColor(themeKeyColor);
+    updateCacheThemeColor(saved);
   };
 
   if (authLoading || instanceLoading) {
@@ -159,14 +171,15 @@ export default function CommunitySettings() {
     );
   }
 
+  const savedColor = savedColorRef.current;
   const normalizedHex = hexValue.startsWith("#") ? hexValue : `#${hexValue}`;
   const hasPendingChange =
     hexValue !== "" &&
     HEX_RE.test(normalizedHex) &&
-    normalizedHex.toLowerCase() !== (themeKeyColor ?? "").toLowerCase();
+    normalizedHex.toLowerCase() !== (savedColor ?? "").toLowerCase();
   const canReset =
-    hexValue !== (themeKeyColor ?? "") ||
-    pickerValue !== (themeKeyColor ?? DEFAULT_PICKER);
+    hexValue !== (savedColor ?? "") ||
+    pickerValue !== (savedColor ?? DEFAULT_PICKER);
 
   return (
     <div className="min-h-screen bg-background">
@@ -270,7 +283,7 @@ export default function CommunitySettings() {
                 )}
               </div>
 
-              {themeKeyColor && (
+              {savedColor && (
                 <div className="pt-4 border-t border-border">
                   <Button
                     variant="outline"
