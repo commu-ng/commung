@@ -49,6 +49,8 @@ export function CommunityCard({ community }: CommunityCardProps) {
     community.custom_domain && community.domain_verified
       ? community.custom_domain
       : `${community.slug}.${env.domain}`;
+  const communityHref = `/communities/${community.slug}`;
+  const communityAppUrl = `https://${communityUrl}`;
 
   const startDate = new Date(community.starts_at);
   const endDate = new Date(community.ends_at);
@@ -63,10 +65,12 @@ export function CommunityCard({ community }: CommunityCardProps) {
   const isEnded = isValidEndDate && now > endDate;
 
   return (
-    <Link
-      to={`/communities/${community.slug}`}
-      className="group block overflow-hidden rounded-3xl border border-border/70 bg-card shadow-marsh transition-all duration-300 hover:-translate-y-1 hover:shadow-marsh-lg"
-    >
+    <div className="group relative overflow-hidden rounded-3xl border border-border/70 bg-card shadow-marsh transition-all duration-300 hover:-translate-y-1 hover:shadow-marsh-lg">
+      <Link
+        to={communityHref}
+        aria-label={community.name}
+        className="absolute inset-0 z-10"
+      />
       {/* Banner */}
       <div className="relative aspect-[16/9] bg-gradient-to-br from-blossom/40 via-lilac/30 to-mint/30 overflow-hidden">
         {community.banner_image_url ? (
@@ -203,12 +207,15 @@ export function CommunityCard({ community }: CommunityCardProps) {
 
         {/* Subtle URL */}
         <div className="mt-3 pt-3 border-t border-border/70">
-          <span className="inline-flex items-center text-[11px] text-muted-foreground/80 font-mono">
+          <a
+            href={communityAppUrl}
+            className="relative z-20 inline-flex items-center text-[11px] text-muted-foreground/80 font-mono hover:text-foreground"
+          >
             <ExternalLink className="h-3 w-3 mr-1.5" />
             {communityUrl}
-          </span>
+          </a>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
