@@ -58,8 +58,8 @@ export default function Profiles() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }, () => (
+          <div className="bg-card rounded-xl border border-border divide-y divide-border overflow-hidden">
+            {Array.from({ length: 8 }, () => (
               <ProfileCardSkeleton key={crypto.randomUUID()} />
             ))}
           </div>
@@ -146,40 +146,37 @@ export default function Profiles() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="bg-card rounded-xl border border-border divide-y divide-border overflow-hidden">
             {filteredProfiles.map((profile) => (
               <Link
                 key={profile.id}
                 to={`/@${profile.username}`}
-                className="bg-card rounded-2xl shadow-marsh border border-border p-6 hover:shadow-marsh-lg hover:border-border transition-all duration-200 group"
+                className="flex items-center gap-3 px-4 py-2.5 hover:bg-accent transition-colors group"
               >
-                <div className="flex items-start gap-4">
-                  <ProfileAvatar
-                    profilePictureUrl={profile.profile_picture_url || undefined}
-                    name={profile.name}
-                    username={profile.username}
-                    profileId={profile.id}
-                    size="lg"
-                    showOnlineStatus={true}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors truncate">
-                      {profile.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      @{profile.username}
-                    </p>
-                    {profile.bio && (
-                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                        {profile.bio}
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-3">
-                      가입일:{" "}
-                      {new Date(profile.created_at).toLocaleDateString("ko-KR")}
-                    </p>
-                  </div>
+                <ProfileAvatar
+                  profilePictureUrl={profile.profile_picture_url || undefined}
+                  name={profile.name}
+                  username={profile.username}
+                  profileId={profile.id}
+                  size="md"
+                  showOnlineStatus={true}
+                />
+                <div className="flex-1 min-w-0 flex items-baseline gap-2">
+                  <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                    {profile.name}
+                  </span>
+                  <span className="text-xs text-muted-foreground truncate">
+                    @{profile.username}
+                  </span>
+                  {profile.bio && (
+                    <span className="hidden sm:inline text-xs text-muted-foreground truncate">
+                      · {profile.bio}
+                    </span>
+                  )}
                 </div>
+                <span className="text-xs text-muted-foreground flex-shrink-0 hidden md:inline">
+                  {new Date(profile.created_at).toLocaleDateString("ko-KR")}
+                </span>
               </Link>
             ))}
           </div>
