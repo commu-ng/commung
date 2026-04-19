@@ -119,7 +119,7 @@ export function CommunityCard({ community }: CommunityCardProps) {
             <Badge
               className={
                 community.role === "owner"
-                  ? "bg-blossom/30 dark:bg-blossom/20 backdrop-blur-md text-blossom-ink border border-blossom/50 shadow-marsh"
+                  ? "bg-card/85 backdrop-blur-md text-blossom-ink border border-blossom/60 shadow-marsh"
                   : community.role === "moderator"
                     ? "bg-lilac/40 dark:bg-lilac/25 text-lilac-ink border border-lilac/60 shadow-marsh"
                     : "bg-card/85 backdrop-blur-md text-primary border border-primary/30 shadow-marsh"
