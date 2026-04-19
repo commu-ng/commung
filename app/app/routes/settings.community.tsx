@@ -55,6 +55,19 @@ export default function CommunitySettings() {
     );
   };
 
+  useEffect(() => {
+    return () => {
+      if (!hasHydratedRef.current) return;
+      const saved = savedColorRef.current;
+      queryClient.setQueryData<{
+        theme_key_color: string | null;
+        [k: string]: unknown;
+      } | null>(["current-instance"], (prev) =>
+        prev ? { ...prev, theme_key_color: saved } : prev,
+      );
+    };
+  }, [queryClient]);
+
   const handlePickerChange = (value: string) => {
     const normalized = value.toLowerCase();
     setPickerValue(normalized);
