@@ -209,6 +209,8 @@ export function CommunityCard({ community }: CommunityCardProps) {
         <div className="mt-3 pt-3 border-t border-border/70">
           <a
             href={communityAppUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="relative z-20 inline-flex items-center text-[11px] text-muted-foreground/80 font-mono hover:text-foreground"
           >
             <ExternalLink className="h-3 w-3 mr-1.5" />
