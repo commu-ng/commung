@@ -271,6 +271,10 @@ function MyCommunitiesGrid({ communities }: { communities: Community[] }) {
                         ? "모더레이터"
                         : "멤버"}
                   </p>
+                  <p className="flex items-center gap-1 text-[11px] text-muted-foreground/80 font-mono truncate mt-0.5">
+                    <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">{communityHost}</span>
+                  </p>
                 </div>
                 {community.pending_application_count !== undefined &&
                   community.pending_application_count > 0 && (
