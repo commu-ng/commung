@@ -206,17 +206,15 @@ export function CommunityCard({ community }: CommunityCardProps) {
         </div>
 
         {/* Subtle URL */}
-        <div className="mt-3 pt-3 border-t border-border/70">
-          <a
-            href={communityAppUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="relative z-20 inline-flex items-center text-[11px] text-muted-foreground/80 font-mono hover:text-foreground"
-          >
-            <ExternalLink className="h-3 w-3 mr-1.5" />
-            {communityUrl}
-          </a>
-        </div>
+        <a
+          href={communityAppUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="relative z-20 mt-3 -mx-5 -mb-5 flex items-center border-t border-border/70 px-5 py-3 text-[11px] text-muted-foreground/80 font-mono hover:bg-accent/50 hover:text-foreground"
+        >
+          <ExternalLink className="h-3 w-3 mr-1.5" />
+          {communityUrl}
+        </a>
       </div>
     </div>
   );
