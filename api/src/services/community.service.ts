@@ -418,6 +418,35 @@ export async function updateCommunity(
   };
 }
 
+export async function updateCommunityThemeKeyColor(
+  communityId: string,
+  themeKeyColor: string | null,
+) {
+  const community = await db.query.community.findFirst({
+    where: and(
+      eq(communityTable.id, communityId),
+      isNull(communityTable.deletedAt),
+    ),
+  });
+
+  if (!community) {
+    throw new AppException(404, GENERAL_ERROR_CODE, "커뮤를 찾을 수 없습니다");
+  }
+
+  const updated = await db
+    .update(communityTable)
+    .set({ themeKeyColor })
+    .where(eq(communityTable.id, communityId))
+    .returning();
+
+  const result = updated[0];
+  if (!result) {
+    throw new Error("Failed to update community theme key color");
+  }
+
+  return result;
+}
+
 /**
  * Delete a community (soft delete)
  */

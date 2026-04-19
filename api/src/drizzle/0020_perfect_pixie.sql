@@ -1,0 +1,2 @@
+ALTER TABLE "community" ADD COLUMN "theme_key_color" text;--> statement-breakpoint
+ALTER TABLE "community" ADD CONSTRAINT "valid_theme_key_color" CHECK (theme_key_color IS NULL OR theme_key_color ~ '^#[0-9a-fA-F]{6}$');

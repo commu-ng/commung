@@ -9,7 +9,10 @@ import { membershipMiddleware } from "../../middleware/membership";
 import {
   profileIdQuerySchema,
   profileUpdateRequestSchema,
+  themeKeyColorUpdateRequestSchema,
 } from "../../schemas";
+import * as communityService from "../../services/community.service";
+import * as membershipService from "../../services/membership.service";
 import * as userService from "../../services/user.service";
 import type { AuthVariables } from "../../types";
 import { GeneralErrorCode } from "../../types/api-responses";
@@ -35,6 +38,30 @@ export const meRouter = new Hono<{ Variables: AuthVariables }>()
     );
     return c.json({ data: result });
   })
+  .patch(
+    "/me/instance/theme",
+    communityMiddleware,
+    appAuthMiddleware,
+    zValidator("json", themeKeyColorUpdateRequestSchema),
+    async (c) => {
+      const user = c.get("user");
+      const community = c.get("community");
+      const { theme_key_color } = c.req.valid("json");
+
+      await membershipService.validateMembershipRole(user.id, community.id, [
+        "owner",
+      ]);
+
+      const updated = await communityService.updateCommunityThemeKeyColor(
+        community.id,
+        theme_key_color,
+      );
+
+      return c.json({
+        data: { theme_key_color: updated.themeKeyColor },
+      });
+    },
+  )
 
   .put(
     "/me/profiles",

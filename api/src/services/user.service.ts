@@ -147,6 +147,7 @@ export async function getCurrentUserInstance(
     banner_image_url: bannerInfo?.url || null,
     show_all_replies: community.showAllReplies,
     bump_on_reply: community.bumpOnReply,
+    theme_key_color: community.themeKeyColor,
   };
 }
 
@@ -175,6 +176,7 @@ export async function getPublicInstanceInfo(communityId: string) {
     slug: community.slug,
     description: community.description,
     banner_image_url: bannerInfo?.url || null,
+    theme_key_color: community.themeKeyColor,
   };
 }
 

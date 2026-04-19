@@ -1,4 +1,10 @@
-import { FileText, Settings as SettingsIcon, User, Users } from "lucide-react";
+import {
+  FileText,
+  Palette,
+  Settings as SettingsIcon,
+  User,
+  Users,
+} from "lucide-react";
 import { Link } from "react-router";
 import { Spinner } from "~/components/ui/spinner";
 import { useAuth } from "~/hooks/useAuth";
@@ -6,7 +12,11 @@ import { useCurrentInstance } from "~/hooks/useCurrentInstance";
 
 export default function Settings() {
   const { user, isLoading: authLoading } = useAuth();
-  const { isModerator, isLoading: instanceLoading } = useCurrentInstance();
+  const {
+    isModerator,
+    isOwner,
+    isLoading: instanceLoading,
+  } = useCurrentInstance();
 
   if (authLoading || instanceLoading) {
     return (
@@ -55,6 +65,13 @@ export default function Settings() {
       requiresModeratorOrOwner: true,
     },
     {
+      title: "커뮤 테마 색상",
+      description: "커뮤 기본 색상을 선택하여 전체 팔레트를 생성",
+      icon: Palette,
+      href: "/settings/community",
+      requiresOwner: true,
+    },
+    {
       title: "계정",
       description: "로그아웃",
       icon: FileText,
@@ -63,9 +80,11 @@ export default function Settings() {
   ];
 
   // Filter settings based on user role
-  const settingsSections = allSettingsSections.filter(
-    (section) => !section.requiresModeratorOrOwner || isModerator,
-  );
+  const settingsSections = allSettingsSections.filter((section) => {
+    if (section.requiresOwner && !isOwner) return false;
+    if (section.requiresModeratorOrOwner && !isModerator) return false;
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-background">

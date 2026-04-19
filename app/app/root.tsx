@@ -10,6 +10,7 @@ import {
   ScrollRestoration,
 } from "react-router";
 import { AppLayout } from "~/components/app-layout";
+import { CommunityThemeInjector } from "~/components/community-theme-injector";
 import { Toaster } from "~/components/ui/sonner";
 import { CurrentProfileProvider } from "~/providers/CurrentProfileProvider";
 import type { Route } from "./+types/root";
@@ -55,6 +56,8 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
+const COMMUNITY_THEME_BOOTSTRAP = `(function(){try{var c=localStorage.getItem("community-theme-css:"+location.hostname);if(c){var s=document.createElement("style");s.id="community-theme";s.textContent=c;document.head.appendChild(s);}}catch(e){}})();`;
+
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -63,6 +66,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: synchronous bootstrap to avoid theme FOUC
+          dangerouslySetInnerHTML={{ __html: COMMUNITY_THEME_BOOTSTRAP }}
+        />
       </head>
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
@@ -79,6 +86,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <CommunityThemeInjector />
       <CurrentProfileProvider>
         <AppLayout>
           <Outlet />

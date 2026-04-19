@@ -292,8 +292,8 @@ export default function MessageConversation() {
     setIsUploadingImages(true);
     try {
       const uploadPromises = imageObjects.map(async (imageObj) => {
-        const uploadedId = await uploadImage(imageObj.file);
-        return { tempId: imageObj.tempId, uploadedId };
+        const uploaded = await uploadImage(imageObj.file);
+        return { tempId: imageObj.tempId, uploadedId: uploaded.id };
       });
 
       const uploadResults = await Promise.all(uploadPromises);

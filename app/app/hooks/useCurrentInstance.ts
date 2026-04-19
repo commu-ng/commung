@@ -13,6 +13,7 @@ interface CurrentInstance {
   starts_at: string;
   ends_at: string;
   show_all_replies: boolean;
+  theme_key_color: string | null;
 }
 
 export function useCurrentInstance() {
@@ -40,6 +41,7 @@ export function useCurrentInstance() {
       currentInstance?.role === "moderator" ||
       currentInstance?.role === "owner",
     showAllReplies: currentInstance?.show_all_replies ?? false,
+    themeKeyColor: currentInstance?.theme_key_color ?? null,
     ...queryResult,
   };
 }

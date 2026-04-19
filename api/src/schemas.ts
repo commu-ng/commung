@@ -150,6 +150,13 @@ export const communityUpdateRequestSchema = z.object({
   bump_on_reply: z.boolean().optional(),
 });
 
+export const themeKeyColorUpdateRequestSchema = z.object({
+  theme_key_color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Theme key color must be a #RRGGBB hex string")
+    .nullable(),
+});
+
 export const imageCreateRequestSchema = z.object({
   key: z.string().min(1, "Key cannot be empty"),
   filename: z.string().min(1, "Filename cannot be empty"),

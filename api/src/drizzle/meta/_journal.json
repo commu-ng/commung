@@ -141,6 +141,13 @@
       "when": 1774529667215,
       "tag": "0019_safe_crusher_hogan",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1776586590624,
+      "tag": "0020_perfect_pixie",
+      "breakpoints": true
     }
   ]
 }

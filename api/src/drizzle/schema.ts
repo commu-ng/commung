@@ -224,6 +224,7 @@ export const community = pgTable(
     muteNewMembers: boolean("mute_new_members").notNull().default(false),
     showAllReplies: boolean("show_all_replies").notNull().default(false),
     bumpOnReply: boolean("bump_on_reply").notNull().default(false),
+    themeKeyColor: text("theme_key_color"),
   },
   (table) => [
     unique("community_slug_key").on(table.slug),
@@ -232,6 +233,7 @@ export const community = pgTable(
     sql`CONSTRAINT valid_name CHECK (length(name) > 0)`,
     sql`CONSTRAINT valid_description CHECK (description IS NULL OR length(description) <= 10000)`,
     sql`CONSTRAINT valid_custom_domain CHECK (custom_domain IS NULL OR custom_domain ~ '^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$')`,
+    sql`CONSTRAINT valid_theme_key_color CHECK (theme_key_color IS NULL OR theme_key_color ~ '^#[0-9a-fA-F]{6}$')`,
     sql`CONSTRAINT valid_dates CHECK (ends_at > starts_at)`,
     sql`CONSTRAINT valid_recruiting_dates CHECK (recruiting_ends_at IS NULL OR recruiting_starts_at IS NULL OR recruiting_ends_at > recruiting_starts_at)`,
     sql`CONSTRAINT valid_recruiting_window CHECK (is_recruiting = false OR (recruiting_starts_at IS NOT NULL AND recruiting_ends_at IS NOT NULL))`,
