@@ -2,9 +2,9 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
   BookOpen,
+  Bookmark,
   Bot,
   ExternalLink,
-  Heart,
   ImageIcon,
   MessageSquare,
   Plus,
@@ -131,10 +131,6 @@ function WelcomeHero({
       <div className="pointer-events-none absolute -top-16 -right-10 h-56 w-56 rounded-full bg-gradient-to-br from-blossom/50 via-primary/20 to-transparent blur-2xl" />
       <div className="pointer-events-none absolute -bottom-16 -left-10 h-56 w-56 rounded-full bg-gradient-to-tr from-mint/40 via-lilac/20 to-transparent blur-2xl" />
       <Sparkles className="pointer-events-none absolute top-6 right-8 h-6 w-6 text-primary/60" />
-      <Heart
-        className="pointer-events-none absolute bottom-8 right-16 h-5 w-5 text-blossom"
-        fill="currentColor"
-      />
 
       <div className="relative">
         <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-primary mb-2">
@@ -222,12 +218,8 @@ function MyCommunitiesGrid({ communities }: { communities: Community[] }) {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <Heart
-              className="h-5 w-5 text-primary"
-              fill="currentColor"
-              strokeWidth={1.5}
-            />
-            내 커뮤
+            <Bookmark className="h-5 w-5 text-primary" strokeWidth={1.75} />
+            <span>내 커뮤</span>
           </CardTitle>
           <Button
             variant="ghost"
@@ -560,10 +552,6 @@ function GuestHero() {
           <span className="text-primary">커뮹</span>에서
           <br />
           우리의 커뮤를 시작해요
-          <Heart
-            className="inline-block ml-2 h-7 w-7 sm:h-10 sm:w-10 text-blossom align-middle"
-            fill="currentColor"
-          />
         </h1>
         <p className="text-base sm:text-lg text-muted-foreground mt-5 max-w-xl mx-auto leading-relaxed">
           취향을 나눌 사람들과 함께, 일상과 자캐와 이야기를 부드럽게 엮어가는

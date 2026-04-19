@@ -1,4 +1,4 @@
-import { Heart, Plus } from "lucide-react";
+import { Bookmark, Plus } from "lucide-react";
 import { Link } from "react-router";
 import { CommunityList } from "~/components/CommunityList";
 import { PageHeader } from "~/components/shared/PageHeader";
@@ -73,7 +73,7 @@ export default function MyCommunities() {
     <div className="container mx-auto py-8 px-4 max-w-5xl">
       <PageHeader
         eyebrow="내 커뮤"
-        icon={Heart}
+        icon={Bookmark}
         title="내 커뮤"
         description="참여 중인 커뮤를 한눈에 확인해요"
         tone="blossom"

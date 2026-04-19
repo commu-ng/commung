@@ -2,9 +2,9 @@ import {
   Bell,
   Bookmark,
   ExternalLink,
-  Heart,
   Home,
   LayoutList,
+  MessagesSquare,
   Megaphone,
   MessageCircle,
   PenSquare,
@@ -102,10 +102,9 @@ export function SidebarNav({
           aria-label="홈"
           className="bg-logo relative w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-marsh transition-transform duration-300 hover:rotate-[-6deg] hover:scale-105"
         >
-          <Heart
+          <MessagesSquare
             className="h-5 w-5 text-primary-foreground"
-            fill="currentColor"
-            strokeWidth={1.5}
+            strokeWidth={1.75}
           />
         </Link>
         {!collapsed && (

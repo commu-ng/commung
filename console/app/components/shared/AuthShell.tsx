@@ -1,4 +1,4 @@
-import { Heart, Sparkles } from "lucide-react";
+import { MessagesSquare, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 
@@ -35,10 +35,9 @@ export function AuthShell({
             aria-label="홈"
             className="bg-logo inline-flex h-14 w-14 items-center justify-center rounded-3xl shadow-marsh transition-transform hover:rotate-[-6deg] hover:scale-105"
           >
-            <Heart
+            <MessagesSquare
               className="h-6 w-6 text-primary-foreground"
-              fill="currentColor"
-              strokeWidth={1.5}
+              strokeWidth={1.75}
             />
           </Link>
           {eyebrow && (

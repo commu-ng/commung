@@ -5,9 +5,9 @@ import {
   CalendarIcon,
   CheckCircle,
   Clock,
+  Crown,
   ExternalLink,
   Hash,
-  Heart,
   ImageIcon,
   Sparkles,
   UsersIcon,
@@ -122,7 +122,7 @@ export function CommunityCard({ community }: CommunityCardProps) {
               }
             >
               {community.role === "owner" ? (
-                <Heart className="h-3 w-3 mr-1" fill="currentColor" />
+                <Crown className="h-3 w-3 mr-1" />
               ) : null}
               {community.role === "owner"
                 ? "내가 만든"

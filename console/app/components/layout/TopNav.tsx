@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import {
+  Bookmark,
   FileText,
   Globe,
-  Heart,
   Home,
   LayoutList,
   LogIn,
   Menu,
+  MessagesSquare,
   Search,
   Sparkles,
   UserCog,
@@ -85,7 +86,7 @@ export function TopNav() {
     {
       to: "/communities/mine",
       label: "내 커뮤",
-      icon: Heart,
+      icon: Bookmark,
       badge: totalPending,
       authOnly: true,
     },
@@ -207,10 +208,9 @@ export function TopNav() {
           className="bg-logo flex items-center gap-2 rounded-full pl-1.5 pr-3 py-1.5 shadow-marsh transition-transform duration-300 hover:rotate-[-3deg] hover:scale-[1.02]"
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-card/30 backdrop-blur">
-            <Heart
+            <MessagesSquare
               className="h-4 w-4 text-primary-foreground"
-              fill="currentColor"
-              strokeWidth={1.5}
+              strokeWidth={1.75}
             />
           </span>
           <span className="font-display text-lg font-bold text-primary-foreground tracking-tight">
@@ -250,10 +250,9 @@ export function TopNav() {
             <div className="flex flex-col h-full py-4 px-4">
               <div className="flex items-center gap-3 px-1 pb-3">
                 <span className="bg-logo flex h-11 w-11 items-center justify-center rounded-2xl shadow-marsh">
-                  <Heart
+                  <MessagesSquare
                     className="h-5 w-5 text-primary-foreground"
-                    fill="currentColor"
-                    strokeWidth={1.5}
+                    strokeWidth={1.75}
                   />
                 </span>
                 <div className="flex flex-col leading-tight">
