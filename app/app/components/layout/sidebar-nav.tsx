@@ -120,13 +120,6 @@ export function SidebarNav({
         <ProfileSwitcher compact={collapsed} />
       </div>
 
-      {/* Balance Pill (only renders if currency defined) */}
-      <div
-        className={`${collapsed ? "mt-2 flex justify-center" : "mt-2 px-1"}`}
-      >
-        <BalancePill compact={collapsed} fullWidth={!collapsed} />
-      </div>
-
       {/* Navigation Links */}
       <nav className="flex flex-col gap-1 mt-4 flex-1 overflow-y-auto">
         {navigationItems.map((item) => {
@@ -153,8 +146,13 @@ export function SidebarNav({
           );
         })}
 
+        {/* Balance Pill (only renders if currency defined) */}
+        <div className={`mt-4 ${collapsed ? "flex justify-center" : ""}`}>
+          <BalancePill compact={collapsed} fullWidth={!collapsed} />
+        </div>
+
         {/* Compose Button */}
-        <Link to="/" className="mt-4">
+        <Link to="/" className="mt-2">
           <Button
             className={`${collapsed ? "w-12 h-12 p-0" : "w-full py-3 text-[15px]"}`}
             size={collapsed ? "icon" : "lg"}
