@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "../src/db";
 import { community, installedApp, membership } from "../src/drizzle/schema";
