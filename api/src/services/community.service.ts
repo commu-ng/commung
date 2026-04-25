@@ -35,7 +35,9 @@ import {
 import { getPrimaryProfileIdForUserInCommunity } from "../utils/profile-ownership";
 import { batchLoadProfilePictures } from "../utils/profile-picture-helper";
 import { addImageUrl } from "../utils/r2";
+import { getBuiltinApp } from "./builtin-commands";
 import * as imageService from "./image.service";
+import * as installedAppService from "./installed-app.service";
 
 /**
  * Get community by custom domain
@@ -212,6 +214,25 @@ export async function createCommunity(
         profile: newProfile,
       };
     });
+
+    // Best-effort auto-install of the help app. Runs outside the transaction
+    // so a failure (e.g. username collision with the owner) doesn't abort
+    // community creation. Owner can install manually from the catalog.
+    const helpApp = getBuiltinApp("help");
+    if (helpApp) {
+      try {
+        await installedAppService.installApp(result.community.id, helpApp.id, {
+          profileName: helpApp.defaultProfile.name,
+          profileUsername: helpApp.defaultProfile.username,
+          installedById: userId,
+        });
+      } catch (err) {
+        logger.service.warn("Auto-install of help app failed", {
+          communityId: result.community.id,
+          error: err,
+        });
+      }
+    }
 
     return result;
   } catch (error: unknown) {
