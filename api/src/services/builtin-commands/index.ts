@@ -331,13 +331,13 @@ export const BUILTIN_APPS: Record<string, BuiltinApp> = {
           {
             input: "/use 검",
             output:
-              "🪄 **jihyeok**님이 **검**을(를) 꺼내 보였습니다.\n\n번뜩이는 직검",
+              "🪄 **홍길동**님이 **검**을(를) 꺼내 보였습니다.\n\n번뜩이는 직검",
             note: "소모품이 아닌 상품: 차감 없이 자랑하기 용도",
           },
           {
             input: "/use 포션",
             output:
-              "🪄 **jihyeok**님이 **포션**을(를) 사용했습니다.\n\nHP를 회복합니다.",
+              "🪄 **홍길동**님이 **포션**을(를) 사용했습니다.\n\nHP를 회복합니다.",
             note: "소모품: 1개 차감",
           },
         ],
