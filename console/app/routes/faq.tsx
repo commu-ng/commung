@@ -77,7 +77,7 @@ export default function FAQPage() {
 
         <h2>커뮹은 누가 만드나요?</h2>
         <p>
-          팀 양나루에서 만드는 프로젝트입니다. 같은 팀이 만든 다른 프로젝트는{" "}
+          커뮹은 양나루라는 개발 팀에서 만듭니다. 같은 팀이 만든 다른 프로젝트는{" "}
           <a
             href="https://yang.naru.pub"
             target="_blank"
