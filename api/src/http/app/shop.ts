@@ -1,6 +1,9 @@
 import { zValidator } from "@hono/zod-validator";
+import { and, eq, isNotNull, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
+import { db } from "../../db";
+import { profile as profileTable } from "../../drizzle/schema";
 import { appAuthMiddleware } from "../../middleware/auth";
 import { communityMiddleware } from "../../middleware/community";
 import { membershipMiddleware } from "../../middleware/membership";
@@ -16,6 +19,14 @@ const summaryQuerySchema = z.object({
 const buySchema = z.object({
   profile_id: z.uuid(),
   item_id: z.uuid(),
+});
+
+const usernameParamSchema = z.object({
+  username: z
+    .string()
+    .min(1)
+    .max(50)
+    .regex(/^[a-zA-Z0-9_]+$/),
 });
 
 export const shopRouter = new Hono<{ Variables: AuthVariables }>()
@@ -106,5 +117,48 @@ export const shopRouter = new Hono<{ Variables: AuthVariables }>()
         actorUserId: user.id,
       });
       return c.json({ data: { item } });
+    },
+  )
+  .get(
+    "/shop/inventory/:username",
+    communityMiddleware,
+    appAuthMiddleware,
+    membershipMiddleware,
+    zValidator("param", usernameParamSchema),
+    async (c) => {
+      const community = c.get("community");
+      const { username } = c.req.valid("param");
+
+      const [target] = await db
+        .select({ id: profileTable.id, name: profileTable.name })
+        .from(profileTable)
+        .where(
+          and(
+            eq(profileTable.communityId, community.id),
+            eq(profileTable.username, username),
+            isNotNull(profileTable.activatedAt),
+            isNull(profileTable.deletedAt),
+          ),
+        );
+
+      if (!target) {
+        return c.json(
+          {
+            error: {
+              code: GeneralErrorCode.PROFILE_NOT_FOUND,
+              message: "프로필을 찾을 수 없습니다",
+            },
+          },
+          404,
+        );
+      }
+
+      const inventory = await shopService.listInventoryForProfile(
+        community.id,
+        target.id,
+      );
+      return c.json({
+        data: { profile_id: target.id, items: inventory },
+      });
     },
   );

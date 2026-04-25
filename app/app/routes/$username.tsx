@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { PostCard } from "~/components/post-card";
 import { ProfileAvatar } from "~/components/profile-avatar";
+import { ProfileInventory } from "~/components/profile-inventory";
 import { LoadingState } from "~/components/shared/LoadingState";
 import { Spinner } from "~/components/ui/spinner";
 import {
@@ -273,6 +274,9 @@ export default function ProfileProfile() {
               </div>
             </div>
           </div>
+
+          {/* Inventory Section (only renders if non-empty) */}
+          <ProfileInventory username={profile.username} />
 
           {/* Posts Section */}
           <div className="space-y-4">
