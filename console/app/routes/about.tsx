@@ -1,356 +1,127 @@
-import { ArrowRight, LayoutGrid, Lock, Sparkles, Users } from "lucide-react";
 import { Link } from "react-router";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent } from "~/components/ui/card";
-import { useAuth } from "~/hooks/useAuth";
 import type { Route } from "./+types/about";
 
 export function meta(_args: Route.MetaArgs) {
   return [
-    { title: "커뮹 소개" },
+    { title: "커뮹에 대해서" },
     {
       name: "description",
       content:
-        "하나의 계정으로 커뮤마다 다른 페르소나. 페르소나는 다른 커뮤로 새지 않아요. 슬래시 명령으로 커뮤를 확장하세요.",
+        "커뮤마다 페르소나가 따로 살고, 커뮤마다 도구가 따로 있는 — 작은 차이가 모인 플랫폼.",
     },
   ];
 }
 
-function Hero({ isAuthenticated }: { isAuthenticated: boolean }) {
-  return (
-    <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-card shadow-marsh-lg px-6 sm:px-12 py-14 text-center">
-      <div className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-gradient-to-br from-blossom/50 via-primary/30 to-transparent blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-gradient-to-tr from-mint/40 via-lilac/30 to-transparent blur-3xl" />
-      <Sparkles className="pointer-events-none absolute top-8 right-12 h-6 w-6 text-primary/60" />
-
-      <div className="relative">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary px-4 py-1.5 text-xs font-semibold tracking-wide">
-          <Sparkles className="h-3 w-3" />
-          타임라인 기반 커뮤 플랫폼
-        </span>
-        <h1 className="font-display text-4xl sm:text-6xl font-bold mt-6 leading-[1.05] tracking-tight">
-          커뮤마다 따로 계정 만들기,
-          <br className="hidden sm:block" /> 이제{" "}
-          <span className="text-primary">그만</span>
-        </h1>
-        <p className="text-base sm:text-lg text-muted-foreground mt-6 max-w-xl mx-auto leading-relaxed">
-          하나의 계정으로 커뮤마다 다른 모습. 게이머일 때, 작가일 때, 덕후일 때
-          — 한 사람의 여러 모습을 한 곳에서 자연스럽게.
-        </p>
-
-        <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
-          {isAuthenticated ? (
-            <>
-              <Button asChild size="lg" className="rounded-full">
-                <Link to="/communities/create">
-                  <Sparkles className="h-4 w-4" />
-                  커뮤 만들기
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="rounded-full"
-              >
-                <Link to="/apps">
-                  <LayoutGrid className="h-4 w-4" />앱 둘러보기
-                </Link>
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button asChild size="lg" className="rounded-full">
-                <Link to="/signup">
-                  <Sparkles className="h-4 w-4" />
-                  지금 시작하기
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="rounded-full"
-              >
-                <Link to="/login">로그인</Link>
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-interface FeatureSectionProps {
-  eyebrow: string;
-  title: string;
-  body: string;
-  bullets: { label: string; sub: string }[];
-  icon: typeof Users;
-  tone: "mint" | "lilac" | "butter" | "blossom";
-  reverse?: boolean;
-}
-
-const toneClasses = {
-  mint: {
-    eyebrow: "text-mint-ink",
-    iconBg: "bg-mint/40 text-mint-ink",
-    blob: "from-mint/40 via-mint/15 to-transparent",
-  },
-  lilac: {
-    eyebrow: "text-lilac-ink",
-    iconBg: "bg-lilac/40 text-lilac-ink",
-    blob: "from-lilac/40 via-lilac/15 to-transparent",
-  },
-  butter: {
-    eyebrow: "text-butter-ink",
-    iconBg: "bg-butter/40 text-butter-ink",
-    blob: "from-butter/40 via-butter/15 to-transparent",
-  },
-  blossom: {
-    eyebrow: "text-blossom-ink",
-    iconBg: "bg-blossom/40 text-blossom-ink",
-    blob: "from-blossom/40 via-blossom/15 to-transparent",
-  },
-} as const;
-
-function FeatureSection({
-  eyebrow,
-  title,
-  body,
-  bullets,
-  icon: Icon,
-  tone,
-  reverse = false,
-}: FeatureSectionProps) {
-  const t = toneClasses[tone];
-  return (
-    <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-card/80 shadow-marsh">
-      <div
-        className={`pointer-events-none absolute ${reverse ? "-top-20 -left-16" : "-top-20 -right-16"} h-64 w-64 rounded-full bg-gradient-to-br ${t.blob} blur-3xl`}
-      />
-      <div
-        className={`relative grid grid-cols-1 md:grid-cols-2 gap-6 p-6 sm:p-10 ${reverse ? "md:[&>*:first-child]:order-2" : ""}`}
-      >
-        <div className="space-y-4">
-          <span
-            className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl ${t.iconBg} shadow-marsh`}
-          >
-            <Icon className="h-6 w-6" />
-          </span>
-          <p
-            className={`text-[11px] uppercase tracking-[0.2em] font-semibold ${t.eyebrow}`}
-          >
-            {eyebrow}
-          </p>
-          <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight leading-tight">
-            {title}
-          </h2>
-          <p className="text-muted-foreground leading-relaxed">{body}</p>
-        </div>
-        <div className="space-y-3">
-          {bullets.map((b) => (
-            <div
-              key={b.label}
-              className="rounded-2xl border border-border/60 bg-background/60 p-4"
-            >
-              <p className="font-semibold text-sm">{b.label}</p>
-              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                {b.sub}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ScenarioCard() {
-  return (
-    <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-card via-card to-muted/30 px-6 sm:px-10 py-10">
-      <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-primary text-center">
-        구체적인 예시
-      </p>
-      <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-center mt-2">
-        한 명의 사용자, 세 개의 모습
-      </h2>
-      <p className="text-muted-foreground text-center mt-3 max-w-xl mx-auto">
-        같은 로그인 계정에서, 각 커뮤별로 완전히 다른 페르소나를 운영해요. 커뮤
-        사이에 정보가 새지 않습니다.
-      </p>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-8">
-        {[
-          {
-            tone: "from-mint/30 to-mint/5",
-            who: "게이머",
-            persona: "@drago_slayer",
-            community: "TRPG 캠페인 커뮤",
-            activity: "/roll 1d20+5 으로 공격, /buy 검 으로 장비",
-          },
-          {
-            tone: "from-lilac/30 to-lilac/5",
-            who: "작가",
-            persona: "@은하수",
-            community: "글쓰기 모임",
-            activity: "단편 소설 게시, 합평 답글",
-          },
-          {
-            tone: "from-butter/30 to-butter/5",
-            who: "덕후",
-            persona: "@최애_지킴이",
-            community: "덕질 커뮤",
-            activity: "최애 굿즈 정보 공유, 컴백 응원 게시물",
-          },
-        ].map((s) => (
-          <Card key={s.persona} className="overflow-hidden border-border/60">
-            <div className={`bg-gradient-to-br ${s.tone} px-4 py-3`}>
-              <p className="text-xs font-semibold text-foreground/70">
-                {s.who}
-              </p>
-              <p className="font-mono text-sm font-bold mt-0.5">{s.persona}</p>
-            </div>
-            <CardContent className="p-4 space-y-2">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                {s.community}
-              </p>
-              <p className="text-sm">{s.activity}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <p className="text-center text-sm text-muted-foreground mt-8 max-w-md mx-auto">
-        세 페르소나는 같은 사람이지만, 다른 커뮤의 누구도 그 사실을 알 수
-        없어요.
-      </p>
-    </section>
-  );
-}
-
-function ClosingCTA({ isAuthenticated }: { isAuthenticated: boolean }) {
-  return (
-    <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-card px-6 sm:px-12 py-12 text-center">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-blossom/10" />
-      <div className="relative">
-        <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">
-          시작할 준비가 되셨나요?
-        </h2>
-        <p className="text-muted-foreground mt-4 max-w-md mx-auto">
-          가입하면 첫 커뮤를 만들 수 있고, 다른 커뮤에는 별도 가입 없이 새
-          페르소나로 합류할 수 있어요.
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-2 mt-7">
-          {isAuthenticated ? (
-            <Button asChild size="lg" className="rounded-full">
-              <Link to="/communities/create">
-                커뮤 만들기
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          ) : (
-            <>
-              <Button asChild size="lg" className="rounded-full">
-                <Link to="/signup">
-                  지금 시작하기
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="rounded-full"
-              >
-                <Link to="/communities">둘러보기</Link>
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export default function AboutPage() {
-  const { isAuthenticated } = useAuth();
-
   return (
-    <div className="container mx-auto py-8 px-4 max-w-5xl space-y-8">
-      <Hero isAuthenticated={isAuthenticated} />
+    <article className="container mx-auto px-4 py-16 max-w-2xl">
+      <header className="space-y-2">
+        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          About
+        </p>
+        <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight leading-tight">
+          커뮹에 대해서
+        </h1>
+      </header>
 
-      <FeatureSection
-        eyebrow="멀티 페르소나"
-        title="한 계정, 커뮤마다 다른 나"
-        body="새 커뮤에 가입할 때마다 새 계정을 만들 필요 없어요. 같은 로그인에서 커뮤별로 다른 이름, 다른 프로필, 다른 자기소개를 만들 수 있습니다. 페르소나끼리는 자유롭게 전환되고, 다른 커뮤의 활동은 절대 묻어 나오지 않아요."
-        icon={Users}
-        tone="mint"
-        bullets={[
-          {
-            label: "커뮤마다 다른 이름과 프로필",
-            sub: "닉네임으로, 캐릭터명으로, 필명으로 — 원하는 만큼.",
-          },
-          {
-            label: "한 번 가입, 여러 커뮤",
-            sub: "다른 커뮤로 옮길 때 새 계정을 만들지 않아도 됩니다.",
-          },
-          {
-            label: "한 사용자가 한 커뮤에서 여러 페르소나",
-            sub: "주 캐릭터, 보조 캐릭터, 부캐 — 한 커뮤 안에서도 분리 가능.",
-          },
-        ]}
-      />
+      <div className="prose prose-neutral dark:prose-invert max-w-none mt-10 prose-headings:font-display prose-headings:tracking-tight prose-h2:mt-12 prose-h2:mb-3 prose-p:leading-relaxed">
+        <p>
+          인터넷에서 오래 살다 보면 한 사람이 여러 모습으로 살게 됩니다. 평소엔
+          어떤 이름으로 글을 쓰고, 게임 커뮤에서는 다른 닉으로 활동하고,
+          좋아하는 아이돌을 응원할 때는 또 다른 이름이 됩니다. 이상한 일이
+          아닙니다. 한 사람의 모습이 하나일 리 없습니다.
+        </p>
 
-      <FeatureSection
-        eyebrow="프라이버시"
-        title="페르소나는 절대 다른 커뮤로 새지 않아요"
-        body="각 페르소나는 그 커뮤 안에서만 존재합니다. 다른 커뮤의 멤버는 어떤 페르소나가 같은 사람인지 알 수 없어요. 게시물, 답글, 멘션, 알림 — 모두 그 커뮤 안에서만 흐릅니다. 본명이 들킬 걱정 없이 자유롭게 여러 모습으로 활동할 수 있어요."
-        icon={Lock}
-        tone="lilac"
-        reverse
-        bullets={[
-          {
-            label: "활동은 커뮤 안에서만",
-            sub: "게시물·답글·멘션·반응이 다른 커뮤로 흘러가지 않습니다.",
-          },
-          {
-            label: "멤버 목록도 분리",
-            sub: "한 커뮤의 멤버 목록은 그 커뮤 안의 페르소나만 보여줍니다.",
-          },
-          {
-            label: "검색에서도 안전",
-            sub: "다른 커뮤의 활동을 추적해 같은 사람을 찾아낼 수 없어요.",
-          },
-        ]}
-      />
+        <p>
+          문제는 그 모습들을 갈라놓기가 너무 번거롭다는 점입니다. 사이트마다 새
+          계정을 만들고, 비밀번호가 쌓이고, 어디까지가 누구의 활동인지 본인도
+          헷갈립니다. 더 곤란한 건 그렇게 갈라놓은 정체성이 얼마든지 새어나갈 수
+          있다는 점입니다. 같은 이메일, 같은 글쓰기 습관, 같은 친구들. 누군가
+          마음먹으면 추적할 수 있는 흔적이 곳곳에 남습니다.
+        </p>
 
-      <ScenarioCard />
+        <p>커뮹은 이 문제에 다르게 답해보려는 시도입니다.</p>
 
-      <FeatureSection
-        eyebrow="앱과 슬래시 명령"
-        title="코드 한 줄 없이 커뮤를 확장"
-        body="카탈로그에서 앱을 설치하면 멤버 누구나 슬래시 명령으로 사용할 수 있어요. TRPG 주사위, 동전 던지기, 무작위 선택, 통화·상점까지 — 클릭 몇 번으로 커뮤가 살아납니다. 새 명령은 자동으로 따라옵니다."
-        icon={LayoutGrid}
-        tone="butter"
-        bullets={[
-          {
-            label: "TRPG 주사위와 RP",
-            sub: "/roll 3d6, 1d20+5 같은 표준 다이스 표기법 그대로.",
-          },
-          {
-            label: "통화와 상점",
-            sub: "owner가 통화·상품을 정의하고, 멤버가 /balance, /buy, /use로 즐겨요.",
-          },
-          {
-            label: "공식 문서로 미리 보기",
-            sub: "설치하지 않아도 누구나 카탈로그에서 사용법과 예시를 볼 수 있어요.",
-          },
-        ]}
-      />
+        <h2>한 계정, 커뮤마다 다른 페르소나</h2>
 
-      <ClosingCTA isAuthenticated={isAuthenticated} />
-    </div>
+        <p>
+          커뮹에서는 가입을 한 번만 합니다. 그 하나의 계정으로 여러 커뮤에
+          들어갈 수 있고, 들어간 커뮤마다 새 페르소나를 만듭니다 — 새 이름, 새
+          프로필, 새 자기소개. 게이머일 때는 한 닉으로, 글쓰기 모임에서는 또
+          다른 필명으로, 덕질 모임에서는 또 다른 이름으로. 같은 사람이 만든
+          페르소나지만, 사이에 드러나는 연결고리는 없습니다.
+        </p>
+
+        <p>
+          같은 커뮤 안에서도 페르소나를 여럿 둘 수 있습니다. 주캐와 부캐, 또는
+          시점이 다른 캐릭터들. 어떻게 쓸지는 사용자가 정하지, 플랫폼이 강제하지
+          않습니다.
+        </p>
+
+        <h2>페르소나는 새지 않습니다</h2>
+
+        <p>
+          이게 핵심입니다. 한 페르소나의 활동은 그 페르소나가 속한 커뮤 안에서만
+          흐릅니다. 게시물, 답글, 멘션, 알림 — 전부요. 다른 커뮤에서는 이
+          페르소나가 존재한다는 사실 자체가 보이지 않습니다. 멤버 목록에서도,
+          검색에서도, 멘션 자동완성에서도.
+        </p>
+
+        <p>
+          단순한 UI 분리가 아닙니다. 데이터 구조 자체가 커뮤별로 따로 존재하도록
+          설계되어 있어서, 한 페르소나가 만든 콘텐츠는 그 페르소나에만 묶입니다.
+          어느 페르소나가 누구와 같은 사람인지 알 수 있는 단서가 플랫폼 안에서
+          만들어지지 않습니다.
+        </p>
+
+        <p>
+          물론 완벽한 익명성을 약속하지는 않습니다. 글쓰기 습관, 활동 시간대,
+          관심사 같은 외부 단서까지 통제할 수는 없으니까요. 다만 플랫폼이 스스로
+          두 페르소나를 연결지어 노출하는 일은 없습니다. 본명이 들킬 걱정 없이
+          여러 모습으로 살 수 있는 것은 그 보장 위에서입니다.
+        </p>
+
+        <h2>앱과 슬래시 명령</h2>
+
+        <p>
+          커뮤마다 필요한 도구가 다릅니다. TRPG 캠페인에는 주사위가 필요하고,
+          글쓰기 모임에는 부드러운 응원이, 덕질 모임에는 굿즈 정보 공유와 작은
+          응원 통화가 필요합니다. 모든 커뮤에 같은 기능만 얹는 건 어떤 커뮤에든
+          어울리지 않게 됩니다.
+        </p>
+
+        <p>
+          그래서 앱이 있습니다. 카탈로그에서 골라 설치하면 그 커뮤 안에서 슬래시
+          명령으로 작동합니다. <code>/roll 3d6</code>은 주사위를 굴리고,{" "}
+          <code>/buy 검</code>은 상점에서 검을 사고, <code>/balance</code>는
+          잔액을 보여줍니다. 코드를 짜지 않아도, 클릭 몇 번이면 됩니다. 새
+          명령이 추가되면 운영자가 따로 업그레이드를 누르지 않아도 자동으로
+          따라옵니다.
+        </p>
+
+        <p>
+          앱은 외부 도구처럼 따로 떠 있는 게 아니라 커뮤의 일부처럼 동작합니다.
+          봇 프로필이 멤버 목록에 자연스럽게 등장하고, 명령에 대한 응답은 보통
+          게시물처럼 답글로 달립니다. 카탈로그는 누구나{" "}
+          <Link to="/apps">설치 없이 미리 볼 수</Link> 있어서, 어떤 도구가
+          있는지 알고 들어올 수 있습니다.
+        </p>
+
+        <h2>그래서 뭐가 좋아지나</h2>
+
+        <p>
+          페르소나가 깨끗하게 갈라지고, 사이에 새지 않고, 자연스럽게 전환되면 —
+          사용자는 커뮤마다 그 커뮤에 어울리는 모습으로 살 수 있습니다. 한
+          페르소나가 다른 페르소나의 활동을 의식할 필요가 없고, 노출 걱정 없이
+          공간마다 다른 톤으로 글을 쓸 수 있습니다. 그 위에 커뮤마다 다른 도구가
+          쌓이면, 공간이 진짜로 그 공간다워집니다.
+        </p>
+
+        <p>
+          이것이 커뮹이 만들고 싶은 것입니다. 작은 차이지만, 모이면 다르게
+          느껴지는 공간.
+        </p>
+      </div>
+    </article>
   );
 }
