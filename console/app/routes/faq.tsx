@@ -21,7 +21,7 @@ export default function FAQPage() {
 
       <div className="prose prose-neutral dark:prose-invert max-w-none mt-10 prose-headings:font-display prose-headings:tracking-tight prose-h2:mt-10 prose-h2:mb-3 prose-p:leading-relaxed">
         <h2>커뮹은 무엇인가요?</h2>
-        <p>여러 커뮤니티를 한 계정으로 사용하는 플랫폼입니다.</p>
+        <p>타임라인 기반의 커뮤 플랫폼입니다.</p>
 
         <h2>한 계정으로 여러 커뮤에 가입할 수 있나요?</h2>
         <p>
