@@ -9,6 +9,7 @@ import {
   ExternalLink,
   FileText,
   Hash,
+  LayoutGrid,
   LayoutList,
   LogOut,
   Settings,
@@ -396,6 +397,13 @@ export default function CommunityDetails() {
               <Link to={`/communities/${slug}/bots`}>
                 <Button variant="outline" size="sm">
                   <Bot className="h-4 w-4" />봇
+                </Button>
+              </Link>
+            )}
+            {currentUser && userRole === "owner" && (
+              <Link to={`/communities/${slug}/apps`}>
+                <Button variant="outline" size="sm">
+                  <LayoutGrid className="h-4 w-4" />앱
                 </Button>
               </Link>
             )}
