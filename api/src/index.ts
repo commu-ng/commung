@@ -9,6 +9,7 @@ import { AppException } from "./exception";
 import { appRouter } from "./http/app/index";
 import { auth } from "./http/auth";
 import { botApiRouter } from "./http/bot/index";
+import { catalogRouter } from "./http/catalog/index";
 import { consoleRouter } from "./http/console";
 import { startScheduler } from "./services/scheduler.service";
 import { GeneralErrorCode } from "./types/api-responses";
@@ -58,6 +59,7 @@ const app = new Hono()
   .route("/app", appRouter)
   .route("/console", consoleRouter)
   .route("/bot", botApiRouter)
+  .route("/catalog", catalogRouter)
   .onError((err, c) => {
     if (err instanceof AppException) {
       logger.http.warn("AppException: {message}", { message: err.message });
