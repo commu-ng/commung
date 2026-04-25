@@ -6,7 +6,6 @@ import {
   Pencil,
   Plus,
   Power,
-  RotateCw,
   Trash2,
 } from "lucide-react";
 import { useId, useMemo, useState } from "react";
@@ -481,36 +480,6 @@ function InstallCard({
     queryClient.invalidateQueries({ queryKey: ["installed-apps", slug] });
   };
 
-  const upgrade = useMutation({
-    mutationFn: async () => {
-      const response = await api.console.communities[":id"].apps[":installId"][
-        "upgrade"
-      ].$post({
-        param: { id: slug, installId: install.id },
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          getErrorMessage(errorData, "업그레이드에 실패했습니다"),
-        );
-      }
-      return response.json();
-    },
-    onSuccess: (result) => {
-      const added = (result.data as { addedCommands: BotCommand[] })
-        .addedCommands;
-      toast.success(
-        added.length === 0
-          ? "이미 최신 버전입니다"
-          : `업그레이드되었습니다 (+${added.length}개 명령어)`,
-      );
-      invalidate();
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
-  });
-
   const uninstall = useMutation({
     mutationFn: async () => {
       const response = await api.console.communities[":id"].apps[
@@ -550,15 +519,6 @@ function InstallCard({
             </p>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => upgrade.mutate()}
-              disabled={upgrade.isPending}
-              title="업그레이드"
-            >
-              <RotateCw className="h-4 w-4" />
-            </Button>
             <Button
               variant="outline"
               size="sm"

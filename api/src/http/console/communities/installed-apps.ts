@@ -203,26 +203,6 @@ export const installedAppsRouter = new Hono()
     },
   )
 
-  .post(
-    "/:id/apps/:installId/upgrade",
-    authMiddleware,
-    zValidator("param", installIdParamSchema),
-    async (c) => {
-      const { id: slug, installId } = c.req.valid("param");
-      const user = c.get("user");
-      const community =
-        await communityService.validateCommunityExistsBySlug(slug);
-      await membershipService.validateMembershipRole(user.id, community.id, [
-        "owner",
-      ]);
-      const result = await installedAppService.upgradeApp(
-        community.id,
-        installId,
-      );
-      return c.json({ data: result });
-    },
-  )
-
   .delete(
     "/:id/apps/:installId",
     authMiddleware,

@@ -11,6 +11,7 @@ import { auth } from "./http/auth";
 import { botApiRouter } from "./http/bot/index";
 import { catalogRouter } from "./http/catalog/index";
 import { consoleRouter } from "./http/console";
+import { syncCatalogCommandsForAllInstalls } from "./services/installed-app.service";
 import { startScheduler } from "./services/scheduler.service";
 import { GeneralErrorCode } from "./types/api-responses";
 
@@ -98,6 +99,13 @@ logger.http.info("Starting server on port {port}", { port });
 
 // Start the post scheduler
 startScheduler();
+
+// Pull any new catalog commands into existing installs.
+// Fire-and-forget: missing commands surface on next page load anyway,
+// and we don't want to block server startup on a slow query.
+syncCatalogCommandsForAllInstalls().catch((err) => {
+  logger.http.error("Catalog sync on startup failed", { error: err });
+});
 
 serve({
   fetch: app.fetch,

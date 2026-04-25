@@ -52,8 +52,7 @@ export default function CatalogIndexPage() {
           </h1>
           <p className="text-muted-foreground">
             커뮤니티에 설치하면 슬래시 명령으로 즐길 수 있는 봇과 앱입니다.
-            아무나 읽을 수 있는 공식 문서이며, 카드를 눌러 사용법과 예시를
-            확인하세요.
+            카드를 눌러 사용법과 예시를 확인하세요.
           </p>
         </div>
 

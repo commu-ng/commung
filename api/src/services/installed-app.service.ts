@@ -417,75 +417,106 @@ export async function configureApp(
   return updated;
 }
 
-export async function upgradeApp(communityId: string, installId: string) {
-  const install = await validateInstalledExists(communityId, installId);
+/**
+ * Auto-sync new catalog commands into a single install.
+ *
+ * Looks up the catalog entry for this install's builtinId, compares
+ * against bot_command rows for the install (including soft-deleted, so
+ * an owner's explicit removal stays removed), and inserts any commands
+ * that are present in the catalog but not yet in the install. Commands
+ * whose default name collides with an existing community-wide command
+ * are skipped with a warning — the owner can still pick them up later
+ * by reinstalling with an override.
+ */
+async function syncCatalogCommandsForInstall(install: {
+  id: string;
+  communityId: string;
+  builtinId: string;
+}): Promise<number> {
   const app = getBuiltinApp(install.builtinId);
-  if (!app) {
-    throw new AppException(
-      404,
-      GeneralErrorCode.NOT_FOUND,
-      "카탈로그에서 앱을 찾을 수 없습니다",
-    );
-  }
+  if (!app) return 0;
 
-  if (install.version === app.version) {
-    return { install, addedCommands: [] as BotCommandRow[] };
-  }
+  // Include soft-deleted rows: a deletedAt-set row means the owner removed
+  // that command and we should not re-add it on the next sync.
+  const seen = await db
+    .select({ handlerBuiltinId: botCommand.handlerBuiltinId })
+    .from(botCommand)
+    .where(eq(botCommand.installedAppId, install.id));
+  const seenHandlers = new Set(seen.map((r) => r.handlerBuiltinId));
 
-  const existing = await db
-    .select({
-      handlerBuiltinId: botCommand.handlerBuiltinId,
-    })
+  const missing = app.commands.filter(
+    (c) => !seenHandlers.has(c.handlerBuiltinId),
+  );
+  if (missing.length === 0) return 0;
+
+  // Collision check against other community-wide active commands.
+  const lowerNames = missing.map((c) => c.defaultName.toLowerCase());
+  const taken = await db
+    .select({ name: botCommand.name })
     .from(botCommand)
     .where(
       and(
-        eq(botCommand.installedAppId, installId),
+        eq(botCommand.communityId, install.communityId),
         isNull(botCommand.deletedAt),
+        inArray(sql`LOWER(${botCommand.name})`, lowerNames),
       ),
     );
-  const existingHandlers = new Set(existing.map((r) => r.handlerBuiltinId));
-  const newCommands = app.commands.filter(
-    (c) => !existingHandlers.has(c.handlerBuiltinId),
+  const takenSet = new Set(taken.map((r) => r.name.toLowerCase()));
+
+  const toInsert = missing.filter(
+    (c) => !takenSet.has(c.defaultName.toLowerCase()),
   );
-
-  await assertNamesAvailable(
-    communityId,
-    newCommands.map((c) => c.defaultName),
-    installId,
+  const skipped = missing.filter((c) =>
+    takenSet.has(c.defaultName.toLowerCase()),
   );
+  if (skipped.length > 0) {
+    console.warn(
+      "[catalog-sync] skipped commands due to name collision",
+      install.id,
+      skipped.map((c) => c.defaultName),
+    );
+  }
+  if (toInsert.length === 0) return 0;
 
-  const result = await db.transaction(async (tx) => {
-    const [updatedInstall] = await tx
-      .update(installedApp)
-      .set({ version: app.version, updatedAt: sql`now()` })
-      .where(
-        and(
-          eq(installedApp.id, installId),
-          eq(installedApp.communityId, communityId),
-          isNull(installedApp.deletedAt),
-        ),
-      )
-      .returning();
+  await db.insert(botCommand).values(
+    toInsert.map((c) => ({
+      communityId: install.communityId,
+      installedAppId: install.id,
+      name: c.defaultName,
+      description: c.description,
+      handlerBuiltinId: c.handlerBuiltinId,
+    })),
+  );
+  return toInsert.length;
+}
 
-    const addedCommands =
-      newCommands.length === 0
-        ? []
-        : await tx
-            .insert(botCommand)
-            .values(
-              newCommands.map((c) => ({
-                communityId,
-                installedAppId: installId,
-                name: c.defaultName,
-                description: c.description,
-                handlerBuiltinId: c.handlerBuiltinId,
-                enabled: true,
-              })),
-            )
-            .returning();
+/**
+ * Walk every active install in the database and run a per-install sync.
+ * Idempotent — only writes when there's something to add. Intended to run
+ * once on api startup so post-deploy catalog updates land without an
+ * explicit owner action.
+ */
+export async function syncCatalogCommandsForAllInstalls(): Promise<void> {
+  const installs = await db
+    .select({
+      id: installedApp.id,
+      communityId: installedApp.communityId,
+      builtinId: installedApp.builtinId,
+    })
+    .from(installedApp)
+    .where(isNull(installedApp.deletedAt));
 
-    return { install: updatedInstall, addedCommands };
-  });
-
-  return result;
+  let totalAdded = 0;
+  for (const install of installs) {
+    try {
+      totalAdded += await syncCatalogCommandsForInstall(install);
+    } catch (err) {
+      console.error("[catalog-sync] sync failed for install", install.id, err);
+    }
+  }
+  if (totalAdded > 0) {
+    console.log(
+      `[catalog-sync] added ${totalAdded} new commands across ${installs.length} installs`,
+    );
+  }
 }
