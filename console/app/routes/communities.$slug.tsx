@@ -6,6 +6,7 @@ import {
   Bot,
   CheckCircle,
   Clock,
+  Coins,
   ExternalLink,
   FileText,
   Hash,
@@ -404,6 +405,14 @@ export default function CommunityDetails() {
               <Link to={`/communities/${slug}/apps`}>
                 <Button variant="outline" size="sm">
                   <LayoutGrid className="h-4 w-4" />앱
+                </Button>
+              </Link>
+            )}
+            {currentUser && userRole === "owner" && (
+              <Link to={`/communities/${slug}/shop`}>
+                <Button variant="outline" size="sm">
+                  <Coins className="h-4 w-4" />
+                  상점
                 </Button>
               </Link>
             )}
