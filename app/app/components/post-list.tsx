@@ -63,6 +63,7 @@ export const PostList = forwardRef<PostListRef>((_props, ref) => {
         : undefined;
     },
     initialPageParam: undefined as string | undefined,
+    enabled: !!currentProfile?.id,
     staleTime: 2 * 60 * 1000, // 2 minutes - posts are dynamic but can be cached briefly
     gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache for navigation back
     refetchOnMount: true, // Refetch on mount to get new posts
@@ -152,7 +153,7 @@ export const PostList = forwardRef<PostListRef>((_props, ref) => {
     refresh: () => refetch(),
   }));
 
-  if (isLoading) {
+  if (isLoading || !currentProfile?.id) {
     return (
       <div className="space-y-4">
         {Array.from({ length: 3 }, () => (
