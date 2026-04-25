@@ -58,6 +58,24 @@ export const deletionReasonEnum = pgEnum("deletion_reason", [
 
 export const devicePlatformEnum = pgEnum("device_platform", ["ios", "android"]);
 
+export const shopTransactionKindEnum = pgEnum("shop_transaction_kind", [
+  "currency_grant",
+  "currency_charge",
+  "currency_refund",
+  "item_grant",
+  "item_purchase",
+  "item_consume",
+]);
+
+export const shopTransactionSourceEnum = pgEnum("shop_transaction_source", [
+  "owner_grant",
+  "bot_grant",
+  "post_reward",
+  "purchase",
+  "consume",
+  "refund",
+]);
+
 export const groupChat = pgTable(
   "group_chat",
   {
@@ -1800,6 +1818,213 @@ export const botCommand = pgTable(
     sql`CONSTRAINT valid_bot_command_name CHECK (name ~ '^[a-z][a-z0-9_-]{0,30}$')`,
     sql`CONSTRAINT valid_bot_command_description CHECK (description IS NULL OR length(description) <= 1000)`,
     sql`CONSTRAINT valid_bot_command_handler_builtin_id CHECK (handler_builtin_id ~ '^[a-z][a-z0-9_.-]*$')`,
+  ],
+);
+
+export const shopCurrency = pgTable(
+  "shop_currency",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    communityId: uuid("community_id").notNull(),
+    name: text().notNull(),
+    description: text(),
+    isDefault: boolean("is_default").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.communityId],
+      foreignColumns: [community.id],
+      name: "shop_currency_community_id_fkey",
+    }),
+    uniqueIndex("unique_shop_currency_name_per_community")
+      .on(table.communityId, sql`LOWER(${table.name})`)
+      .where(sql`${table.deletedAt} IS NULL`),
+    index("idx_shop_currency_community_id").on(table.communityId),
+    sql`CONSTRAINT valid_shop_currency_name CHECK (length(name) > 0 AND length(name) <= 50)`,
+    sql`CONSTRAINT valid_shop_currency_description CHECK (description IS NULL OR length(description) <= 500)`,
+  ],
+);
+
+export const shopBalance = pgTable(
+  "shop_balance",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    communityId: uuid("community_id").notNull(),
+    profileId: uuid("profile_id").notNull(),
+    currencyId: uuid("currency_id").notNull(),
+    amount: integer().notNull().default(0),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.communityId],
+      foreignColumns: [community.id],
+      name: "shop_balance_community_id_fkey",
+    }),
+    foreignKey({
+      columns: [table.profileId],
+      foreignColumns: [profile.id],
+      name: "shop_balance_profile_id_fkey",
+    }),
+    foreignKey({
+      columns: [table.currencyId],
+      foreignColumns: [shopCurrency.id],
+      name: "shop_balance_currency_id_fkey",
+    }),
+    uniqueIndex("unique_shop_balance_per_holder").on(
+      table.communityId,
+      table.profileId,
+      table.currencyId,
+    ),
+    index("idx_shop_balance_profile").on(table.communityId, table.profileId),
+    sql`CONSTRAINT valid_shop_balance_amount CHECK (amount >= 0)`,
+  ],
+);
+
+export const shopItem = pgTable(
+  "shop_item",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    communityId: uuid("community_id").notNull(),
+    name: text().notNull(),
+    description: text(),
+    priceAmount: integer("price_amount").notNull(),
+    currencyId: uuid("currency_id").notNull(),
+    consumable: boolean().notNull().default(false),
+    isUnique: boolean("is_unique").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.communityId],
+      foreignColumns: [community.id],
+      name: "shop_item_community_id_fkey",
+    }),
+    foreignKey({
+      columns: [table.currencyId],
+      foreignColumns: [shopCurrency.id],
+      name: "shop_item_currency_id_fkey",
+    }),
+    uniqueIndex("unique_shop_item_name_per_community")
+      .on(table.communityId, sql`LOWER(${table.name})`)
+      .where(sql`${table.deletedAt} IS NULL`),
+    index("idx_shop_item_community_id").on(table.communityId),
+    sql`CONSTRAINT valid_shop_item_name CHECK (length(name) > 0 AND length(name) <= 100)`,
+    sql`CONSTRAINT valid_shop_item_description CHECK (description IS NULL OR length(description) <= 1000)`,
+    sql`CONSTRAINT valid_shop_item_price CHECK (price_amount > 0)`,
+  ],
+);
+
+export const shopInventory = pgTable(
+  "shop_inventory",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    communityId: uuid("community_id").notNull(),
+    profileId: uuid("profile_id").notNull(),
+    itemId: uuid("item_id").notNull(),
+    qty: integer().notNull().default(0),
+    grantedAt: timestamp("granted_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.communityId],
+      foreignColumns: [community.id],
+      name: "shop_inventory_community_id_fkey",
+    }),
+    foreignKey({
+      columns: [table.profileId],
+      foreignColumns: [profile.id],
+      name: "shop_inventory_profile_id_fkey",
+    }),
+    foreignKey({
+      columns: [table.itemId],
+      foreignColumns: [shopItem.id],
+      name: "shop_inventory_item_id_fkey",
+    }),
+    uniqueIndex("unique_shop_inventory_per_holder").on(
+      table.communityId,
+      table.profileId,
+      table.itemId,
+    ),
+    index("idx_shop_inventory_profile").on(table.communityId, table.profileId),
+    sql`CONSTRAINT valid_shop_inventory_qty CHECK (qty >= 0)`,
+  ],
+);
+
+export const shopTransaction = pgTable(
+  "shop_transaction",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    communityId: uuid("community_id").notNull(),
+    profileId: uuid("profile_id").notNull(),
+    kind: shopTransactionKindEnum().notNull(),
+    source: shopTransactionSourceEnum().notNull(),
+    currencyId: uuid("currency_id"),
+    currencyDelta: integer("currency_delta"),
+    itemId: uuid("item_id"),
+    itemQtyDelta: integer("item_qty_delta"),
+    reason: text(),
+    actorUserId: uuid("actor_user_id"),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.communityId],
+      foreignColumns: [community.id],
+      name: "shop_transaction_community_id_fkey",
+    }),
+    foreignKey({
+      columns: [table.profileId],
+      foreignColumns: [profile.id],
+      name: "shop_transaction_profile_id_fkey",
+    }),
+    foreignKey({
+      columns: [table.currencyId],
+      foreignColumns: [shopCurrency.id],
+      name: "shop_transaction_currency_id_fkey",
+    }),
+    foreignKey({
+      columns: [table.itemId],
+      foreignColumns: [shopItem.id],
+      name: "shop_transaction_item_id_fkey",
+    }),
+    foreignKey({
+      columns: [table.actorUserId],
+      foreignColumns: [user.id],
+      name: "shop_transaction_actor_user_id_fkey",
+    }),
+    index("idx_shop_transaction_community_created").on(
+      table.communityId,
+      table.createdAt,
+    ),
+    index("idx_shop_transaction_profile_created").on(
+      table.communityId,
+      table.profileId,
+      table.createdAt,
+    ),
+    sql`CONSTRAINT valid_shop_transaction_reason CHECK (reason IS NULL OR length(reason) <= 500)`,
   ],
 );
 
