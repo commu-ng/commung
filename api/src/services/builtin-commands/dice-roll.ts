@@ -28,6 +28,7 @@ function parseDiceExpression(input: string): ParsedRoll | string {
   if (!match) return USAGE;
 
   const [, countStr, sidesStr, modKind, modN, sign, constStr] = match;
+  if (!sidesStr) return USAGE;
 
   const count = countStr ? Number.parseInt(countStr, 10) : 1;
   const sides = Number.parseInt(sidesStr, 10);
@@ -81,24 +82,20 @@ function applyModifier(
   if (!modifier) return { kept: rolls, dropped: [] };
 
   const sortedDesc = [...rolls.entries()].sort((a, b) => b[1] - a[1]);
-  const keptIndices = new Set<number>();
   const { kind, n } = modifier;
 
+  let keptEntries: [number, number][];
   if (kind === "kh") {
-    for (let i = 0; i < n; i++) keptIndices.add(sortedDesc[i][0]);
+    keptEntries = sortedDesc.slice(0, n);
   } else if (kind === "kl") {
-    for (let i = sortedDesc.length - n; i < sortedDesc.length; i++) {
-      keptIndices.add(sortedDesc[i][0]);
-    }
+    keptEntries = sortedDesc.slice(-n);
   } else if (kind === "dh") {
-    for (let i = n; i < sortedDesc.length; i++)
-      keptIndices.add(sortedDesc[i][0]);
-  } else if (kind === "dl") {
-    for (let i = 0; i < sortedDesc.length - n; i++) {
-      keptIndices.add(sortedDesc[i][0]);
-    }
+    keptEntries = sortedDesc.slice(n);
+  } else {
+    keptEntries = sortedDesc.slice(0, sortedDesc.length - n);
   }
 
+  const keptIndices = new Set(keptEntries.map(([idx]) => idx));
   const kept: number[] = [];
   const dropped: number[] = [];
   rolls.forEach((roll, idx) => {
