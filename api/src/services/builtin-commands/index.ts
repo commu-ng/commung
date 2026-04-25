@@ -3,7 +3,13 @@ import { choosePick } from "./choose";
 import { coinFlip } from "./coin";
 import { diceRoll } from "./dice-roll";
 import { helpList } from "./help";
-import { shopBalance, shopBuy, shopInventory, shopItems } from "./shop";
+import {
+  shopBalance,
+  shopBuy,
+  shopInventory,
+  shopItems,
+  shopUse,
+} from "./shop";
 import { shopAdminGrant } from "./shop-admin";
 
 export type CommandInput = {
@@ -49,6 +55,15 @@ export type ShopContext = {
     profileId: string,
     name: string,
   ): Promise<{ name: string }>;
+  useItemByName(
+    profileId: string,
+    name: string,
+  ): Promise<{
+    profileName: string;
+    itemName: string;
+    itemDescription: string | null;
+    consumed: boolean;
+  }>;
   findProfileByUsername(
     username: string,
   ): Promise<{ id: string; username: string; name: string } | null>;
@@ -105,6 +120,7 @@ export const BUILTIN_HANDLERS: Record<string, BuiltinCommandHandler> = {
   [shopItems.id]: shopItems,
   [shopBuy.id]: shopBuy,
   [shopInventory.id]: shopInventory,
+  [shopUse.id]: shopUse,
   [shopAdminGrant.id]: shopAdminGrant,
 };
 
@@ -171,9 +187,9 @@ export const BUILTIN_APPS: Record<string, BuiltinApp> = {
   },
   shop: {
     id: "shop",
-    version: "1.0.0",
+    version: "1.1.0",
     description:
-      "커뮤 상점. /balance로 잔액 확인, /items로 상품 목록, /buy <이름>으로 구매, /inventory로 보유 확인.",
+      "커뮤 상점. /balance로 잔액 확인, /items로 상품 목록, /buy <이름>으로 구매, /inventory로 보유 확인, /use <이름>으로 사용.",
     defaultProfile: { name: "ShopBot", username: "shopbot" },
     commands: [
       {
@@ -195,6 +211,12 @@ export const BUILTIN_APPS: Record<string, BuiltinApp> = {
         defaultName: "inventory",
         description: "보유 중인 상품 목록을 봅니다.",
         handlerBuiltinId: shopInventory.id,
+      },
+      {
+        defaultName: "use",
+        description:
+          "보유한 상품을 사용/꺼내 보입니다. 소모품은 1개 차감됩니다. 사용법: /use <상품 이름>",
+        handlerBuiltinId: shopUse.id,
       },
     ],
     configSchema: z.object({}).strict(),

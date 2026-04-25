@@ -74,3 +74,31 @@ export const shopInventory: BuiltinCommandHandler = {
     return { content: `**보유 상품**\n\n${lines.join("\n")}` };
   },
 };
+
+export const shopUse: BuiltinCommandHandler = {
+  id: "shop.use",
+  description: "Use an item from inventory; consumables are decremented.",
+  async handle(input, ctx) {
+    const name = input.args.trim();
+    if (!name) {
+      return { content: "사용법: `/use <상품 이름>`" };
+    }
+    try {
+      const result = await ctx.shop.useItemByName(
+        input.post.authorProfileId,
+        name,
+      );
+      const verb = result.consumed ? "사용했습니다" : "꺼내 보였습니다";
+      let content = `🪄 **${result.profileName}**님이 **${result.itemName}**을(를) ${verb}.`;
+      if (result.itemDescription) {
+        content += `\n\n${result.itemDescription}`;
+      }
+      return { content };
+    } catch (err) {
+      if (err instanceof AppException) {
+        return { content: err.message };
+      }
+      return { content: "사용에 실패했습니다." };
+    }
+  },
+};

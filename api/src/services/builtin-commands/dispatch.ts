@@ -88,6 +88,48 @@ function makeShopContext(
       });
       return { name: item.name };
     },
+    useItemByName: async (profileId, name) => {
+      const item = await shopService.getItemByName(communityId, name);
+      if (!item) {
+        throw new AppException(
+          404,
+          GeneralErrorCode.NOT_FOUND,
+          `상품을 찾을 수 없습니다: ${name}`,
+        );
+      }
+      if (item.consumable) {
+        await shopService.consumeItem({
+          communityId,
+          profileId,
+          itemId: item.id,
+          actorUserId,
+        });
+      } else {
+        // Non-consumable: just verify ownership
+        const inv = await shopService.listInventoryForProfile(
+          communityId,
+          profileId,
+        );
+        const owned = inv.find((row) => row.itemId === item.id && row.qty > 0);
+        if (!owned) {
+          throw new AppException(
+            400,
+            GeneralErrorCode.INVALID_REQUEST,
+            `보유하고 있지 않습니다: ${item.name}`,
+          );
+        }
+      }
+      const [prof] = await db
+        .select({ name: profileTable.name })
+        .from(profileTable)
+        .where(eq(profileTable.id, profileId));
+      return {
+        profileName: prof?.name ?? "",
+        itemName: item.name,
+        itemDescription: item.description,
+        consumed: item.consumable,
+      };
+    },
     findProfileByUsername: async (username) => {
       const [row] = await db
         .select({
