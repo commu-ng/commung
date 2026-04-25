@@ -673,6 +673,13 @@ function GuestHero() {
             <Link to="/login">로그인</Link>
           </Button>
         </div>
+        <Link
+          to="/about"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mt-4"
+        >
+          커뮹은 무엇이 다른가요?
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
       </div>
     </section>
   );
