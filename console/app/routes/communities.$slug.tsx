@@ -5,6 +5,7 @@ import {
   BarChart3,
   Bot,
   CheckCircle,
+  ChevronDown,
   Clock,
   Coins,
   ExternalLink,
@@ -40,6 +41,14 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Spinner } from "~/components/ui/spinner";
 import { useAuth } from "~/hooks/useAuth";
@@ -387,61 +396,79 @@ export default function CommunityDetails() {
           </div>
           <div className="flex gap-2">
             {currentUser && userRole === "owner" && (
-              <Link to={`/communities/${slug}/settings`}>
-                <Button variant="outline" size="sm">
-                  <Settings className="h-4 w-4" />
-                  설정
-                </Button>
-              </Link>
-            )}
-            {currentUser && userRole === "owner" && (
-              <Link to={`/communities/${slug}/bots`}>
-                <Button variant="outline" size="sm">
-                  <Bot className="h-4 w-4" />봇
-                </Button>
-              </Link>
-            )}
-            {currentUser && userRole === "owner" && (
-              <Link to={`/communities/${slug}/apps`}>
-                <Button variant="outline" size="sm">
-                  <LayoutGrid className="h-4 w-4" />앱
-                </Button>
-              </Link>
-            )}
-            {currentUser && userRole === "owner" && (
-              <Link to={`/communities/${slug}/shop`}>
-                <Button variant="outline" size="sm">
-                  <Coins className="h-4 w-4" />
-                  상점
-                </Button>
-              </Link>
-            )}
-            {currentUser && userRole === "owner" && (
-              <Link to={`/communities/${slug}/boards`}>
-                <Button variant="outline" size="sm">
-                  <LayoutList className="h-4 w-4" />
-                  게시판
-                </Button>
-              </Link>
-            )}
-            {currentUser &&
-              (userRole === "owner" || userRole === "moderator") && (
-                <Link to={`/communities/${slug}/analytics`}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
-                    <BarChart3 className="h-4 w-4" />
-                    분석
+                    <Settings className="h-4 w-4" />
+                    관리
+                    <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-60" />
                   </Button>
-                </Link>
-              )}
-            {currentUser &&
-              (userRole === "owner" || userRole === "moderator") && (
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuLabel>운영</DropdownMenuLabel>
+                  <DropdownMenuItem asChild>
+                    <Link to={`/communities/${slug}/settings`}>
+                      <Settings className="h-4 w-4" />
+                      설정
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to={`/communities/${slug}/members`}>
+                      <Users className="h-4 w-4" />
+                      멤버
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to={`/communities/${slug}/analytics`}>
+                      <BarChart3 className="h-4 w-4" />
+                      분석
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>콘텐츠</DropdownMenuLabel>
+                  <DropdownMenuItem asChild>
+                    <Link to={`/communities/${slug}/boards`}>
+                      <LayoutList className="h-4 w-4" />
+                      게시판
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>확장</DropdownMenuLabel>
+                  <DropdownMenuItem asChild>
+                    <Link to={`/communities/${slug}/apps`}>
+                      <LayoutGrid className="h-4 w-4" />앱
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to={`/communities/${slug}/bots`}>
+                      <Bot className="h-4 w-4" />봇
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to={`/communities/${slug}/shop`}>
+                      <Coins className="h-4 w-4" />
+                      상점
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            {currentUser && userRole === "moderator" && (
+              <>
                 <Link to={`/communities/${slug}/members`}>
                   <Button variant="outline" size="sm">
                     <Users className="h-4 w-4" />
                     멤버
                   </Button>
                 </Link>
-              )}
+                <Link to={`/communities/${slug}/analytics`}>
+                  <Button variant="outline" size="sm">
+                    <BarChart3 className="h-4 w-4" />
+                    분석
+                  </Button>
+                </Link>
+              </>
+            )}
             {currentUser &&
               userRole !== "owner" &&
               community?.membership_status === "member" && (
