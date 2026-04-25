@@ -30,7 +30,6 @@ export default [
     "communities/:slug/analytics",
     "routes/communities.$slug.analytics.tsx",
   ),
-  route("about", "routes/about.tsx"),
   route("apps", "routes/apps._index.tsx"),
   route("apps/:builtinId", "routes/apps.$builtinId.tsx"),
   route("communities/:slug/bots", "routes/communities.$slug.bots.tsx"),
