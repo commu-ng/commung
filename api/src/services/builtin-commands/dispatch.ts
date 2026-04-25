@@ -1,6 +1,13 @@
+import { AppException } from "../../exception";
+import { GeneralErrorCode } from "../../types/api-responses";
 import * as botCommandService from "../bot-command.service";
 import * as postService from "../post.service";
-import { getBuiltinHandler } from "./index";
+import * as shopService from "../shop.service";
+import {
+  type CommandContext,
+  getBuiltinHandler,
+  type ShopContext,
+} from "./index";
 
 const SLASH_COMMAND_PATTERN = /^\/([a-z][a-z0-9_-]{0,30})(?:\s+([\s\S]*))?$/i;
 const HANDLER_TIMEOUT_MS = 2000;
@@ -30,6 +37,53 @@ function parseSlashCommand(
   return { name: rawName.toLowerCase(), args: rawArgs ?? "" };
 }
 
+function makeShopContext(communityId: string): ShopContext {
+  return {
+    listBalances: (profileId) =>
+      shopService.listBalancesForProfile(communityId, profileId),
+    listItems: () => shopService.listItems(communityId),
+    listInventory: (profileId) =>
+      shopService.listInventoryForProfile(communityId, profileId),
+    getItemByName: async (name) => {
+      const item = await shopService.getItemByName(communityId, name);
+      if (!item) return null;
+      const currency = await shopService.getCurrency(
+        communityId,
+        item.currencyId,
+      );
+      return {
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        priceAmount: item.priceAmount,
+        currencyName: currency?.name ?? "",
+        consumable: item.consumable,
+        isUnique: item.isUnique,
+      };
+    },
+    purchaseItemByName: async (profileId, name) => {
+      const item = await shopService.getItemByName(communityId, name);
+      if (!item) {
+        throw new AppException(
+          404,
+          GeneralErrorCode.NOT_FOUND,
+          `상품을 찾을 수 없습니다: ${name}`,
+        );
+      }
+      await shopService.purchaseItem({
+        communityId,
+        profileId,
+        itemId: item.id,
+      });
+      return { name: item.name };
+    },
+  };
+}
+
+function makeCommandContext(communityId: string): CommandContext {
+  return { shop: makeShopContext(communityId) };
+}
+
 async function callHandlerWithTimeout(
   handler: NonNullable<ReturnType<typeof getBuiltinHandler>>,
   args: string,
@@ -48,7 +102,7 @@ async function callHandlerWithTimeout(
             communityId: trigger.communityId,
           },
         },
-        {},
+        makeCommandContext(trigger.communityId),
       ),
       new Promise<never>((_, reject) => {
         timer = setTimeout(

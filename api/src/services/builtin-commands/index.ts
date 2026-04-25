@@ -3,6 +3,7 @@ import { choosePick } from "./choose";
 import { coinFlip } from "./coin";
 import { diceRoll } from "./dice-roll";
 import { helpList } from "./help";
+import { shopBalance, shopBuy, shopInventory, shopItems } from "./shop";
 
 export type CommandInput = {
   args: string;
@@ -14,7 +15,44 @@ export type CommandInput = {
   };
 };
 
-export type CommandContext = Record<string, never>;
+export type ShopBalanceView = {
+  currencyId: string;
+  currencyName: string;
+  isDefault: boolean;
+  amount: number;
+};
+
+export type ShopItemView = {
+  id: string;
+  name: string;
+  description: string | null;
+  priceAmount: number;
+  currencyName: string;
+  consumable: boolean;
+  isUnique: boolean;
+};
+
+export type ShopInventoryView = {
+  itemId: string;
+  itemName: string;
+  qty: number;
+  consumable: boolean;
+};
+
+export type ShopContext = {
+  listBalances(profileId: string): Promise<ShopBalanceView[]>;
+  listItems(): Promise<ShopItemView[]>;
+  listInventory(profileId: string): Promise<ShopInventoryView[]>;
+  getItemByName(name: string): Promise<ShopItemView | null>;
+  purchaseItemByName(
+    profileId: string,
+    name: string,
+  ): Promise<{ name: string }>;
+};
+
+export type CommandContext = {
+  shop: ShopContext;
+};
 
 export type CommandOutput = {
   content: string;
@@ -47,6 +85,10 @@ export const BUILTIN_HANDLERS: Record<string, BuiltinCommandHandler> = {
   [helpList.id]: helpList,
   [coinFlip.id]: coinFlip,
   [choosePick.id]: choosePick,
+  [shopBalance.id]: shopBalance,
+  [shopItems.id]: shopItems,
+  [shopBuy.id]: shopBuy,
+  [shopInventory.id]: shopInventory,
 };
 
 export const BUILTIN_APPS: Record<string, BuiltinApp> = {
@@ -106,6 +148,36 @@ export const BUILTIN_APPS: Record<string, BuiltinApp> = {
         description:
           "옵션 중 하나를 무작위로 선택합니다 (쉼표 또는 공백으로 구분).",
         handlerBuiltinId: choosePick.id,
+      },
+    ],
+    configSchema: z.object({}).strict(),
+  },
+  shop: {
+    id: "shop",
+    version: "1.0.0",
+    description:
+      "커뮤 상점. /balance로 잔액 확인, /items로 상품 목록, /buy <이름>으로 구매, /inventory로 보유 확인.",
+    defaultProfile: { name: "ShopBot", username: "shopbot" },
+    commands: [
+      {
+        defaultName: "balance",
+        description: "내 잔액을 확인합니다.",
+        handlerBuiltinId: shopBalance.id,
+      },
+      {
+        defaultName: "items",
+        description: "판매 중인 상품 목록을 봅니다.",
+        handlerBuiltinId: shopItems.id,
+      },
+      {
+        defaultName: "buy",
+        description: "상품을 구매합니다. 사용법: /buy <상품 이름>",
+        handlerBuiltinId: shopBuy.id,
+      },
+      {
+        defaultName: "inventory",
+        description: "보유 중인 상품 목록을 봅니다.",
+        handlerBuiltinId: shopInventory.id,
       },
     ],
     configSchema: z.object({}).strict(),
