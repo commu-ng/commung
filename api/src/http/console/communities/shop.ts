@@ -4,6 +4,7 @@ import { z } from "zod";
 import { authMiddleware } from "../../../middleware/auth";
 import * as communityService from "../../../services/community.service";
 import * as membershipService from "../../../services/membership.service";
+import * as profileService from "../../../services/profile.service";
 import * as shopService from "../../../services/shop.service";
 
 const communityIdParamSchema = z.object({ id: z.string().min(1) });
@@ -75,6 +76,11 @@ const transactionsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional(),
   cursor: z.string().optional(),
   profile_id: z.uuid().optional(),
+});
+
+const profileSearchQuerySchema = z.object({
+  q: z.string().max(100).optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional(),
 });
 
 export const shopRouter = new Hono()
@@ -277,6 +283,30 @@ export const shopRouter = new Hono()
         });
       }
       return c.body(null, 204);
+    },
+  )
+
+  .get(
+    "/:id/shop/profiles",
+    authMiddleware,
+    zValidator("param", communityIdParamSchema),
+    zValidator("query", profileSearchQuerySchema),
+    async (c) => {
+      const { id: slug } = c.req.valid("param");
+      const user = c.get("user");
+      const { q, limit } = c.req.valid("query");
+      const community =
+        await communityService.validateCommunityExistsBySlug(slug);
+      await membershipService.validateMembershipRole(user.id, community.id, [
+        "owner",
+        "moderator",
+      ]);
+      const data = await profileService.searchProfilesByUsernameInCommunity(
+        community.id,
+        q ?? "",
+        limit ?? 10,
+      );
+      return c.json({ data });
     },
   )
 

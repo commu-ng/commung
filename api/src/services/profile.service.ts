@@ -1349,3 +1349,32 @@ export async function updateOnlineStatusVisibility(
 
   return { success: true };
 }
+
+export async function searchProfilesByUsernameInCommunity(
+  communityId: string,
+  query: string,
+  limit = 10,
+) {
+  const q = query.trim().toLowerCase();
+  const conditions = [
+    eq(profileTable.communityId, communityId),
+    isNotNull(profileTable.activatedAt),
+    isNull(profileTable.deletedAt),
+  ];
+  if (q.length > 0) {
+    const pattern = `%${q}%`;
+    conditions.push(
+      sql`(LOWER(${profileTable.username}) LIKE ${pattern} OR LOWER(${profileTable.name}) LIKE ${pattern})`,
+    );
+  }
+  return db
+    .select({
+      id: profileTable.id,
+      name: profileTable.name,
+      username: profileTable.username,
+    })
+    .from(profileTable)
+    .where(and(...conditions))
+    .orderBy(profileTable.username)
+    .limit(Math.min(Math.max(limit, 1), 50));
+}

@@ -363,6 +363,12 @@ function ItemDialog({
   );
 }
 
+interface ProfileSearchResult {
+  id: string;
+  name: string;
+  username: string;
+}
+
 function GrantDialog({
   slug,
   currencies,
@@ -376,6 +382,13 @@ function GrantDialog({
 }) {
   const [kind, setKind] = useState<"currency" | "item">("currency");
   const [profileId, setProfileId] = useState("");
+  const [profileQuery, setProfileQuery] = useState("");
+  const [profileResults, setProfileResults] = useState<ProfileSearchResult[]>(
+    [],
+  );
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [selectedProfile, setSelectedProfile] =
+    useState<ProfileSearchResult | null>(null);
   const [currencyId, setCurrencyId] = useState(
     currencies.find((c) => c.isDefault)?.id ?? currencies[0]?.id ?? "",
   );
@@ -384,7 +397,7 @@ function GrantDialog({
   const [qty, setQty] = useState("1");
   const [reason, setReason] = useState("");
   const queryClient = useQueryClient();
-  const profileIdInputId = useId();
+  const profileInputId = useId();
   const amountId = useId();
   const qtyId = useId();
   const reasonId = useId();
@@ -452,14 +465,81 @@ function GrantDialog({
             상품
           </Button>
         </div>
-        <div>
-          <Label htmlFor={profileIdInputId}>프로필 ID (UUID)</Label>
-          <Input
-            id={profileIdInputId}
-            value={profileId}
-            onChange={(e) => setProfileId(e.target.value)}
-            placeholder="멤버 페이지에서 복사하세요"
-          />
+        <div className="relative">
+          <Label htmlFor={profileInputId}>받는 프로필</Label>
+          {selectedProfile ? (
+            <div className="flex items-center justify-between gap-2 mt-1 px-3 py-2 rounded-md border bg-muted">
+              <span className="text-sm">
+                <span className="font-medium">{selectedProfile.name}</span>{" "}
+                <span className="text-muted-foreground">
+                  @{selectedProfile.username}
+                </span>
+              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setSelectedProfile(null);
+                  setProfileId("");
+                  setProfileQuery("");
+                  setShowProfileDropdown(true);
+                }}
+              >
+                변경
+              </Button>
+            </div>
+          ) : (
+            <>
+              <Input
+                id={profileInputId}
+                value={profileQuery}
+                onChange={async (e) => {
+                  const q = e.target.value;
+                  setProfileQuery(q);
+                  setShowProfileDropdown(true);
+                  try {
+                    const r = await api.console.communities[
+                      ":id"
+                    ].shop.profiles.$get({
+                      param: { id: slug },
+                      query: { q },
+                    });
+                    if (r.ok) {
+                      const result = await r.json();
+                      setProfileResults(
+                        (result.data as ProfileSearchResult[]) ?? [],
+                      );
+                    }
+                  } catch {
+                    /* ignore */
+                  }
+                }}
+                onFocus={() => setShowProfileDropdown(true)}
+                placeholder="이름 또는 사용자명으로 검색"
+              />
+              {showProfileDropdown && profileResults.length > 0 && (
+                <div className="absolute left-0 right-0 z-10 mt-1 max-h-48 overflow-y-auto rounded-md border bg-card shadow-md">
+                  {profileResults.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-accent"
+                      onClick={() => {
+                        setSelectedProfile(p);
+                        setProfileId(p.id);
+                        setShowProfileDropdown(false);
+                      }}
+                    >
+                      <span className="font-medium">{p.name}</span>{" "}
+                      <span className="text-muted-foreground">
+                        @{p.username}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
         {kind === "currency" ? (
           <div className="grid grid-cols-2 gap-3">
