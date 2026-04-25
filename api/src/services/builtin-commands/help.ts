@@ -11,11 +11,11 @@ export const helpList: BuiltinCommandHandler = {
     }
     const lines = commands.map((cmd) =>
       cmd.description
-        ? `\`/${cmd.name}\` — ${cmd.description}`
-        : `\`/${cmd.name}\``,
+        ? `- \`/${cmd.name}\` — ${cmd.description}`
+        : `- \`/${cmd.name}\``,
     );
     return {
-      content: `**사용 가능한 명령어**\n${lines.join("\n")}`,
+      content: `**사용 가능한 명령어**\n\n${lines.join("\n")}`,
     };
   },
 };
