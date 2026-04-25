@@ -16,6 +16,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
+import { BalancePill } from "~/components/balance-pill";
 import { ProfileSwitcher } from "~/components/profile-switcher";
 import { ThemeToggle } from "~/components/ThemeToggle";
 import { Button } from "~/components/ui/button";
@@ -129,6 +130,11 @@ export function MobileNavDrawer({
             {/* Profile Switcher */}
             <div className="mt-2 px-2">
               <ProfileSwitcher compact={false} />
+            </div>
+
+            {/* Balance Pill */}
+            <div className="mt-2 px-2">
+              <BalancePill fullWidth />
             </div>
 
             {/* Navigation Links */}

@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
-import { BalancePill } from "~/components/balance-pill";
 import { ProfileSwitcher } from "~/components/profile-switcher";
 import { ThemeToggle } from "~/components/ThemeToggle";
 import { Button } from "~/components/ui/button";
@@ -162,7 +161,6 @@ export function Header({
             </a>
           </div>
           <div className="flex items-center gap-2">
-            <BalancePill />
             <ThemeToggle />
             <ProfileSwitcher />
           </div>

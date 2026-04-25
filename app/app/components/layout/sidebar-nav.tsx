@@ -14,6 +14,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
+import { BalancePill } from "~/components/balance-pill";
 import { ProfileSwitcher } from "~/components/profile-switcher";
 import { ThemeToggle } from "~/components/ThemeToggle";
 import { Button } from "~/components/ui/button";
@@ -117,6 +118,13 @@ export function SidebarNav({
       {/* Profile Switcher */}
       <div className={`${collapsed ? "mt-2" : "mt-3 px-1"}`}>
         <ProfileSwitcher compact={collapsed} />
+      </div>
+
+      {/* Balance Pill (only renders if currency defined) */}
+      <div
+        className={`${collapsed ? "mt-2 flex justify-center" : "mt-2 px-1"}`}
+      >
+        <BalancePill compact={collapsed} fullWidth={!collapsed} />
       </div>
 
       {/* Navigation Links */}
