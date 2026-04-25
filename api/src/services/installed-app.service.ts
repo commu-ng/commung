@@ -28,6 +28,103 @@ export function listCatalog(): BuiltinApp[] {
   return Object.values(BUILTIN_APPS);
 }
 
+/**
+ * Build the user-facing list of installed apps with their full catalog
+ * documentation (longDescription, examples) and resolved slash command
+ * names. Used by the app subdomain's apps directory + detail pages.
+ */
+export async function listInstalledAppsWithDocs(communityId: string) {
+  const installs = await db
+    .select({
+      id: installedApp.id,
+      builtinId: installedApp.builtinId,
+      version: installedApp.version,
+      profileName: profile.name,
+      profileUsername: profile.username,
+    })
+    .from(installedApp)
+    .innerJoin(profile, eq(installedApp.profileId, profile.id))
+    .where(
+      and(
+        eq(installedApp.communityId, communityId),
+        isNull(installedApp.deletedAt),
+        isNull(profile.deletedAt),
+      ),
+    )
+    .orderBy(installedApp.createdAt);
+
+  type CommandView = {
+    name: string;
+    default_name: string;
+    description: string;
+    long_description: string | null;
+    required_role: "owner" | "moderator" | null;
+    examples: Array<{ input: string; output: string; note: string | null }>;
+  };
+  type AppView = {
+    builtin_id: string;
+    version: string;
+    profile: { name: string; username: string };
+    description: string;
+    long_description: string | null;
+    commands: CommandView[];
+  };
+
+  const result: AppView[] = [];
+  for (const install of installs) {
+    const catalog = BUILTIN_APPS[install.builtinId];
+    if (!catalog) continue;
+
+    const commands = await db
+      .select({
+        name: botCommand.name,
+        handlerBuiltinId: botCommand.handlerBuiltinId,
+        enabled: botCommand.enabled,
+      })
+      .from(botCommand)
+      .where(
+        and(
+          eq(botCommand.installedAppId, install.id),
+          isNull(botCommand.deletedAt),
+        ),
+      );
+    const byHandler = new Map(commands.map((c) => [c.handlerBuiltinId, c]));
+
+    const commandViews = catalog.commands
+      .map((cmd): CommandView | null => {
+        const installed = byHandler.get(cmd.handlerBuiltinId);
+        if (!installed || !installed.enabled) return null;
+        return {
+          name: installed.name,
+          default_name: cmd.defaultName,
+          description: cmd.description,
+          long_description: cmd.longDescription ?? null,
+          required_role: cmd.requiredRole ?? null,
+          examples: (cmd.examples ?? []).map((ex) => ({
+            input: ex.input,
+            output: ex.output,
+            note: ex.note ?? null,
+          })),
+        };
+      })
+      .filter((c): c is CommandView => c !== null);
+
+    result.push({
+      builtin_id: install.builtinId,
+      version: install.version,
+      profile: {
+        name: install.profileName,
+        username: install.profileUsername,
+      },
+      description: catalog.description,
+      long_description: catalog.longDescription ?? null,
+      commands: commandViews,
+    });
+  }
+
+  return result;
+}
+
 export async function listInstalled(communityId: string) {
   return db
     .select({

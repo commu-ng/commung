@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import type { AuthVariables } from "../../types";
+import { appsRouter } from "./apps";
 import { communityBoardsRouter } from "./boards";
 import { commandsRouter } from "./commands";
 import { meRouter } from "./me";
@@ -17,4 +18,5 @@ export const appRouter = new Hono<{ Variables: AuthVariables }>()
   .route("/", postsRouter)
   .route("/", commandsRouter)
   .route("/", shopRouter)
+  .route("/", appsRouter)
   .route("/", communityBoardsRouter);
