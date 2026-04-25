@@ -340,6 +340,19 @@ export function CommunityMemberManagement({
                   />
                 ))}
 
+                {/* Load more button (works even when scroll detection fails) */}
+                {hasNextPage && !isFetchingNextPage && (
+                  <div className="mt-4 text-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => fetchNextPage()}
+                      disabled={isFetchingNextPage}
+                    >
+                      더 보기 ({members.length}명 표시 중)
+                    </Button>
+                  </div>
+                )}
+
                 {/* Loading indicator for infinite scroll */}
                 {isFetchingNextPage && (
                   <div className="mt-4">
@@ -354,7 +367,7 @@ export function CommunityMemberManagement({
                 {!hasNextPage && members.length > 0 && (
                   <div className="bg-background rounded-2xl border border-border p-6 text-center mt-4">
                     <p className="text-muted-foreground text-sm">
-                      모든 멤버를 확인했습니다
+                      모든 멤버를 확인했습니다 (총 {members.length}명)
                     </p>
                   </div>
                 )}
