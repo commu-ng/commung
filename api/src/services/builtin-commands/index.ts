@@ -47,12 +47,14 @@ export const BUILTIN_APPS: Record<string, BuiltinApp> = {
   dice: {
     id: "dice",
     version: "1.0.0",
-    description: "TRPG dice roller. Use /roll 3d6, 1d20+5, 2d20kh1, 4d6dl1.",
+    description:
+      "TRPG 주사위 굴리기. /roll 3d6, 1d20+5, 2d20kh1, 4d6dl1 형식으로 사용하세요.",
     defaultProfile: { name: "DiceBot", username: "dicebot" },
     commands: [
       {
         defaultName: "roll",
-        description: "Roll dice: 3d6, 1d20+5, 2d20kh1 (advantage), 4d6dl1.",
+        description:
+          "주사위 굴리기: 3d6, 1d20+5, 2d20kh1 (어드밴티지), 4d6dl1 (최저값 버림).",
         handlerBuiltinId: diceRoll.id,
       },
     ],
