@@ -7,6 +7,7 @@ import { messagesRouter } from "./messages";
 import { notificationsRouter } from "./notifications";
 import { postsRouter } from "./posts";
 import { profilesRouter } from "./profiles";
+import { shopRouter } from "./shop";
 
 export const appRouter = new Hono<{ Variables: AuthVariables }>()
   .route("/", profilesRouter)
@@ -15,4 +16,5 @@ export const appRouter = new Hono<{ Variables: AuthVariables }>()
   .route("/", notificationsRouter)
   .route("/", postsRouter)
   .route("/", commandsRouter)
+  .route("/", shopRouter)
   .route("/", communityBoardsRouter);
