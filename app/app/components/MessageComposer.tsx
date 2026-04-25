@@ -129,6 +129,21 @@ export function MessageComposer({
   const [mentionProfiles, setMentionProfiles] = useState<Profile[]>([]);
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
 
+  // Slash command autocomplete state
+  type SlashCommand = {
+    id: string;
+    name: string;
+    description: string | null;
+    builtinId: string;
+  };
+  const [showSlashDropdown, setShowSlashDropdown] = useState(false);
+  const [slashQuery, setSlashQuery] = useState("");
+  const [slashCommands, setSlashCommands] = useState<SlashCommand[]>([]);
+  const [allSlashCommands, setAllSlashCommands] = useState<
+    SlashCommand[] | null
+  >(null);
+  const [selectedSlashIndex, setSelectedSlashIndex] = useState(0);
+
   // IME composition state for CJK input
   const compositionDataRef = useRef<string>("");
 
@@ -201,6 +216,68 @@ export function MessageComposer({
 
     return () => clearTimeout(debounceTimer);
   }, [mentionQuery, showMentionDropdown, fetchProfiles]);
+
+  // Fetch installed slash commands once when first needed
+  const fetchSlashCommands = useCallback(async () => {
+    try {
+      const response = await client.app.commands.$get();
+      if (response.ok) {
+        const result = await response.json();
+        const commands: SlashCommand[] = Array.isArray(result?.data)
+          ? result.data
+          : [];
+        setAllSlashCommands(commands);
+        return commands;
+      }
+    } catch (error) {
+      console.error("Failed to fetch slash commands:", error);
+    }
+    setAllSlashCommands([]);
+    return [];
+  }, []);
+
+  // Filter commands by current query
+  useEffect(() => {
+    if (!showSlashDropdown || !allSlashCommands) return;
+    const q = slashQuery.toLowerCase();
+    const filtered = allSlashCommands
+      .filter((cmd) => cmd.name.toLowerCase().startsWith(q))
+      .slice(0, 8);
+    setSlashCommands(filtered);
+    setSelectedSlashIndex(0);
+  }, [slashQuery, showSlashDropdown, allSlashCommands]);
+
+  // Check for /command at the very start of the message
+  const checkForSlashCommand = (text: string, cursorPosition: number) => {
+    const beforeCursor = text.slice(0, cursorPosition);
+    const match = beforeCursor.match(/^\/([a-z0-9_-]*)$/i);
+    if (match) {
+      setSlashQuery(match[1] ?? "");
+      setShowSlashDropdown(true);
+      if (allSlashCommands === null) {
+        fetchSlashCommands();
+      }
+    } else {
+      setShowSlashDropdown(false);
+      setSlashCommands([]);
+      setSlashQuery("");
+    }
+  };
+
+  // Insert selected slash command
+  const selectSlashCommand = (cmd: SlashCommand) => {
+    const after = message.slice(slashQuery.length + 1);
+    const newMessage = `/${cmd.name} ${after.trimStart()}`;
+    setMessage(newMessage);
+    setShowSlashDropdown(false);
+    setSlashCommands([]);
+    setSlashQuery("");
+    setTimeout(() => {
+      textareaRef.current?.focus();
+      const newPosition = cmd.name.length + 2;
+      textareaRef.current?.setSelectionRange(newPosition, newPosition);
+    }, 0);
+  };
 
   // Check for @ mentions
   const checkForMention = (text: string, cursorPosition: number) => {
@@ -350,6 +427,38 @@ export function MessageComposer({
       }
       return;
     }
+
+    if (showSlashDropdown && slashCommands.length > 0) {
+      switch (e.key) {
+        case "ArrowDown":
+          e.preventDefault();
+          setSelectedSlashIndex((prev) =>
+            prev < slashCommands.length - 1 ? prev + 1 : 0,
+          );
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          setSelectedSlashIndex((prev) =>
+            prev > 0 ? prev - 1 : slashCommands.length - 1,
+          );
+          break;
+        case "Enter":
+        case "Tab": {
+          e.preventDefault();
+          const selected = slashCommands[selectedSlashIndex];
+          if (selected) {
+            selectSlashCommand(selected);
+          }
+          break;
+        }
+        case "Escape":
+          e.preventDefault();
+          setShowSlashDropdown(false);
+          setSlashCommands([]);
+          break;
+      }
+      return;
+    }
   };
 
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -357,11 +466,13 @@ export function MessageComposer({
     setMessage(newMessage);
     const cursorPosition = e.target.selectionStart;
     checkForMention(newMessage, cursorPosition);
+    checkForSlashCommand(newMessage, cursorPosition);
   };
 
   const handleTextareaClick = (e: React.MouseEvent<HTMLTextAreaElement>) => {
     const cursorPosition = e.currentTarget.selectionStart;
     checkForMention(message, cursorPosition);
+    checkForSlashCommand(message, cursorPosition);
   };
 
   // IME composition handlers for CJK input
@@ -641,7 +752,8 @@ export function MessageComposer({
               placeholder={placeholder}
               disabled={isSubmitting}
               className={`resize-none border-0 focus:ring-0 focus:border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent text-base leading-relaxed transition-all ${
-                showMentionDropdown && mentionProfiles.length > 0
+                (showMentionDropdown && mentionProfiles.length > 0) ||
+                (showSlashDropdown && slashCommands.length > 0)
                   ? "min-h-[120px] rounded-t-none"
                   : "min-h-[120px] rounded-none"
               }`}
@@ -716,12 +828,61 @@ export function MessageComposer({
               </div>
             </div>
           )}
+
+        {/* Slash command autocomplete */}
+        {showSlashDropdown && slashCommands.length > 0 && !isPreviewMode && (
+          <div className="slash-dropdown bg-card border-t border-border max-h-48 overflow-y-auto">
+            {slashCommands.map((cmd, index) => (
+              <button
+                key={cmd.id}
+                type="button"
+                className={`px-4 py-3 cursor-pointer w-full text-left flex items-center gap-3 transition-colors border-l-4 ${
+                  index === selectedSlashIndex
+                    ? "bg-accent border-l-primary"
+                    : "hover:bg-background border-l-transparent"
+                }`}
+                onClick={() => selectSlashCommand(cmd)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    selectSlashCommand(cmd);
+                  }
+                }}
+              >
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className="text-sm font-mono font-medium text-foreground">
+                    /{cmd.name}
+                  </span>
+                  {cmd.description && (
+                    <span className="text-xs text-muted-foreground truncate">
+                      {cmd.description}
+                    </span>
+                  )}
+                </div>
+                {index === selectedSlashIndex && (
+                  <div className="text-xs text-muted-foreground font-medium">
+                    Tab
+                  </div>
+                )}
+              </button>
+            ))}
+            <div className="px-4 py-2 bg-background border-t border-border">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>↑↓ 선택</span>
+                <span>Tab 확인</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Footer */}
       <div
         className={`px-4 py-3 bg-background ${
-          showMentionDropdown && mentionProfiles.length > 0 && !isPreviewMode
+          (
+            (showMentionDropdown && mentionProfiles.length > 0) ||
+              (showSlashDropdown && slashCommands.length > 0)
+          ) && !isPreviewMode
             ? "border-t-0"
             : "border-t border-border"
         }`}
