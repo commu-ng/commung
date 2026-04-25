@@ -272,15 +272,39 @@ export async function uninstallApp(communityId: string, installId: string) {
   });
 }
 
+function validateConfigForApp(
+  app: BuiltinApp,
+  config: unknown,
+): Record<string, unknown> {
+  const result = app.configSchema.safeParse(config);
+  if (!result.success) {
+    throw new AppException(
+      400,
+      GeneralErrorCode.INVALID_REQUEST,
+      `잘못된 설정입니다: ${result.error.issues.map((i) => i.message).join(", ")}`,
+    );
+  }
+  return (result.data ?? {}) as Record<string, unknown>;
+}
+
 export async function configureApp(
   communityId: string,
   installId: string,
-  config: Record<string, unknown>,
+  config: unknown,
 ) {
-  await validateInstalledExists(communityId, installId);
+  const install = await validateInstalledExists(communityId, installId);
+  const app = getBuiltinApp(install.builtinId);
+  if (!app) {
+    throw new AppException(
+      404,
+      GeneralErrorCode.NOT_FOUND,
+      "카탈로그에서 앱을 찾을 수 없습니다",
+    );
+  }
+  const validated = validateConfigForApp(app, config);
   const [updated] = await db
     .update(installedApp)
-    .set({ config, updatedAt: sql`now()` })
+    .set({ config: validated, updatedAt: sql`now()` })
     .where(
       and(
         eq(installedApp.id, installId),
