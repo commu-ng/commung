@@ -113,7 +113,41 @@ export async function publishScheduledPosts(): Promise<number> {
           isNull(postTable.deletedAt),
         ),
       )
-      .returning({ id: postTable.id });
+      .returning({
+        id: postTable.id,
+        content: postTable.content,
+        communityId: postTable.communityId,
+        authorId: postTable.authorId,
+        rootPostId: postTable.rootPostId,
+      });
+
+    if (duePostsResult.length > 0) {
+      // Lazy import avoids cycle: dispatch.ts -> post.service.ts -> dispatch.ts
+      const { maybeDispatchCommand } = await import(
+        "./builtin-commands/dispatch"
+      );
+      for (const due of duePostsResult) {
+        const community = await db.query.community.findFirst({
+          where: eq(communityTable.id, due.communityId),
+        });
+        if (!community) continue;
+        maybeDispatchCommand(
+          {
+            id: due.id,
+            content: due.content,
+            communityId: due.communityId,
+            authorProfileId: due.authorId,
+            rootPostId: due.rootPostId,
+          },
+          {
+            startsAt: community.startsAt,
+            endsAt: community.endsAt,
+          },
+        ).catch((err) => {
+          console.error("[bot-command] scheduled dispatch failed", err);
+        });
+      }
+    }
 
     return duePostsResult.length;
   } catch (error) {
