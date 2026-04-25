@@ -1,5 +1,11 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Calendar, MessageCircle, User } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  CornerDownRight,
+  MessageCircle,
+  User,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { PostCard } from "~/components/post-card";
@@ -314,15 +320,52 @@ export default function ProfileProfile() {
             ) : (
               <>
                 <div className="space-y-4">
-                  {posts.map((post) => (
-                    <PostCard
-                      key={post.id}
-                      post={post as unknown as Post}
-                      currentProfileId={currentProfile?.id}
-                      isCommunityOwner={isCommunityOwner}
-                      isProfileView={true}
-                    />
-                  ))}
+                  {posts.map((post) => {
+                    const parent = (
+                      post as unknown as {
+                        parent_summary?: {
+                          id: string;
+                          content_excerpt: string;
+                          author: {
+                            id: string;
+                            name: string;
+                            username: string;
+                          };
+                        } | null;
+                      }
+                    ).parent_summary;
+                    return (
+                      <div key={post.id}>
+                        {parent && (
+                          <Link
+                            to={`/@${parent.author.username}/${parent.id}`}
+                            className="flex items-start gap-2 px-4 py-2 mb-1 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors"
+                          >
+                            <CornerDownRight className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                            <span className="min-w-0 flex-1 truncate">
+                              <span className="font-medium">
+                                {parent.author.name}
+                              </span>
+                              <span className="text-muted-foreground/70">
+                                {" "}
+                                @{parent.author.username}
+                              </span>
+                              님의 게시물에 답글:{" "}
+                              <span className="italic">
+                                {parent.content_excerpt}
+                              </span>
+                            </span>
+                          </Link>
+                        )}
+                        <PostCard
+                          post={post as unknown as Post}
+                          currentProfileId={currentProfile?.id}
+                          isCommunityOwner={isCommunityOwner}
+                          isProfileView={true}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* Loading indicator for infinite scroll */}

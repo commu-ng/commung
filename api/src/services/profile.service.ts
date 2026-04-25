@@ -830,6 +830,51 @@ export async function getProfilePosts(
     TIMELINE_REPLY_LIMIT,
   );
 
+  // Load parent post summaries for any post that is itself a reply
+  const parentIds = Array.from(
+    new Set(
+      postsToReturn
+        .map((p) => p.inReplyToId)
+        .filter((id): id is string => id !== null),
+    ),
+  );
+  type ParentSummary = {
+    id: string;
+    content_excerpt: string;
+    author: { id: string; name: string; username: string };
+  };
+  const parentSummaryMap = new Map<string, ParentSummary>();
+  if (parentIds.length > 0) {
+    const parents = await db.query.post.findMany({
+      where: and(inArray(postTable.id, parentIds), isNull(postTable.deletedAt)),
+      columns: {
+        id: true,
+        content: true,
+        authorId: true,
+      },
+      with: {
+        profile: {
+          columns: { id: true, name: true, username: true },
+        },
+      },
+    });
+    for (const parent of parents) {
+      if (!parent.profile) continue;
+      const trimmed = parent.content.trim();
+      const excerpt =
+        trimmed.length > 80 ? `${trimmed.slice(0, 80)}…` : trimmed;
+      parentSummaryMap.set(parent.id, {
+        id: parent.id,
+        content_excerpt: excerpt,
+        author: {
+          id: parent.profile.id,
+          name: parent.profile.name,
+          username: parent.profile.username,
+        },
+      });
+    }
+  }
+
   const result = postsToReturn.map((post) => {
     const postImageTableData = post.postImages.map((pi) => ({
       id: pi.image.id,
@@ -858,6 +903,9 @@ export async function getProfilePosts(
       depth: post.depth,
       root_post_id: post.rootPostId,
       is_bookmarked: false,
+      parent_summary: post.inReplyToId
+        ? (parentSummaryMap.get(post.inReplyToId) ?? null)
+        : null,
       replies: repliesMap.get(post.id)?.replies ?? [],
       reply_count: repliesMap.get(post.id)?.totalCount ?? 0,
       has_more_replies:
