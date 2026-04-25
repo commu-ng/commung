@@ -34,7 +34,7 @@ function Hero({ isAuthenticated }: { isAuthenticated: boolean }) {
           <span className="text-primary">그만</span>
         </h1>
         <p className="text-base sm:text-lg text-muted-foreground mt-6 max-w-xl mx-auto leading-relaxed">
-          하나의 계정으로 커뮤마다 다른 모습. 게이머일 때, 작가일 때, 본명일 때
+          하나의 계정으로 커뮤마다 다른 모습. 게이머일 때, 작가일 때, 덕후일 때
           — 한 사람의 여러 모습을 한 곳에서 자연스럽게.
         </p>
 
@@ -199,10 +199,10 @@ function ScenarioCard() {
           },
           {
             tone: "from-butter/30 to-butter/5",
-            who: "동료",
-            persona: "@김지영",
-            community: "회사 팀 커뮤",
-            activity: "본명 프로필, 업무 공지 확인",
+            who: "덕후",
+            persona: "@최애_지킴이",
+            community: "덕질 커뮤",
+            activity: "최애 굿즈 정보 공유, 컴백 응원 게시물",
           },
         ].map((s) => (
           <Card key={s.persona} className="overflow-hidden border-border/60">
@@ -290,7 +290,7 @@ export default function AboutPage() {
         bullets={[
           {
             label: "커뮤마다 다른 이름과 프로필",
-            sub: "본명으로, 닉네임으로, 캐릭터명으로 — 원하는 만큼.",
+            sub: "닉네임으로, 캐릭터명으로, 펜네임으로 — 원하는 만큼.",
           },
           {
             label: "한 번 가입, 여러 커뮤",
