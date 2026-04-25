@@ -3,7 +3,7 @@ import type { Route } from "./+types/faq";
 export function meta(_args: Route.MetaArgs) {
   return [
     { title: "FAQ" },
-    { name: "description", content: "커뮹에 대한 자주 묻는 질문." },
+    { name: "description", content: "커뮹!에 대한 자주 묻는 질문." },
   ];
 }
 
@@ -20,7 +20,7 @@ export default function FAQPage() {
       </header>
 
       <div className="prose prose-neutral dark:prose-invert max-w-none mt-10 prose-headings:font-display prose-headings:tracking-tight prose-h2:mt-10 prose-h2:mb-3 prose-p:leading-relaxed">
-        <h2>커뮹은 무엇인가요?</h2>
+        <h2>커뮹!은 무엇인가요?</h2>
         <p>타임라인 기반의 커뮤 플랫폼입니다.</p>
 
         <h2>한 계정으로 여러 커뮤에 가입할 수 있나요?</h2>
@@ -75,9 +75,10 @@ export default function FAQPage() {
         <h2>계정을 삭제할 수 있나요?</h2>
         <p>네. 계정 설정에서 계정 삭제를 진행할 수 있습니다.</p>
 
-        <h2>커뮹은 누가 만드나요?</h2>
+        <h2>커뮹!은 누가 만드나요?</h2>
         <p>
-          커뮹은 양나루라는 개발 팀에서 만듭니다. 같은 팀이 만든 다른 프로젝트는{" "}
+          커뮹!은 양나루라는 개발 팀에서 만듭니다. 같은 팀이 만든 다른
+          프로젝트는{" "}
           <a
             href="https://yang.naru.pub"
             target="_blank"
