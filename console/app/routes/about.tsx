@@ -290,7 +290,7 @@ export default function AboutPage() {
         bullets={[
           {
             label: "커뮤마다 다른 이름과 프로필",
-            sub: "닉네임으로, 캐릭터명으로, 펜네임으로 — 원하는 만큼.",
+            sub: "닉네임으로, 캐릭터명으로, 필명으로 — 원하는 만큼.",
           },
           {
             label: "한 번 가입, 여러 커뮤",
