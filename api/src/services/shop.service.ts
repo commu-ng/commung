@@ -863,8 +863,24 @@ export async function listTransactions(
     conditions.push(lt(shopTransaction.id, options.cursor));
   }
   const rows = await db
-    .select()
+    .select({
+      id: shopTransaction.id,
+      communityId: shopTransaction.communityId,
+      profileId: shopTransaction.profileId,
+      profileName: profile.name,
+      profileUsername: profile.username,
+      kind: shopTransaction.kind,
+      source: shopTransaction.source,
+      currencyId: shopTransaction.currencyId,
+      currencyDelta: shopTransaction.currencyDelta,
+      itemId: shopTransaction.itemId,
+      itemQtyDelta: shopTransaction.itemQtyDelta,
+      reason: shopTransaction.reason,
+      actorUserId: shopTransaction.actorUserId,
+      createdAt: shopTransaction.createdAt,
+    })
     .from(shopTransaction)
+    .leftJoin(profile, eq(shopTransaction.profileId, profile.id))
     .where(and(...conditions))
     .orderBy(desc(shopTransaction.id))
     .limit(limit + 1);
