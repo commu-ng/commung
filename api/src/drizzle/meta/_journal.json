@@ -148,6 +148,13 @@
       "when": 1776586590624,
       "tag": "0020_perfect_pixie",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1777118954113,
+      "tag": "0021_spicy_blade",
+      "breakpoints": true
     }
   ]
 }

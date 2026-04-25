@@ -4,6 +4,7 @@ import {
   foreignKey,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
@@ -1717,6 +1718,88 @@ export const botToken = pgTable(
     unique("bot_token_token_key").on(table.token),
     index("idx_bot_token_bot_id").on(table.botId),
     sql`CONSTRAINT valid_bot_token_name CHECK (name IS NULL OR length(name) <= 100)`,
+  ],
+);
+
+export const installedApp = pgTable(
+  "installed_app",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    communityId: uuid("community_id").notNull(),
+    profileId: uuid("profile_id").notNull(),
+    builtinId: text("builtin_id").notNull(),
+    version: text().notNull(),
+    config: jsonb().notNull().default(sql`'{}'::jsonb`),
+    installedById: uuid("installed_by_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.communityId],
+      foreignColumns: [community.id],
+      name: "installed_app_community_id_fkey",
+    }),
+    foreignKey({
+      columns: [table.profileId],
+      foreignColumns: [profile.id],
+      name: "installed_app_profile_id_fkey",
+    }),
+    foreignKey({
+      columns: [table.installedById],
+      foreignColumns: [user.id],
+      name: "installed_app_installed_by_id_fkey",
+    }),
+    uniqueIndex("unique_installed_app_per_community")
+      .on(table.communityId, table.builtinId)
+      .where(sql`${table.deletedAt} IS NULL`),
+    index("idx_installed_app_community_id").on(table.communityId),
+    sql`CONSTRAINT valid_installed_app_builtin_id CHECK (builtin_id ~ '^[a-z][a-z0-9_.-]*$')`,
+    sql`CONSTRAINT valid_installed_app_version CHECK (length(version) > 0 AND length(version) <= 50)`,
+  ],
+);
+
+export const botCommand = pgTable(
+  "bot_command",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    communityId: uuid("community_id").notNull(),
+    installedAppId: uuid("installed_app_id").notNull(),
+    name: text().notNull(),
+    description: text(),
+    handlerBuiltinId: text("handler_builtin_id").notNull(),
+    enabled: boolean().notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.communityId],
+      foreignColumns: [community.id],
+      name: "bot_command_community_id_fkey",
+    }),
+    foreignKey({
+      columns: [table.installedAppId],
+      foreignColumns: [installedApp.id],
+      name: "bot_command_installed_app_id_fkey",
+    }),
+    uniqueIndex("unique_bot_command_name_per_community")
+      .on(table.communityId, sql`LOWER(${table.name})`)
+      .where(sql`${table.deletedAt} IS NULL`),
+    index("idx_bot_command_installed_app_id").on(table.installedAppId),
+    sql`CONSTRAINT valid_bot_command_name CHECK (name ~ '^[a-z][a-z0-9_-]{0,30}$')`,
+    sql`CONSTRAINT valid_bot_command_description CHECK (description IS NULL OR length(description) <= 1000)`,
+    sql`CONSTRAINT valid_bot_command_handler_builtin_id CHECK (handler_builtin_id ~ '^[a-z][a-z0-9_.-]*$')`,
   ],
 );
 
