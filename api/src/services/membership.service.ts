@@ -1662,14 +1662,58 @@ export async function getUserLatestApplication(
 export async function getCommunityMembers(
   communityId: string,
   currentUserId: string,
-  pagination: { limit: number; offset: number },
+  pagination: {
+    limit: number;
+    offset: number;
+    q?: string;
+    role?: "owner" | "moderator" | "member";
+  },
 ) {
+  const conditions = [
+    eq(membershipTable.communityId, communityId),
+    isNotNull(membershipTable.activatedAt),
+  ];
+
+  if (pagination.role) {
+    conditions.push(eq(membershipTable.role, pagination.role));
+  }
+
+  if (pagination.q && pagination.q.trim().length > 0) {
+    const q = pagination.q.trim().toLowerCase();
+    const pattern = `%${q}%`;
+    const matchingUserRows = await db
+      .selectDistinct({ userId: profileOwnershipTable.userId })
+      .from(profileOwnershipTable)
+      .innerJoin(
+        profileTable,
+        eq(profileOwnershipTable.profileId, profileTable.id),
+      )
+      .where(
+        and(
+          eq(profileTable.communityId, communityId),
+          isNotNull(profileTable.activatedAt),
+          isNull(profileTable.deletedAt),
+          or(
+            sql`LOWER(${profileTable.name}) LIKE ${pattern}`,
+            sql`LOWER(${profileTable.username}) LIKE ${pattern}`,
+          ),
+        ),
+      );
+
+    if (matchingUserRows.length === 0) {
+      return [];
+    }
+    conditions.push(
+      inArray(
+        membershipTable.userId,
+        matchingUserRows.map((r) => r.userId),
+      ),
+    );
+  }
+
   // Get community members
   const members = await db.query.membership.findMany({
-    where: and(
-      eq(membershipTable.communityId, communityId),
-      isNotNull(membershipTable.activatedAt),
-    ),
+    where: and(...conditions),
     with: {
       user: true,
     },

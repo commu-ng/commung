@@ -49,14 +49,22 @@ export function CommunityMemberManagement({
   currentUserRole,
   currentUserId,
 }: CommunityMemberManagementProps) {
-  const [filteredMembers, setFilteredMembers] = useState<CommunityMember[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<
     "all" | "owner" | "moderator" | "member"
   >("all");
   const MEMBERS_PER_PAGE = 50;
 
-  // Fetch members with infinite query
+  // Debounce search query so we don't fire a request per keystroke
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery.trim());
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [searchQuery]);
+
+  // Fetch members with infinite query (server-side filtered)
   const {
     data,
     fetchNextPage,
@@ -66,14 +74,23 @@ export function CommunityMemberManagement({
     isError,
     refetch,
   } = useInfiniteQuery({
-    queryKey: ["community-members", communityId],
+    queryKey: [
+      "community-members",
+      communityId,
+      debouncedSearchQuery,
+      roleFilter,
+    ],
     queryFn: async ({ pageParam = 0 }): Promise<CommunityMember[]> => {
+      const query: Record<string, string> = {
+        limit: MEMBERS_PER_PAGE.toString(),
+        offset: pageParam.toString(),
+      };
+      if (debouncedSearchQuery) query.q = debouncedSearchQuery;
+      if (roleFilter !== "all") query.role = roleFilter;
+
       const response = await api.console.communities[":id"].members.$get({
         param: { id: communityId },
-        query: {
-          limit: MEMBERS_PER_PAGE.toString(),
-          offset: pageParam.toString(),
-        },
+        query,
       });
 
       if (!response.ok) {
@@ -94,6 +111,7 @@ export function CommunityMemberManagement({
   });
 
   const members = useMemo(() => data?.pages.flat() ?? [], [data?.pages]);
+  const filteredMembers = members;
 
   // Infinite scroll trigger
   const loadMore = useCallback(() => {
@@ -121,38 +139,6 @@ export function CommunityMemberManagement({
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, [loadMore]);
-
-  useEffect(() => {
-    let filtered = members;
-
-    // Apply role filter
-    if (roleFilter !== "all") {
-      filtered = filtered.filter((member) => member.role === roleFilter);
-    }
-
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((member) => {
-        // Search in profile names and usernames
-        const profileMatch = member.profiles.some(
-          (profile) =>
-            profile.name.toLowerCase().includes(query) ||
-            profile.username.toLowerCase().includes(query),
-        );
-
-        // Search in application details if no profiles
-        const applicationMatch =
-          member.application &&
-          (member.application.profile_name.toLowerCase().includes(query) ||
-            member.application.profile_username.toLowerCase().includes(query));
-
-        return profileMatch || applicationMatch;
-      });
-    }
-
-    setFilteredMembers(filtered);
-  }, [members, searchQuery, roleFilter]);
 
   const getRoleStats = () => {
     const stats = {

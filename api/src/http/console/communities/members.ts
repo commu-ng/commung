@@ -6,8 +6,8 @@ import * as membershipService from "../../../services/membership.service";
 import {
   communityIdParamSchema,
   communityMemberParamSchema,
+  memberListQuerySchema,
   memberRoleUpdateSchema,
-  paginationQuerySchema,
 } from "./schemas";
 
 export const membersRouter = new Hono()
@@ -47,14 +47,12 @@ export const membersRouter = new Hono()
     "/:id/members",
     authMiddleware,
     zValidator("param", communityIdParamSchema),
-    zValidator("query", paginationQuerySchema),
+    zValidator("query", memberListQuerySchema),
     async (c) => {
       const { id: slug } = c.req.valid("param");
       const user = c.get("user");
-      const { limit = 50, offset = 0 } = c.req.valid("query");
+      const { limit = 50, offset = 0, q, role } = c.req.valid("query");
 
-      // Check if user has permission (must be owner only)
-      // Validate community exists and get its ID
       const community =
         await communityService.validateCommunityExistsBySlug(slug);
 
@@ -62,11 +60,10 @@ export const membersRouter = new Hono()
         "owner",
       ]);
 
-      // Get community members with profiles
       const result = await membershipService.getCommunityMembers(
         community.id,
         user.id,
-        { limit, offset },
+        { limit, offset, q, role },
       );
 
       return c.json({ data: result });

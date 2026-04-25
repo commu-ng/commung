@@ -16,6 +16,13 @@ export const paginationQuerySchema = z.object({
   offset: z.string().regex(/^\d+$/).transform(Number).optional(),
 });
 
+export const memberListQuerySchema = z.object({
+  limit: z.string().regex(/^\d+$/).transform(Number).optional(),
+  offset: z.string().regex(/^\d+$/).transform(Number).optional(),
+  q: z.string().max(100).optional(),
+  role: z.enum(["owner", "moderator", "member"]).optional(),
+});
+
 export const memberRoleUpdateSchema = z.object({
   membership_id: z.uuid(),
   role: z.enum(["owner", "moderator", "member"]),
