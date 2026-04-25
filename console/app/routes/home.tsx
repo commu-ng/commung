@@ -186,6 +186,13 @@ function WelcomeHero({
             </Link>
           )}
         </div>
+        <Link
+          to="/faq"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mt-4"
+        >
+          자주 묻는 질문
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
       </div>
     </section>
   );
@@ -673,6 +680,13 @@ function GuestHero() {
             <Link to="/login">로그인</Link>
           </Button>
         </div>
+        <Link
+          to="/faq"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mt-4"
+        >
+          자주 묻는 질문
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
       </div>
     </section>
   );
