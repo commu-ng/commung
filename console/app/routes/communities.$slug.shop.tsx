@@ -67,6 +67,8 @@ interface Item {
 interface Transaction {
   id: string;
   profileId: string;
+  profileName: string | null;
+  profileUsername: string | null;
   kind: string;
   source: string;
   currencyId: string | null;
@@ -98,7 +100,7 @@ async function fetchTransactions(slug: string): Promise<Transaction[]> {
     query: {},
   });
   if (!r.ok) throw new Error("거래 내역을 가져오지 못했습니다");
-  return (await r.json()).data as Transaction[];
+  return (await r.json()).data as unknown as Transaction[];
 }
 
 function CurrencyDialog({
@@ -816,8 +818,17 @@ function TransactionRow({ txn }: { txn: Transaction }) {
             {txn.source}
           </Badge>
         </div>
-        <div className="text-xs text-muted-foreground font-mono truncate">
-          profile {txn.profileId.slice(0, 8)}…
+        <div className="text-xs text-muted-foreground truncate">
+          {txn.profileName ? (
+            <>
+              <span className="font-medium">{txn.profileName}</span>{" "}
+              <span className="font-mono">@{txn.profileUsername}</span>
+            </>
+          ) : (
+            <span className="font-mono">
+              profile {txn.profileId.slice(0, 8)}…
+            </span>
+          )}
           {txn.currencyDelta !== null && ` · ${txn.currencyDelta}`}
           {txn.itemQtyDelta !== null && ` · ${txn.itemQtyDelta}개`}
         </div>

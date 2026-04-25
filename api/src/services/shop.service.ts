@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, isNull, lt, ne, sql } from "drizzle-orm";
 import { db } from "../db";
 import {
+  profile,
   shopBalance,
   shopCurrency,
   shopInventory,
