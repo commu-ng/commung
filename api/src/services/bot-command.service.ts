@@ -22,6 +22,27 @@ export async function listForInstall(installId: string, communityId: string) {
     .orderBy(botCommand.createdAt);
 }
 
+export async function listEnabledForCommunity(communityId: string) {
+  return db
+    .select({
+      id: botCommand.id,
+      name: botCommand.name,
+      description: botCommand.description,
+      handlerBuiltinId: botCommand.handlerBuiltinId,
+    })
+    .from(botCommand)
+    .innerJoin(installedApp, eq(botCommand.installedAppId, installedApp.id))
+    .where(
+      and(
+        eq(botCommand.communityId, communityId),
+        eq(botCommand.enabled, true),
+        isNull(botCommand.deletedAt),
+        isNull(installedApp.deletedAt),
+      ),
+    )
+    .orderBy(botCommand.name);
+}
+
 export async function findByNameInCommunity(communityId: string, name: string) {
   const [row] = await db
     .select({
