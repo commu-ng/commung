@@ -118,6 +118,7 @@ export async function publishScheduledPosts(): Promise<number> {
         content: postTable.content,
         communityId: postTable.communityId,
         authorId: postTable.authorId,
+        createdByUserId: postTable.createdByUserId,
         rootPostId: postTable.rootPostId,
       });
 
@@ -137,6 +138,7 @@ export async function publishScheduledPosts(): Promise<number> {
             content: due.content,
             communityId: due.communityId,
             authorProfileId: due.authorId,
+            actorUserId: due.createdByUserId,
             rootPostId: due.rootPostId,
           },
           {

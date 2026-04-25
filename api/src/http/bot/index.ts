@@ -776,6 +776,7 @@ botApiRouter
           content,
           communityId,
           authorProfileId: botResult.profileId,
+          actorUserId: botResult.createdByUserId,
           rootPostId: result.root_post_id ?? null,
         },
         { startsAt: community.startsAt, endsAt: community.endsAt },

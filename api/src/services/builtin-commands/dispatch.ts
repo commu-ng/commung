@@ -18,6 +18,7 @@ type TriggerPost = {
   content: string;
   communityId: string;
   authorProfileId: string;
+  actorUserId: string | null;
   rootPostId: string | null;
 };
 
@@ -37,7 +38,10 @@ function parseSlashCommand(
   return { name: rawName.toLowerCase(), args: rawArgs ?? "" };
 }
 
-function makeShopContext(communityId: string): ShopContext {
+function makeShopContext(
+  communityId: string,
+  actorUserId: string | null,
+): ShopContext {
   return {
     listBalances: (profileId) =>
       shopService.listBalancesForProfile(communityId, profileId),
@@ -74,14 +78,18 @@ function makeShopContext(communityId: string): ShopContext {
         communityId,
         profileId,
         itemId: item.id,
+        actorUserId,
       });
       return { name: item.name };
     },
   };
 }
 
-function makeCommandContext(communityId: string): CommandContext {
-  return { shop: makeShopContext(communityId) };
+function makeCommandContext(
+  communityId: string,
+  actorUserId: string | null,
+): CommandContext {
+  return { shop: makeShopContext(communityId, actorUserId) };
 }
 
 async function callHandlerWithTimeout(
@@ -102,7 +110,7 @@ async function callHandlerWithTimeout(
             communityId: trigger.communityId,
           },
         },
-        makeCommandContext(trigger.communityId),
+        makeCommandContext(trigger.communityId, trigger.actorUserId),
       ),
       new Promise<never>((_, reject) => {
         timer = setTimeout(
@@ -175,6 +183,7 @@ export async function maybeDispatchCommand(
         content: output.content,
         communityId: trigger.communityId,
         authorProfileId: cmd.profileId,
+        actorUserId: null,
         rootPostId: replyPost.root_post_id ?? null,
       },
       community,

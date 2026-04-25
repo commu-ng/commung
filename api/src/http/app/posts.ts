@@ -291,6 +291,7 @@ export const postsRouter = new Hono<{ Variables: AuthVariables }>()
             content,
             communityId: community.id,
             authorProfileId: profile.id,
+            actorUserId: user.id,
             rootPostId: result.root_post_id ?? null,
           },
           { startsAt: community.startsAt, endsAt: community.endsAt },
