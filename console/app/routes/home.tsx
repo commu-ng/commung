@@ -6,6 +6,7 @@ import {
   Bot,
   ExternalLink,
   ImageIcon,
+  LayoutGrid,
   MessageSquare,
   Plus,
   Search,
@@ -95,6 +96,21 @@ async function fetchBoards(): Promise<Board[]> {
   }
   const json = await res.json();
   return json.data;
+}
+
+interface CatalogShowcaseEntry {
+  builtin_id: string;
+  version: string;
+  profile: { name: string; username: string };
+  description: string;
+  commands: Array<{ name: string }>;
+}
+
+async function fetchCatalogShowcase(): Promise<CatalogShowcaseEntry[]> {
+  const res = await api.catalog.apps.$get();
+  if (!res.ok) return [];
+  const json = await res.json();
+  return json.data as unknown as CatalogShowcaseEntry[];
 }
 
 async function fetchBoardPosts(boardSlug: string): Promise<BoardPost[]> {
@@ -416,6 +432,89 @@ function LatestBoardPosts() {
   );
 }
 
+function AppsShowcase() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["catalog-apps-showcase"],
+    queryFn: fetchCatalogShowcase,
+  });
+
+  if (isLoading) {
+    return <Skeleton className="h-64 rounded-3xl" />;
+  }
+  if (!data || data.length === 0) {
+    return null;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-butter/40 text-butter-ink shadow-marsh">
+                <LayoutGrid className="h-4 w-4" />
+              </span>
+              앱 카탈로그
+            </CardTitle>
+            <CardDescription className="ml-10">
+              슬래시 명령으로 커뮤를 더 재미있게 만들어보세요
+            </CardDescription>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="rounded-full text-muted-foreground"
+          >
+            <Link to="/apps">
+              전체 보기
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {data.map((app) => (
+            <Link
+              key={app.builtin_id}
+              to={`/apps/${app.builtin_id}`}
+              className="group flex flex-col gap-2 p-4 rounded-2xl border border-border/70 bg-card/60 hover:border-primary/30 hover:bg-accent/40 transition-all hover:-translate-y-0.5 hover:shadow-marsh"
+            >
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-semibold text-sm">{app.profile.name}</p>
+                <Badge variant="secondary" className="text-xs">
+                  v{app.version}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground line-clamp-2">
+                {app.description}
+              </p>
+              {app.commands.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {app.commands.slice(0, 4).map((cmd) => (
+                    <code
+                      key={cmd.name}
+                      className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-foreground/80 font-mono"
+                    >
+                      /{cmd.name}
+                    </code>
+                  ))}
+                  {app.commands.length > 4 && (
+                    <span className="text-[10px] text-muted-foreground self-center">
+                      +{app.commands.length - 4}
+                    </span>
+                  )}
+                </div>
+              )}
+            </Link>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function ResourcesAndNews() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -535,6 +634,7 @@ function AuthenticatedHome() {
         pendingCount={totalPending}
       />
       <MyCommunitiesGrid communities={communityList} />
+      <AppsShowcase />
       <LatestBoardPosts />
       <ResourcesAndNews />
     </div>
@@ -640,6 +740,7 @@ function UnauthenticatedHome() {
     <div className="space-y-8">
       <GuestHero />
       <FeatureGrid />
+      <AppsShowcase />
       <LatestBoardPosts />
       <ResourcesAndNews />
     </div>
