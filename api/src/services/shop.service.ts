@@ -57,6 +57,20 @@ export async function getCurrency(communityId: string, currencyId: string) {
   return row;
 }
 
+export async function getCurrencyByName(communityId: string, name: string) {
+  const [row] = await db
+    .select()
+    .from(shopCurrency)
+    .where(
+      and(
+        eq(shopCurrency.communityId, communityId),
+        sql`LOWER(${shopCurrency.name}) = ${name.toLowerCase()}`,
+        isNull(shopCurrency.deletedAt),
+      ),
+    );
+  return row;
+}
+
 export async function getDefaultCurrency(communityId: string) {
   const [row] = await db
     .select()

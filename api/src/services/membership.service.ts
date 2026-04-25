@@ -168,6 +168,24 @@ export async function validateMembershipAndProfile(
 }
 
 /**
+ * Get the membership role for a user in a community, or null if not a member
+ */
+export async function getMembershipRole(
+  userId: string,
+  communityId: string,
+): Promise<string | null> {
+  const membership = await db.query.membership.findFirst({
+    where: and(
+      eq(membershipTable.userId, userId),
+      eq(membershipTable.communityId, communityId),
+      isNotNull(membershipTable.activatedAt),
+    ),
+    columns: { role: true },
+  });
+  return membership?.role ?? null;
+}
+
+/**
  * Check if user has a specific role in community
  */
 export async function validateMembershipRole(

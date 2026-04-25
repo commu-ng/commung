@@ -1,11 +1,17 @@
+import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { db } from "../../db";
+import { profile as profileTable } from "../../drizzle/schema";
 import { AppException } from "../../exception";
 import { GeneralErrorCode } from "../../types/api-responses";
 import * as botCommandService from "../bot-command.service";
+import * as membershipService from "../membership.service";
 import * as postService from "../post.service";
 import * as shopService from "../shop.service";
 import {
   type CommandContext,
+  type CommandRole,
   getBuiltinHandler,
+  getRequiredRoleForHandler,
   type ShopContext,
 } from "./index";
 
@@ -82,7 +88,46 @@ function makeShopContext(
       });
       return { name: item.name };
     },
+    findProfileByUsername: async (username) => {
+      const [row] = await db
+        .select({
+          id: profileTable.id,
+          username: profileTable.username,
+          name: profileTable.name,
+        })
+        .from(profileTable)
+        .where(
+          and(
+            eq(profileTable.communityId, communityId),
+            sql`LOWER(${profileTable.username}) = ${username.toLowerCase()}`,
+            isNotNull(profileTable.activatedAt),
+            isNull(profileTable.deletedAt),
+          ),
+        );
+      return row ?? null;
+    },
+    findCurrencyByName: async (name) => {
+      const row = await shopService.getCurrencyByName(communityId, name);
+      return row ? { id: row.id, name: row.name } : null;
+    },
+    grantCurrency: async (profileId, currencyId, amount, reason) => {
+      await shopService.grantCurrency({
+        communityId,
+        profileId,
+        currencyId,
+        amount,
+        source: "owner_grant",
+        actorUserId,
+        reason,
+      });
+    },
   };
+}
+
+function roleSatisfies(actor: string | null, required: CommandRole): boolean {
+  if (actor === "owner") return true;
+  if (actor === "moderator" && required === "moderator") return true;
+  return false;
 }
 
 function makeCommandContext(
@@ -151,6 +196,40 @@ export async function maybeDispatchCommand(
 
   const handler = getBuiltinHandler(cmd.handlerBuiltinId);
   if (!handler) return;
+
+  const requiredRole = getRequiredRoleForHandler(cmd.handlerBuiltinId);
+  if (requiredRole) {
+    const actorRole = trigger.actorUserId
+      ? await membershipService.getMembershipRole(
+          trigger.actorUserId,
+          trigger.communityId,
+        )
+      : null;
+    if (!roleSatisfies(actorRole, requiredRole)) {
+      try {
+        await postService.createPost(
+          cmd.installedById,
+          cmd.profileId,
+          trigger.communityId,
+          "이 명령어를 사용할 권한이 없습니다.",
+          trigger.id,
+          [],
+          false,
+          null,
+          null,
+          community.startsAt,
+          community.endsAt,
+        );
+      } catch (err) {
+        console.error(
+          "[bot-command] permission denial reply failed",
+          handler.id,
+          err,
+        );
+      }
+      return;
+    }
+  }
 
   const output = await callHandlerWithTimeout(handler, parsed.args, trigger);
   if (!output) return;

@@ -4,6 +4,7 @@ import { coinFlip } from "./coin";
 import { diceRoll } from "./dice-roll";
 import { helpList } from "./help";
 import { shopBalance, shopBuy, shopInventory, shopItems } from "./shop";
+import { shopAdminGrant } from "./shop-admin";
 
 export type CommandInput = {
   args: string;
@@ -48,6 +49,18 @@ export type ShopContext = {
     profileId: string,
     name: string,
   ): Promise<{ name: string }>;
+  findProfileByUsername(
+    username: string,
+  ): Promise<{ id: string; username: string; name: string } | null>;
+  findCurrencyByName(
+    name: string,
+  ): Promise<{ id: string; name: string } | null>;
+  grantCurrency(
+    profileId: string,
+    currencyId: string,
+    amount: number,
+    reason: string | null,
+  ): Promise<void>;
 };
 
 export type CommandContext = {
@@ -65,10 +78,13 @@ export type BuiltinCommandHandler = {
   handle: (input: CommandInput, ctx: CommandContext) => Promise<CommandOutput>;
 };
 
+export type CommandRole = "owner" | "moderator";
+
 export type BuiltinAppCommand = {
   defaultName: string;
   description: string;
   handlerBuiltinId: string;
+  requiredRole?: CommandRole;
 };
 
 export type BuiltinApp = {
@@ -89,6 +105,7 @@ export const BUILTIN_HANDLERS: Record<string, BuiltinCommandHandler> = {
   [shopItems.id]: shopItems,
   [shopBuy.id]: shopBuy,
   [shopInventory.id]: shopInventory,
+  [shopAdminGrant.id]: shopAdminGrant,
 };
 
 export const BUILTIN_APPS: Record<string, BuiltinApp> = {
@@ -182,7 +199,37 @@ export const BUILTIN_APPS: Record<string, BuiltinApp> = {
     ],
     configSchema: z.object({}).strict(),
   },
+  shop_admin: {
+    id: "shop_admin",
+    version: "1.0.0",
+    description:
+      "상점 관리 명령어. 소유자가 슬래시 명령으로 통화를 지급할 수 있습니다.",
+    defaultProfile: { name: "ShopAdmin", username: "shopadmin" },
+    commands: [
+      {
+        defaultName: "grant",
+        description:
+          "소유자 전용. 사용법: /grant <사용자명> <금액> <통화> [사유]",
+        handlerBuiltinId: shopAdminGrant.id,
+        requiredRole: "owner",
+      },
+    ],
+    configSchema: z.object({}).strict(),
+  },
 };
+
+export function getRequiredRoleForHandler(
+  handlerBuiltinId: string,
+): CommandRole | undefined {
+  for (const app of Object.values(BUILTIN_APPS)) {
+    for (const cmd of app.commands) {
+      if (cmd.handlerBuiltinId === handlerBuiltinId) {
+        return cmd.requiredRole;
+      }
+    }
+  }
+  return undefined;
+}
 
 export function getBuiltinApp(builtinId: string): BuiltinApp | undefined {
   return BUILTIN_APPS[builtinId];
