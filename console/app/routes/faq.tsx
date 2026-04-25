@@ -23,20 +23,6 @@ export default function FAQPage() {
         <h2>커뮹은 무엇인가요?</h2>
         <p>타임라인 기반의 커뮤 플랫폼입니다.</p>
 
-        <h2>커뮹은 누가 만드나요?</h2>
-        <p>
-          '팀 양나루'에서 만드는 프로젝트입니다. 같은 팀이 만든 다른 프로젝트는
-          '
-          <a
-            href="https://yang.naru.pub"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            여기
-          </a>
-          '서 볼 수 있습니다.
-        </p>
-
         <h2>한 계정으로 여러 커뮤에 가입할 수 있나요?</h2>
         <p>
           네. 가입은 한 번만 하고, 그 계정으로 여러 커뮤에 들어갈 수 있습니다.
@@ -82,6 +68,19 @@ export default function FAQPage() {
 
         <h2>계정을 삭제할 수 있나요?</h2>
         <p>네. 계정 설정에서 계정 삭제를 진행할 수 있습니다.</p>
+
+        <h2>커뮹은 누가 만드나요?</h2>
+        <p>
+          팀 양나루에서 만드는 프로젝트입니다. 같은 팀이 만든 다른 프로젝트는{" "}
+          <a
+            href="https://yang.naru.pub"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            여기
+          </a>
+          서 볼 수 있습니다.
+        </p>
       </div>
     </article>
   );
