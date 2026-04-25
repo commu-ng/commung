@@ -98,27 +98,38 @@ export async function updateBot(
 }
 
 export async function deleteBot(botId: string, communityId: string) {
-  // Soft delete the bot
-  await db
-    .update(bot)
-    .set({
-      deletedAt: sql`now()`,
-    })
-    .where(
-      and(
-        eq(bot.id, botId),
-        eq(bot.communityId, communityId),
-        isNull(bot.deletedAt),
-      ),
-    );
+  const target = await db.query.bot.findFirst({
+    where: and(
+      eq(bot.id, botId),
+      eq(bot.communityId, communityId),
+      isNull(bot.deletedAt),
+    ),
+    columns: { id: true, profileId: true },
+  });
+  if (!target) return;
 
-  // Revoke all tokens for this bot
-  await db
-    .update(botToken)
-    .set({
-      revokedAt: sql`now()`,
-    })
-    .where(and(eq(botToken.botId, botId), isNull(botToken.revokedAt)));
+  await db.transaction(async (tx) => {
+    await tx
+      .update(bot)
+      .set({ deletedAt: sql`now()` })
+      .where(
+        and(
+          eq(bot.id, botId),
+          eq(bot.communityId, communityId),
+          isNull(bot.deletedAt),
+        ),
+      );
+
+    await tx
+      .update(botToken)
+      .set({ revokedAt: sql`now()` })
+      .where(and(eq(botToken.botId, botId), isNull(botToken.revokedAt)));
+
+    await tx
+      .update(profile)
+      .set({ deletedAt: sql`now()` })
+      .where(and(eq(profile.id, target.profileId), isNull(profile.deletedAt)));
+  });
 }
 
 export async function createBotToken(

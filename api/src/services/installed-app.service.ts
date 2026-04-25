@@ -248,7 +248,7 @@ export async function installApp(
 }
 
 export async function uninstallApp(communityId: string, installId: string) {
-  await validateInstalledExists(communityId, installId);
+  const install = await validateInstalledExists(communityId, installId);
   await db.transaction(async (tx) => {
     await tx
       .update(installedApp)
@@ -269,6 +269,10 @@ export async function uninstallApp(communityId: string, installId: string) {
           isNull(botCommand.deletedAt),
         ),
       );
+    await tx
+      .update(profile)
+      .set({ deletedAt: sql`now()` })
+      .where(and(eq(profile.id, install.profileId), isNull(profile.deletedAt)));
   });
 }
 
