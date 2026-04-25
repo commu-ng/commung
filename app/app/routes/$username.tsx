@@ -317,15 +317,7 @@ export default function ProfileProfile() {
                   {posts.map((post) => (
                     <PostCard
                       key={post.id}
-                      post={{
-                        ...post,
-                        replies: [],
-                        in_reply_to_id: null,
-                        depth: 0,
-                        root_post_id: null,
-                        content_warning: null,
-                        is_bookmarked: false,
-                      }}
+                      post={post as unknown as Post}
                       currentProfileId={currentProfile?.id}
                       isCommunityOwner={isCommunityOwner}
                       isProfileView={true}

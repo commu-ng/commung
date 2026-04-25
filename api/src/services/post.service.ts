@@ -1498,7 +1498,7 @@ type ReplyData = {
 /**
  * Batch version: Build threaded replies for multiple root posts in a single query
  */
-async function buildThreadedRepliesForMultiplePosts(
+export async function buildThreadedRepliesForMultiplePosts(
   rootPostIds: string[],
   communityId: string,
   depthLimit: number = 10,

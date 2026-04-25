@@ -34,6 +34,10 @@ import {
   getProfilePictureUrlById,
 } from "../utils/profile-picture-helper";
 import { addImageUrl, uploadFileDirect, validateImageFile } from "../utils/r2";
+import {
+  buildThreadedRepliesForMultiplePosts,
+  TIMELINE_REPLY_LIMIT,
+} from "./post.service";
 
 /**
  * Upload and set profile picture for an profile
@@ -816,6 +820,16 @@ export async function getProfilePosts(
     ? addImageUrl(profileProfilePicture.image).url
     : null;
 
+  // Load threaded replies for the visible posts
+  const visiblePostIds = postsToReturn.map((p) => p.id);
+  const repliesMap = await buildThreadedRepliesForMultiplePosts(
+    visiblePostIds,
+    communityId,
+    10,
+    undefined,
+    TIMELINE_REPLY_LIMIT,
+  );
+
   const result = postsToReturn.map((post) => {
     const postImageTableData = post.postImages.map((pi) => ({
       id: pi.image.id,
@@ -844,9 +858,11 @@ export async function getProfilePosts(
       depth: post.depth,
       root_post_id: post.rootPostId,
       is_bookmarked: false,
-      replies: [],
-      reply_count: 0,
-      has_more_replies: false,
+      replies: repliesMap.get(post.id)?.replies ?? [],
+      reply_count: repliesMap.get(post.id)?.totalCount ?? 0,
+      has_more_replies:
+        (repliesMap.get(post.id)?.totalCount ?? 0) >
+        (repliesMap.get(post.id)?.loadedCount ?? 0),
       reactions:
         post.postReactions?.map((reaction) => ({
           emoji: reaction.emoji,
