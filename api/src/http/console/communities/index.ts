@@ -7,6 +7,7 @@ import { installedAppsRouter } from "./installed-apps";
 import { linksRouter } from "./links";
 import { membersRouter } from "./members";
 import { moderationRouter } from "./moderation";
+import { shopRouter } from "./shop";
 import { statsRouter } from "./stats";
 
 export const consoleCommunitiesRouter = new Hono()
@@ -18,4 +19,5 @@ export const consoleCommunitiesRouter = new Hono()
   .route("/communities", moderationRouter)
   .route("/communities", botsRouter)
   .route("/communities", installedAppsRouter)
+  .route("/communities", shopRouter)
   .route("/communities", boardsRouter);
