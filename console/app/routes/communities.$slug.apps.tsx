@@ -246,11 +246,7 @@ function InstallForm({
   const [profileUsername, setProfileUsername] = useState(
     entry.default_profile.username,
   );
-  const [overrides, setOverrides] = useState<Record<string, string>>(() =>
-    Object.fromEntries(
-      entry.commands.map((c) => [c.default_name, c.default_name]),
-    ),
-  );
+  const [overrides, setOverrides] = useState<Record<string, string>>({});
   const profileNameId = useId();
   const profileUsernameId = useId();
 
@@ -258,6 +254,7 @@ function InstallForm({
     mutationFn: async () => {
       const command_overrides = Object.fromEntries(
         Object.entries(overrides)
+          .map(([defaultName, name]) => [defaultName, name.trim()])
           .filter(([defaultName, name]) => name && name !== defaultName)
           .map(([defaultName, name]) => [defaultName, { name }]),
       );
@@ -315,12 +312,17 @@ function InstallForm({
         </div>
         <div>
           <Label>슬래시 명령어</Label>
-          <div className="space-y-2 mt-2">
+          <p className="text-xs text-muted-foreground mt-1 mb-2">
+            기본 이름을 그대로 사용하려면 비워두세요. 다른 이름으로 바꾸려면
+            입력하세요.
+          </p>
+          <div className="space-y-2">
             {entry.commands.map((cmd) => (
               <div key={cmd.default_name} className="flex items-center gap-2">
                 <span className="text-muted-foreground">/</span>
                 <Input
-                  value={overrides[cmd.default_name] ?? cmd.default_name}
+                  value={overrides[cmd.default_name] ?? ""}
+                  placeholder={cmd.default_name}
                   onChange={(e) =>
                     setOverrides((prev) => ({
                       ...prev,
