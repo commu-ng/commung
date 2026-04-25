@@ -25,15 +25,16 @@ export default function FAQPage() {
 
         <h2>커뮹은 누가 만드나요?</h2>
         <p>
-          개인이 만드는 프로젝트입니다. 같은 사람이 만든 다른 프로젝트는{" "}
+          '팀 양나루'에서 만드는 프로젝트입니다. 같은 팀이 만든 다른 프로젝트는
+          '
           <a
             href="https://yang.naru.pub"
             target="_blank"
             rel="noopener noreferrer"
           >
-            yang.naru.pub
+            여기
           </a>
-          에서 볼 수 있습니다.
+          '서 볼 수 있습니다.
         </p>
 
         <h2>한 계정으로 여러 커뮤에 가입할 수 있나요?</h2>
