@@ -21,6 +21,7 @@ import {
   profileIdQuerySchema,
   scheduledPostsQuerySchema,
 } from "../../schemas";
+import { maybeDispatchCommand } from "../../services/builtin-commands/dispatch";
 import * as emailService from "../../services/email.service";
 import * as postService from "../../services/post.service";
 import * as profileService from "../../services/profile.service";
@@ -282,6 +283,21 @@ export const postsRouter = new Hono<{ Variables: AuthVariables }>()
         community.startsAt,
         community.endsAt,
       );
+
+      if (result?.id && !scheduled_at) {
+        maybeDispatchCommand(
+          {
+            id: result.id,
+            content,
+            communityId: community.id,
+            authorProfileId: profile.id,
+            rootPostId: result.root_post_id ?? null,
+          },
+          { startsAt: community.startsAt, endsAt: community.endsAt },
+        ).catch((err) => {
+          console.error("[bot-command] dispatch failed", err);
+        });
+      }
 
       return c.json({ data: result }, 201);
     },

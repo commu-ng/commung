@@ -32,6 +32,7 @@ export async function findByNameInCommunity(communityId: string, name: string) {
       enabled: botCommand.enabled,
       installedAppId: botCommand.installedAppId,
       profileId: installedApp.profileId,
+      installedById: installedApp.installedById,
       profileName: profile.name,
       profileUsername: profile.username,
     })
