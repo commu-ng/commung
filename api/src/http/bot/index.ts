@@ -1,6 +1,7 @@
 import { swaggerUI } from "@hono/swagger-ui";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { getCommunityById, validateBotToken } from "../../services/bot.service";
+import { maybeDispatchCommand } from "../../services/builtin-commands/dispatch";
 import * as postService from "../../services/post.service";
 
 // Schema definitions
@@ -767,6 +768,21 @@ botApiRouter
       community.startsAt,
       community.endsAt,
     );
+
+    if (result?.id) {
+      maybeDispatchCommand(
+        {
+          id: result.id,
+          content,
+          communityId,
+          authorProfileId: botResult.profileId,
+          rootPostId: result.root_post_id ?? null,
+        },
+        { startsAt: community.startsAt, endsAt: community.endsAt },
+      ).catch((err) => {
+        console.error("[bot-command] dispatch failed", err);
+      });
+    }
 
     return c.json({ data: result }, 201);
   })

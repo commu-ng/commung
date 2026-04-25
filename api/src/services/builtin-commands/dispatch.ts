@@ -4,6 +4,7 @@ import { getBuiltinHandler } from "./index";
 
 const SLASH_COMMAND_PATTERN = /^\/([a-z][a-z0-9_-]{0,30})(?:\s+([\s\S]*))?$/i;
 const HANDLER_TIMEOUT_MS = 2000;
+const MAX_DISPATCH_DEPTH = 3;
 
 type TriggerPost = {
   id: string;
@@ -67,7 +68,16 @@ async function callHandlerWithTimeout(
 export async function maybeDispatchCommand(
   trigger: TriggerPost,
   community: CommunityWindow,
+  depth = 0,
 ): Promise<void> {
+  if (depth >= MAX_DISPATCH_DEPTH) {
+    console.warn("[bot-command] dispatch depth exceeded", {
+      depth,
+      triggerId: trigger.id,
+    });
+    return;
+  }
+
   const parsed = parseSlashCommand(trigger.content);
   if (!parsed) return;
 
@@ -83,8 +93,10 @@ export async function maybeDispatchCommand(
   const output = await callHandlerWithTimeout(handler, parsed.args, trigger);
   if (!output) return;
 
+  let replyPost: Awaited<ReturnType<typeof postService.createPost>> | null =
+    null;
   try {
-    await postService.createPost(
+    replyPost = await postService.createPost(
       cmd.installedById,
       cmd.profileId,
       trigger.communityId,
@@ -99,5 +111,22 @@ export async function maybeDispatchCommand(
     );
   } catch (err) {
     console.error("[bot-command] reply post failed", handler.id, err);
+    return;
+  }
+
+  if (replyPost?.id) {
+    maybeDispatchCommand(
+      {
+        id: replyPost.id,
+        content: output.content,
+        communityId: trigger.communityId,
+        authorProfileId: cmd.profileId,
+        rootPostId: replyPost.root_post_id ?? null,
+      },
+      community,
+      depth + 1,
+    ).catch((err) => {
+      console.error("[bot-command] chain dispatch failed", err);
+    });
   }
 }
