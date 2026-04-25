@@ -168,6 +168,33 @@ export async function validateMembershipAndProfile(
 }
 
 /**
+ * Aggregate member counts grouped by role (owner/moderator/member)
+ */
+export async function getMemberRoleCounts(communityId: string) {
+  const rows = await db
+    .select({
+      role: membershipTable.role,
+      count: count(),
+    })
+    .from(membershipTable)
+    .where(
+      and(
+        eq(membershipTable.communityId, communityId),
+        isNotNull(membershipTable.activatedAt),
+      ),
+    )
+    .groupBy(membershipTable.role);
+
+  const result = { owner: 0, moderator: 0, member: 0 };
+  for (const row of rows) {
+    if (row.role === "owner") result.owner = row.count;
+    else if (row.role === "moderator") result.moderator = row.count;
+    else if (row.role === "member") result.member = row.count;
+  }
+  return result;
+}
+
+/**
  * Get the membership role for a user in a community, or null if not a member
  */
 export async function getMembershipRole(

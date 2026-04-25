@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   Crown,
@@ -140,16 +140,18 @@ export function CommunityMemberManagement({
     return () => window.removeEventListener("scroll", handleScroll);
   }, [loadMore]);
 
-  const getRoleStats = () => {
-    const stats = {
-      owner: members.filter((m) => m.role === "owner").length,
-      moderator: members.filter((m) => m.role === "moderator").length,
-      member: members.filter((m) => m.role === "member").length,
-    };
-    return stats;
-  };
-
-  const roleStats = getRoleStats();
+  const { data: roleStatsData } = useQuery({
+    queryKey: ["community-member-stats", communityId],
+    queryFn: async () => {
+      const response = await api.console.communities[":id"].members.stats.$get({
+        param: { id: communityId },
+      });
+      if (!response.ok) return { owner: 0, moderator: 0, member: 0 };
+      const result = await response.json();
+      return result.data;
+    },
+  });
+  const roleStats = roleStatsData ?? { owner: 0, moderator: 0, member: 0 };
 
   if (!["owner", "moderator"].includes(currentUserRole)) {
     return (

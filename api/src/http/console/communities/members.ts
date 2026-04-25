@@ -44,6 +44,23 @@ export const membersRouter = new Hono()
     },
   )
   .get(
+    "/:id/members/stats",
+    authMiddleware,
+    zValidator("param", communityIdParamSchema),
+    async (c) => {
+      const { id: slug } = c.req.valid("param");
+      const user = c.get("user");
+      const community =
+        await communityService.validateCommunityExistsBySlug(slug);
+      await membershipService.validateMembershipRole(user.id, community.id, [
+        "owner",
+        "moderator",
+      ]);
+      const stats = await membershipService.getMemberRoleCounts(community.id);
+      return c.json({ data: stats });
+    },
+  )
+  .get(
     "/:id/members",
     authMiddleware,
     zValidator("param", communityIdParamSchema),
