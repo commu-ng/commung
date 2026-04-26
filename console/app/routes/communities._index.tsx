@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
+  ArrowRight,
   Bookmark,
   ChevronDown,
   ChevronUp,
@@ -383,19 +384,40 @@ export default function Communities() {
               {filteredOngoing.length}개
             </span>
           </h2>
-          {visibleOngoing.length === 0
-            ? renderEmpty(
-                "진행 중인 커뮤가 없어요",
-                "지금은 진행 중인 커뮤가 없어요.",
-              )
-            : renderGrid(visibleOngoing)}
-          {hiddenOngoingCount > 0 && (
-            <div className="mt-5 flex justify-center">
-              <Button asChild variant="outline" className="rounded-full">
-                <Link to="/communities/ongoing">
-                  진행 중 커뮤 {hiddenOngoingCount}개 더 보기
+          {visibleOngoing.length === 0 && hiddenOngoingCount === 0 ? (
+            renderEmpty(
+              "진행 중인 커뮤가 없어요",
+              "지금은 진행 중인 커뮤가 없어요.",
+            )
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {visibleOngoing.map((community) => (
+                <CommunityCard key={community.id} community={community} />
+              ))}
+              {hiddenOngoingCount > 0 && (
+                <Link
+                  to="/communities/ongoing"
+                  className="group relative flex flex-col overflow-hidden rounded-3xl border border-dashed border-border bg-card/40 shadow-marsh transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:bg-card hover:shadow-marsh-lg"
+                >
+                  <div className="relative aspect-[16/9] bg-gradient-to-br from-blossom/30 via-lilac/20 to-mint/20 overflow-hidden flex items-center justify-center">
+                    <span className="font-display text-4xl font-bold text-foreground/30 group-hover:text-primary transition-colors">
+                      +{hiddenOngoingCount}
+                    </span>
+                  </div>
+                  <div className="p-5 flex-1 flex flex-col justify-center">
+                    <h3 className="font-display text-xl font-bold text-foreground">
+                      더 많은 진행 중 커뮤
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1.5">
+                      {hiddenOngoingCount}개의 커뮤가 더 있어요
+                    </p>
+                    <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary">
+                      전체 보기
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                  </div>
                 </Link>
-              </Button>
+              )}
             </div>
           )}
         </section>
