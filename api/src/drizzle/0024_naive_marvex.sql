@@ -1,0 +1,1 @@
+ALTER TABLE "community" ADD COLUMN "auto_approve" boolean DEFAULT false NOT NULL;

@@ -169,6 +169,13 @@
       "when": 1777162071746,
       "tag": "0023_perfect_oracle",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1777170952608,
+      "tag": "0024_naive_marvex",
+      "breakpoints": true
     }
   ]
 }

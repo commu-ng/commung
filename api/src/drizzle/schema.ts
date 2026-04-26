@@ -247,6 +247,7 @@ export const community = pgTable(
     muteNewMembers: boolean("mute_new_members").notNull().default(false),
     showAllReplies: boolean("show_all_replies").notNull().default(false),
     bumpOnReply: boolean("bump_on_reply").notNull().default(false),
+    autoApprove: boolean("auto_approve").notNull().default(false),
     themeKeyColor: text("theme_key_color"),
   },
   (table) => [

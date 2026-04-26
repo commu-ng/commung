@@ -1253,68 +1253,77 @@ export async function createApplication(
       return application;
     });
 
-    // Send email notification to community owner
-    // This is done after the transaction to avoid blocking application creation
-    // Errors in email sending are logged but do not prevent application creation
-    try {
-      // Get community information
-      const community = await db.query.community.findFirst({
-        where: and(
-          eq(communityTable.id, communityId),
-          isNull(communityTable.deletedAt),
-        ),
-      });
+    // Get community information for downstream auto-approve / notifications
+    const community = await db.query.community.findFirst({
+      where: and(
+        eq(communityTable.id, communityId),
+        isNull(communityTable.deletedAt),
+      ),
+    });
 
-      if (community) {
-        // Get community owner's membership
-        const ownerMembership = await db.query.membership.findFirst({
+    // Get community owner's membership (used for both auto-approve reviewer and notifications)
+    const ownerMembership = community
+      ? await db.query.membership.findFirst({
           where: and(
             eq(membershipTable.communityId, communityId),
             eq(membershipTable.role, "owner"),
             isNotNull(membershipTable.activatedAt),
           ),
+        })
+      : null;
+
+    if (community?.autoApprove) {
+      // Auto-approve: skip owner notification, immediately approve the application.
+      // The community owner is recorded as the reviewer; if no owner exists, fall
+      // back to the applicant so the non-null reviewer constraint is satisfied.
+      try {
+        const reviewerId = ownerMembership?.userId ?? userId;
+        await approveMembershipApplication(newApplication.id, reviewerId);
+      } catch (approveError: unknown) {
+        logger.service.error("Failed to auto-approve application", {
+          error: approveError,
+          applicationId: newApplication.id,
+          communityId,
+        });
+      }
+    } else if (community && ownerMembership) {
+      // Send email/push notification to community owner.
+      // Errors are logged but do not prevent application creation.
+      try {
+        const ownerUser = await db.query.user.findFirst({
+          where: and(
+            eq(userTable.id, ownerMembership.userId),
+            isNull(userTable.deletedAt),
+          ),
         });
 
-        if (ownerMembership) {
-          // Get owner's user information with email
-          const ownerUser = await db.query.user.findFirst({
-            where: and(
-              eq(userTable.id, ownerMembership.userId),
-              isNull(userTable.deletedAt),
-            ),
-          });
-
-          // Send email only if owner has a verified email
-          if (ownerUser?.email && ownerUser.emailVerifiedAt) {
-            await emailService.sendApplicationNotificationEmail(
-              ownerUser.email,
-              community.name,
-              community.slug,
-              data.profileUsername,
-            );
-          }
-
-          // Send push notification to community owner
-          if (ownerUser) {
-            await pushNotificationService.sendPushNotification(ownerUser.id, {
-              title: "새로운 가입 신청",
-              body: `${data.profileName}님이 ${community.name}에 가입 신청했습니다`,
-              data: {
-                type: "application",
-                community_slug: community.slug,
-                url: `https://${process.env.BASE_DOMAIN || "commu.ng"}/communities/${community.slug}/applications`,
-              },
-            });
-          }
+        if (ownerUser?.email && ownerUser.emailVerifiedAt) {
+          await emailService.sendApplicationNotificationEmail(
+            ownerUser.email,
+            community.name,
+            community.slug,
+            data.profileUsername,
+          );
         }
+
+        if (ownerUser) {
+          await pushNotificationService.sendPushNotification(ownerUser.id, {
+            title: "새로운 가입 신청",
+            body: `${data.profileName}님이 ${community.name}에 가입 신청했습니다`,
+            data: {
+              type: "application",
+              community_slug: community.slug,
+              url: `https://${process.env.BASE_DOMAIN || "commu.ng"}/communities/${community.slug}/applications`,
+            },
+          });
+        }
+      } catch (emailError: unknown) {
+        logger.service.error("Failed to send application notification email", {
+          error: emailError,
+          applicationId: newApplication.id,
+          communityId,
+        });
       }
-    } catch (emailError: unknown) {
-      // Log email error but don't fail the application creation
-      logger.service.error("Failed to send application notification email", {
-        error: emailError,
-        applicationId: newApplication.id,
-        communityId,
-      });
     }
 
     return newApplication;
