@@ -1,10 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
   Bell,
   BookOpen,
   Bookmark,
   Bot,
+  Check,
   Clock,
   CircleHelp,
   ExternalLink,
@@ -122,6 +123,7 @@ async function fetchCatalogShowcase(): Promise<CatalogShowcaseEntry[]> {
 
 interface NotificationItem {
   id: string;
+  source: "profile" | "user";
   type: string;
   title: string;
   message: string;
@@ -151,6 +153,20 @@ async function fetchRecentNotifications(): Promise<RecentNotificationsResponse> 
     throw new Error("Failed to fetch notifications");
   }
   return (await res.json()) as unknown as RecentNotificationsResponse;
+}
+
+async function markNotificationRead(args: {
+  source: "profile" | "user";
+  id: string;
+}): Promise<void> {
+  const res = await api.console.notifications[":source"][
+    ":notification_id"
+  ].read.$post({
+    param: { source: args.source, notification_id: args.id },
+  });
+  if (!res.ok) {
+    throw new Error("Failed to mark notification as read");
+  }
 }
 
 const notificationMd = new MarkdownIt({ linkify: true, breaks: true });
@@ -394,9 +410,40 @@ function MyCommunitiesGrid({ communities }: { communities: Community[] }) {
 }
 
 function NotificationsSection() {
+  const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["notifications-recent"],
     queryFn: fetchRecentNotifications,
+  });
+
+  const markRead = useMutation({
+    mutationFn: markNotificationRead,
+    onMutate: async (vars) => {
+      await queryClient.cancelQueries({ queryKey: ["notifications-recent"] });
+      const previous = queryClient.getQueryData<RecentNotificationsResponse>([
+        "notifications-recent",
+      ]);
+      if (previous) {
+        queryClient.setQueryData<RecentNotificationsResponse>(
+          ["notifications-recent"],
+          {
+            data: previous.data.filter(
+              (n) => !(n.id === vars.id && n.source === vars.source),
+            ),
+            total_unread: Math.max(0, previous.total_unread - 1),
+          },
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["notifications-recent"], context.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications-recent"] });
+    },
   });
 
   if (isLoading) {
@@ -466,7 +513,9 @@ function NotificationsSection() {
               <div className="space-y-2">
                 {g.items.map((n) => {
                   const isExternal = n.link.startsWith("http");
-                  const itemBody = (
+                  const linkClass =
+                    "flex flex-1 min-w-0 gap-3 group/link rounded-l-2xl py-3 pl-3";
+                  const linkBody = (
                     <>
                       <div className="flex-shrink-0">
                         {n.sender?.profile_picture_url ? (
@@ -482,7 +531,7 @@ function NotificationsSection() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
+                        <p className="text-sm font-semibold truncate group-hover/link:text-primary transition-colors">
                           {n.title}
                         </p>
                         <div
@@ -506,22 +555,38 @@ function NotificationsSection() {
                       </div>
                     </>
                   );
-                  const className =
-                    "group flex gap-3 p-3 rounded-2xl border border-border/60 hover:bg-accent/40 hover:border-primary/30 transition-all";
-                  return isExternal ? (
-                    <a
+                  return (
+                    <div
                       key={n.id}
-                      href={n.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={className}
+                      className="flex items-stretch rounded-2xl border border-border/60 hover:border-primary/30 hover:bg-accent/40 transition-all"
                     >
-                      {itemBody}
-                    </a>
-                  ) : (
-                    <Link key={n.id} to={n.link} className={className}>
-                      {itemBody}
-                    </Link>
+                      {isExternal ? (
+                        <a
+                          href={n.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={linkClass}
+                        >
+                          {linkBody}
+                        </a>
+                      ) : (
+                        <Link to={n.link} className={linkClass}>
+                          {linkBody}
+                        </Link>
+                      )}
+                      <button
+                        type="button"
+                        aria-label="읽음으로 표시"
+                        title="읽음으로 표시"
+                        onClick={() =>
+                          markRead.mutate({ source: n.source, id: n.id })
+                        }
+                        disabled={markRead.isPending}
+                        className="flex-shrink-0 px-3 my-3 ml-2 mr-3 rounded-full text-muted-foreground/60 hover:text-primary hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Check className="h-4 w-4" />
+                      </button>
+                    </div>
                   );
                 })}
               </div>

@@ -198,6 +198,7 @@ export async function getNotificationsForProfile(
 
 interface ConsoleNotification {
   id: string;
+  source: "profile" | "user";
   type: string;
   title: string;
   message: string;
@@ -311,6 +312,7 @@ export async function getRecentNotificationsForUser(
 
       return {
         id: n.id,
+        source: "profile" as const,
         type: n.type,
         title: n.title,
         message: n.message,
@@ -342,6 +344,7 @@ export async function getRecentNotificationsForUser(
 
       return {
         id: n.id,
+        source: "user" as const,
         type: n.type,
         title: n.title,
         message: n.message,
@@ -375,6 +378,66 @@ export async function getRecentNotificationsForUser(
     Number(userUnreadResult[0]?.count ?? 0);
 
   return { data, total_unread: totalUnread };
+}
+
+/**
+ * Mark a single notification as read from the console feed.
+ * `source` distinguishes the profile-keyed `notification` table from
+ * the user-keyed `user_notification` table.
+ */
+export async function markConsoleNotificationAsRead(
+  userId: string,
+  source: "profile" | "user",
+  notificationId: string,
+) {
+  if (source === "user") {
+    const updated = await db
+      .update(userNotificationTable)
+      .set({ readAt: sql`NOW()` })
+      .where(
+        and(
+          eq(userNotificationTable.id, notificationId),
+          eq(userNotificationTable.recipientUserId, userId),
+        ),
+      )
+      .returning({ id: userNotificationTable.id });
+    if (updated.length === 0) {
+      throw new AppException(
+        404,
+        GENERAL_ERROR_CODE,
+        "알림을 찾을 수 없습니다",
+      );
+    }
+    return;
+  }
+
+  const notification = await db.query.notification.findFirst({
+    where: eq(notificationTable.id, notificationId),
+    columns: { id: true, recipientId: true },
+  });
+  if (!notification) {
+    throw new AppException(404, GENERAL_ERROR_CODE, "알림을 찾을 수 없습니다");
+  }
+
+  const owns = await db.query.profileOwnership.findFirst({
+    where: and(
+      eq(profileOwnershipTable.userId, userId),
+      eq(profileOwnershipTable.profileId, notification.recipientId),
+    ),
+    columns: { id: true },
+  });
+  if (!owns) {
+    throw new AppException(
+      403,
+      GENERAL_ERROR_CODE,
+      "알림에 접근할 권한이 없습니다",
+    );
+  }
+
+  await db
+    .update(notificationTable)
+    .set({ readAt: sql`NOW()` })
+    .where(eq(notificationTable.id, notificationId));
 }
 
 /**
