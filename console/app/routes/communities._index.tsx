@@ -393,7 +393,7 @@ export default function Communities() {
             <div className="mt-5 flex justify-center">
               <Button asChild variant="outline" className="rounded-full">
                 <Link to="/communities/ongoing">
-                  배너가 없는 진행 중 커뮤 {hiddenOngoingCount}개 더 보기
+                  진행 중 커뮤 {hiddenOngoingCount}개 더 보기
                 </Link>
               </Button>
             </div>
