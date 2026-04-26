@@ -284,11 +284,11 @@ function WelcomeHero({
 
 function MyCommunitiesGrid({ communities }: { communities: Community[] }) {
   const now = new Date();
-  const activeCommunities = communities
-    .filter((c) => new Date(c.ends_at) >= now)
-    .slice(0, 6);
+  const active = communities.filter((c) => new Date(c.ends_at) >= now);
+  const ended = communities.filter((c) => new Date(c.ends_at) < now);
+  const ordered = [...active, ...ended];
 
-  if (activeCommunities.length === 0) {
+  if (ordered.length === 0) {
     return (
       <Card className="text-center">
         <CardContent className="py-10 px-6">
@@ -323,45 +323,40 @@ function MyCommunitiesGrid({ communities }: { communities: Community[] }) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Bookmark className="h-5 w-5 text-primary" strokeWidth={1.75} />
-            <span>내 커뮤</span>
-          </CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className="rounded-full text-muted-foreground"
-          >
-            <Link to="/communities/mine">
-              전체 보기
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
+        <CardTitle className="flex items-center gap-2">
+          <Bookmark className="h-5 w-5 text-primary" strokeWidth={1.75} />
+          <span>내 커뮤</span>
+          {ended.length > 0 && (
+            <span className="text-xs font-normal text-muted-foreground">
+              ({active.length}개 활동 · {ended.length}개 종료)
+            </span>
+          )}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {activeCommunities.map((community) => {
+          {ordered.map((community) => {
             const communityHost =
               community.custom_domain && community.domain_verified
                 ? community.custom_domain
                 : `${community.slug}.${env.domain}`;
+            const hasEnded = new Date(community.ends_at) < now;
             return (
               <a
                 key={community.id}
                 href={`https://${communityHost}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex items-center gap-3 p-3 rounded-2xl border border-border/70 bg-card/60 hover:border-primary/30 hover:bg-accent/40 transition-all hover:-translate-y-0.5 hover:shadow-marsh"
+                className={`group flex items-center gap-3 p-3 rounded-2xl border border-border/70 bg-card/60 hover:border-primary/30 hover:bg-accent/40 transition-all hover:-translate-y-0.5 hover:shadow-marsh ${
+                  hasEnded ? "opacity-60 hover:opacity-100" : ""
+                }`}
               >
                 <div className="relative h-12 w-12 rounded-xl bg-gradient-to-br from-blossom/40 to-lilac/40 flex-shrink-0 overflow-hidden">
                   {community.banner_image_url ? (
                     <img
                       src={community.banner_image_url}
                       alt={community.name}
-                      className="h-full w-full object-cover"
+                      className={`h-full w-full object-cover ${hasEnded ? "grayscale" : ""}`}
                     />
                   ) : (
                     <Users className="h-full w-full p-3.5 text-foreground/40" />
@@ -372,14 +367,23 @@ function MyCommunitiesGrid({ communities }: { communities: Community[] }) {
                     <p className="font-semibold text-sm truncate">
                       {community.name}
                     </p>
-                    {isEndingSoon(community) && (
+                    {hasEnded ? (
                       <Badge
                         variant="outline"
-                        className="text-[10px] h-4 px-1.5 py-0 bg-blossom/20 text-blossom-ink border-blossom/40 dark:bg-blossom/15 flex-shrink-0"
+                        className="text-[10px] h-4 px-1.5 py-0 bg-muted text-muted-foreground border-border flex-shrink-0"
                       >
-                        <Clock className="h-2.5 w-2.5" />
-                        {daysUntil(community.ends_at)}일
+                        종료
                       </Badge>
+                    ) : (
+                      isEndingSoon(community) && (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] h-4 px-1.5 py-0 bg-blossom/20 text-blossom-ink border-blossom/40 dark:bg-blossom/15 flex-shrink-0"
+                        >
+                          <Clock className="h-2.5 w-2.5" />
+                          {daysUntil(community.ends_at)}일
+                        </Badge>
+                      )
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
