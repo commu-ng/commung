@@ -278,16 +278,13 @@ function WelcomeHero({
 
       <div className="relative">
         <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-primary mb-2">
-          오늘도 만나서 반가워요
+          대시보드
         </p>
         <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight leading-tight">
-          {userName ? `${userName}님, ` : ""}
-          <span className="text-primary">우리의 커뮤</span>를
-          <br className="hidden sm:block" /> 함께 가꿔봐요
+          {userName ? `안녕하세요, ${userName}님` : "안녕하세요"}
         </h1>
         <p className="text-muted-foreground mt-3 max-w-lg leading-relaxed">
-          모든 일상과 자캐, 취향을 나눌 공간을 만들어보세요.
-          <br />새 글, 새 친구, 새 이야기가 기다리고 있어요.
+          참여 중인 커뮤와 새 알림을 한곳에서 확인하세요.
         </p>
 
         <div className="flex flex-wrap items-center gap-2 mt-6">
@@ -865,7 +862,7 @@ function AppsShowcase() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {data.map((app) => (
+            {(data ?? []).map((app) => (
               <Link
                 key={app.builtin_id}
                 to={`/apps/${app.builtin_id}`}
