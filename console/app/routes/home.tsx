@@ -6,6 +6,7 @@ import {
   Bookmark,
   Bot,
   Clock,
+  CircleHelp,
   ExternalLink,
   ImageIcon,
   LayoutGrid,
@@ -234,6 +235,12 @@ function WelcomeHero({
               둘러보기
             </Link>
           </Button>
+          <Button asChild size="lg" variant="outline" className="rounded-full">
+            <Link to="/faq">
+              <CircleHelp className="h-4 w-4" />
+              자주 묻는 질문
+            </Link>
+          </Button>
           {pendingCount > 0 && (
             <Link
               to="/communities/mine"
@@ -254,13 +261,6 @@ function WelcomeHero({
             </Link>
           )}
         </div>
-        <Link
-          to="/faq"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mt-4"
-        >
-          자주 묻는 질문
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
       </div>
     </section>
   );
@@ -910,17 +910,16 @@ function GuestHero() {
               둘러보기
             </Link>
           </Button>
+          <Button asChild size="lg" variant="outline" className="rounded-full">
+            <Link to="/faq">
+              <CircleHelp className="h-4 w-4" />
+              자주 묻는 질문
+            </Link>
+          </Button>
           <Button asChild size="lg" variant="ghost" className="rounded-full">
             <Link to="/login">로그인</Link>
           </Button>
         </div>
-        <Link
-          to="/faq"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mt-4"
-        >
-          자주 묻는 질문
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
       </div>
     </section>
   );
