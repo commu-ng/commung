@@ -14,6 +14,7 @@ export default [
   route("communities", "routes/communities._index.tsx"),
   route("communities/create", "routes/communities.create.tsx"),
   route("communities/mine", "routes/communities.mine.tsx"),
+  route("communities/ongoing", "routes/communities.ongoing.tsx"),
   route(
     "communities/:slug/applications/:applicationId",
     "routes/communities.$slug.applications.$applicationId.tsx",

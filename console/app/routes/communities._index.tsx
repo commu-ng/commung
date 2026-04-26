@@ -168,6 +168,16 @@ export default function Communities() {
     [filterCommunities, ongoingCommunities],
   );
 
+  const hasActiveFilters = searchQuery !== "" || selectedHashtags.length > 0;
+  const visibleOngoing = useMemo(() => {
+    // When the user is searching/filtering, surface every match. Otherwise
+    // hide bannerless ones to keep the discovery view visually rich; the
+    // 전체 보기 link below the section opens the full list.
+    if (hasActiveFilters) return filteredOngoing;
+    return filteredOngoing.filter((c) => c.banner_image_url);
+  }, [filteredOngoing, hasActiveFilters]);
+  const hiddenOngoingCount = filteredOngoing.length - visibleOngoing.length;
+
   const toggleHashtag = (hashtag: string) => {
     setSelectedHashtags((prev) =>
       prev.includes(hashtag)
@@ -180,8 +190,6 @@ export default function Communities() {
     setSearchQuery("");
     setSelectedHashtags([]);
   };
-
-  const hasActiveFilters = searchQuery !== "" || selectedHashtags.length > 0;
 
   if (isLoading) {
     return (
@@ -375,12 +383,21 @@ export default function Communities() {
               {filteredOngoing.length}개
             </span>
           </h2>
-          {filteredOngoing.length === 0
+          {visibleOngoing.length === 0
             ? renderEmpty(
                 "진행 중인 커뮤가 없어요",
                 "지금은 진행 중인 커뮤가 없어요.",
               )
-            : renderGrid(filteredOngoing)}
+            : renderGrid(visibleOngoing)}
+          {hiddenOngoingCount > 0 && (
+            <div className="mt-5 flex justify-center">
+              <Button asChild variant="outline" className="rounded-full">
+                <Link to="/communities/ongoing">
+                  배너가 없는 진행 중 커뮤 {hiddenOngoingCount}개 더 보기
+                </Link>
+              </Button>
+            </div>
+          )}
         </section>
       </div>
     </div>
