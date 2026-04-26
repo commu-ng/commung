@@ -151,7 +151,7 @@ export default function Profiles() {
               <Link
                 key={profile.id}
                 to={`/@${profile.username}`}
-                className="flex items-center gap-3 px-4 py-2.5 hover:bg-accent transition-colors group"
+                className="flex w-full min-w-0 items-center gap-3 px-4 py-2.5 hover:bg-accent transition-colors group"
               >
                 <ProfileAvatar
                   profilePictureUrl={profile.profile_picture_url || undefined}
