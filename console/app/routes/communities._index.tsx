@@ -148,7 +148,7 @@ export default function Communities() {
   const filterCommunities = useCallback(
     (communities: Community[] | undefined) => {
       if (!communities) return [];
-      return communities.filter((community) => {
+      const filtered = communities.filter((community) => {
         const matchesSearch =
           searchQuery === "" ||
           community.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -160,6 +160,13 @@ export default function Communities() {
               community.hashtags?.some((h) => h.tag === selectedTag),
             ));
         return matchesSearch && matchesHashtags;
+      });
+      // Communities with a banner image surface first; original order is
+      // preserved within each bucket via Array.prototype.sort stability.
+      return filtered.slice().sort((a, b) => {
+        const aHas = a.banner_image_url ? 1 : 0;
+        const bHas = b.banner_image_url ? 1 : 0;
+        return bHas - aHas;
       });
     },
     [searchQuery, selectedHashtags],
