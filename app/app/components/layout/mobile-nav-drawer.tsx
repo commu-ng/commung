@@ -57,15 +57,6 @@ export function MobileNavDrawer({
   };
 
   const navigationItems = [
-    ...(currentProfile
-      ? [
-          {
-            to: `/@${currentProfile.username}`,
-            icon: User,
-            label: "프로필",
-          },
-        ]
-      : []),
     { to: "/", icon: Home, label: "홈" },
     {
       to: "/notifications",
@@ -88,6 +79,15 @@ export function MobileNavDrawer({
     { to: "/bookmarks", icon: Bookmark, label: "북마크" },
     { to: "/search", icon: Search, label: "검색" },
     { to: "/profiles", icon: UserCheck, label: "멤버" },
+    ...(currentProfile
+      ? [
+          {
+            to: `/@${currentProfile.username}`,
+            icon: User,
+            label: "프로필",
+          },
+        ]
+      : []),
     { to: "/settings", icon: Settings, label: "설정" },
   ];
 
