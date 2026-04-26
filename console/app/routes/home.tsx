@@ -1088,7 +1088,7 @@ function GuestHero() {
               자주 묻는 질문
             </Link>
           </Button>
-          <Button asChild size="lg" variant="ghost" className="rounded-full">
+          <Button asChild size="lg" variant="outline" className="rounded-full">
             <Link to="/login">로그인</Link>
           </Button>
         </div>
