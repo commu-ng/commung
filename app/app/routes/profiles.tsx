@@ -161,18 +161,14 @@ export default function Profiles() {
                   size="md"
                   showOnlineStatus={true}
                 />
-                <div className="flex-1 min-w-0 flex items-baseline gap-2">
-                  <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
                     {profile.name}
-                  </span>
-                  <span className="text-xs text-muted-foreground truncate">
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
                     @{profile.username}
-                  </span>
-                  {profile.bio && (
-                    <span className="hidden sm:inline text-xs text-muted-foreground truncate">
-                      · {profile.bio}
-                    </span>
-                  )}
+                    {profile.bio ? ` · ${profile.bio}` : ""}
+                  </p>
                 </div>
                 <span className="text-xs text-muted-foreground flex-shrink-0 hidden md:inline">
                   {new Date(profile.created_at).toLocaleDateString("ko-KR")}
