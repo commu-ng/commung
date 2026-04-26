@@ -223,6 +223,11 @@ function useDelayedFlag(active: boolean, delayMs = SKELETON_DELAY_MS) {
  *     but stays at opacity 0 until SKELETON_DELAY_MS passes
  *   - if the query resolves before that, no skeleton ever flashes
  *   - when the data arrives, the content fades in cleanly
+ *
+ * IMPORTANT: `children` is evaluated eagerly by JSX even when the loader
+ * picks the skeleton branch instead of rendering them. Inside children,
+ * never dereference data that's `undefined` while loading — guard with
+ * `data ?? []` or `?.` before calling `.map`/`.length`/etc.
  */
 function SectionLoader({
   isLoading,
@@ -1058,11 +1063,10 @@ function GuestHero() {
         <h1 className="font-display text-4xl sm:text-6xl font-bold mt-5 leading-[1.1] tracking-tight">
           <span className="text-primary">커뮹</span>에서
           <br />
-          우리의 커뮤를 시작해요
+          커뮤를 시작하세요
         </h1>
         <p className="text-base sm:text-lg text-muted-foreground mt-5 max-w-xl mx-auto leading-relaxed">
-          취향을 나눌 사람들과 함께, 일상과 자캐와 이야기를 부드럽게 엮어가는
-          공간이에요.
+          커뮤를 만들고, 멤버를 모집하고, 함께 운영해요.
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
