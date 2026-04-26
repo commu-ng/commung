@@ -83,7 +83,7 @@ export default function OngoingCommunities() {
   const filtered = useCallback(
     (communities: Community[] | undefined) => {
       if (!communities) return [];
-      const matched = communities.filter((community) => {
+      return communities.filter((community) => {
         const matchesSearch =
           searchQuery === "" ||
           community.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -95,11 +95,6 @@ export default function OngoingCommunities() {
               community.hashtags?.some((h) => h.tag === tag),
             ));
         return matchesSearch && matchesHashtags;
-      });
-      return matched.slice().sort((a, b) => {
-        const aHas = a.banner_image_url ? 1 : 0;
-        const bHas = b.banner_image_url ? 1 : 0;
-        return bHas - aHas;
       });
     },
     [searchQuery, selectedHashtags],
@@ -151,7 +146,7 @@ export default function OngoingCommunities() {
         icon={Compass}
         tone="lilac"
         title="진행 중인 모든 커뮤"
-        description="배너 이미지가 없는 커뮤까지 한 자리에서 둘러봐요."
+        description="진행 중인 모든 커뮤를 한 자리에서 둘러봐요."
         actions={
           <Button asChild className="rounded-full">
             <Link to="/communities/create">
