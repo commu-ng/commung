@@ -1273,12 +1273,28 @@ export async function createApplication(
       : null;
 
     if (community?.autoApprove) {
-      // Auto-approve: skip owner notification, immediately approve the application.
-      // The community owner is recorded as the reviewer; if no owner exists, fall
-      // back to the applicant so the non-null reviewer constraint is satisfied.
+      // Auto-approve: immediately approve the application and notify the owner
+      // that a new member joined automatically. The community owner is recorded
+      // as the reviewer; if no owner exists, fall back to the applicant so the
+      // non-null reviewer constraint is satisfied.
       try {
         const reviewerId = ownerMembership?.userId ?? userId;
         await approveMembershipApplication(newApplication.id, reviewerId);
+
+        if (ownerMembership) {
+          await pushNotificationService.sendPushNotification(
+            ownerMembership.userId,
+            {
+              title: "새 회원이 자동 승인되었습니다",
+              body: `${data.profileName}님이 ${community.name}에 가입했습니다`,
+              data: {
+                type: "application_auto_approved",
+                community_slug: community.slug,
+                url: `https://${process.env.BASE_DOMAIN || "commu.ng"}/communities/${community.slug}/applications`,
+              },
+            },
+          );
+        }
       } catch (approveError: unknown) {
         logger.service.error("Failed to auto-approve application", {
           error: approveError,
