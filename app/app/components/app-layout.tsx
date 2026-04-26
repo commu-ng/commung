@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MastodonLayout } from "~/components/layout";
+import { NavigationProgress } from "~/components/NavigationProgress";
 import { UnreadCountProvider } from "~/contexts/UnreadCountContext";
 import { useAuth } from "~/hooks/useAuth";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
@@ -86,6 +87,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       refreshUnreadCounts={fetchUnreadCounts}
       isHeaderVisible={isHeaderVisible}
     >
+      <NavigationProgress />
       <div ref={headerRef}>
         <MastodonLayout
           isAuthenticated={isAuthenticated}

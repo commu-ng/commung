@@ -308,3 +308,21 @@ html.theme-transitioning *::after {
     stroke 400ms ease,
     box-shadow 400ms ease;
 }
+
+@keyframes nav-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Tap feedback: briefly dim links and buttons on press so users feel the click
+   registered, even before navigation/data resolves. */
+a:active,
+button:active,
+[role="button"]:active {
+  opacity: 0.75;
+  transition: opacity 0.05s;
+}
