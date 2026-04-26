@@ -723,21 +723,21 @@ export default function CommunityDetails() {
                 {links.map((link) => (
                   <div
                     key={link.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted transition-colors"
+                    className="flex min-w-0 items-center justify-between p-4 border rounded-lg hover:bg-muted transition-colors"
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 min-w-0">
                         <a
                           href={link.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-primary hover:text-primary/90 font-medium transition-colors"
+                          className="flex min-w-0 items-center gap-2 text-primary hover:text-primary/90 font-medium transition-colors"
                         >
-                          <span>{link.title}</span>
-                          <ExternalLink className="h-4 w-4" />
+                          <span className="truncate">{link.title}</span>
+                          <ExternalLink className="h-4 w-4 flex-shrink-0" />
                         </a>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-sm text-muted-foreground mt-1 break-all">
                         {link.url}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
