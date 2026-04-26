@@ -9,6 +9,7 @@ import {
   Clock,
   CircleHelp,
   ExternalLink,
+  LogIn,
   ImageIcon,
   LayoutGrid,
   MessageSquare,
@@ -1089,7 +1090,10 @@ function GuestHero() {
             </Link>
           </Button>
           <Button asChild size="lg" variant="outline" className="rounded-full">
-            <Link to="/login">로그인</Link>
+            <Link to="/login">
+              <LogIn className="h-4 w-4" />
+              로그인
+            </Link>
           </Button>
         </div>
       </div>
