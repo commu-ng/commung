@@ -312,3 +312,21 @@ body {
   transform: scale(1.12) rotate(-6deg);
   filter: var(--commu-ng-glow-strong);
 }
+
+@keyframes nav-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Tap feedback: briefly dim links and buttons on press so users feel the click
+   registered, even before navigation/data resolves. */
+a:active,
+button:active,
+[role="button"]:active {
+  opacity: 0.75;
+  transition: opacity 0.05s;
+}
