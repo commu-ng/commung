@@ -1261,19 +1261,21 @@ export async function createApplication(
       ),
     });
 
-    // Get community owner's membership (used for both auto-approve reviewer and notifications)
-    const ownerMembership = community
-      ? await db.query.membership.findFirst({
+    // Get community admins (owner + moderators) for auto-approve reviewer and notifications
+    const adminMemberships = community
+      ? await db.query.membership.findMany({
           where: and(
             eq(membershipTable.communityId, communityId),
-            eq(membershipTable.role, "owner"),
+            inArray(membershipTable.role, ["owner", "moderator"]),
             isNotNull(membershipTable.activatedAt),
           ),
         })
-      : null;
+      : [];
+    const ownerMembership =
+      adminMemberships.find((m) => m.role === "owner") ?? null;
 
     if (community?.autoApprove) {
-      // Auto-approve: immediately approve the application and notify the owner
+      // Auto-approve: immediately approve the application and notify all admins
       // that a new member joined automatically. The community owner is recorded
       // as the reviewer; if no owner exists, fall back to the applicant so the
       // non-null reviewer constraint is satisfied.
@@ -1281,10 +1283,9 @@ export async function createApplication(
         const reviewerId = ownerMembership?.userId ?? userId;
         await approveMembershipApplication(newApplication.id, reviewerId);
 
-        if (ownerMembership) {
-          await pushNotificationService.sendPushNotification(
-            ownerMembership.userId,
-            {
+        await Promise.all(
+          adminMemberships.map((admin) =>
+            pushNotificationService.sendPushNotification(admin.userId, {
               title: "새 회원이 자동 승인되었습니다",
               body: `${data.profileName}님이 ${community.name}에 가입했습니다`,
               data: {
@@ -1292,9 +1293,9 @@ export async function createApplication(
                 community_slug: community.slug,
                 url: `https://${process.env.BASE_DOMAIN || "commu.ng"}/communities/${community.slug}/applications`,
               },
-            },
-          );
-        }
+            }),
+          ),
+        );
       } catch (approveError: unknown) {
         logger.service.error("Failed to auto-approve application", {
           error: approveError,
@@ -1302,37 +1303,47 @@ export async function createApplication(
           communityId,
         });
       }
-    } else if (community && ownerMembership) {
-      // Send email/push notification to community owner.
+    } else if (community && adminMemberships.length > 0) {
+      // Send email/push notification to all community admins (owner + moderators).
       // Errors are logged but do not prevent application creation.
       try {
-        const ownerUser = await db.query.user.findFirst({
+        const adminUsers = await db.query.user.findMany({
           where: and(
-            eq(userTable.id, ownerMembership.userId),
+            inArray(
+              userTable.id,
+              adminMemberships.map((m) => m.userId),
+            ),
             isNull(userTable.deletedAt),
           ),
         });
 
-        if (ownerUser?.email && ownerUser.emailVerifiedAt) {
-          await emailService.sendApplicationNotificationEmail(
-            ownerUser.email,
-            community.name,
-            community.slug,
-            data.profileUsername,
-          );
-        }
-
-        if (ownerUser) {
-          await pushNotificationService.sendPushNotification(ownerUser.id, {
-            title: "새로운 가입 신청",
-            body: `${data.profileName}님이 ${community.name}에 가입 신청했습니다`,
-            data: {
-              type: "application",
-              community_slug: community.slug,
-              url: `https://${process.env.BASE_DOMAIN || "commu.ng"}/communities/${community.slug}/applications`,
-            },
-          });
-        }
+        await Promise.all(
+          adminUsers.flatMap((adminUser) => {
+            const tasks: Promise<unknown>[] = [];
+            if (adminUser.email && adminUser.emailVerifiedAt) {
+              tasks.push(
+                emailService.sendApplicationNotificationEmail(
+                  adminUser.email,
+                  community.name,
+                  community.slug,
+                  data.profileUsername,
+                ),
+              );
+            }
+            tasks.push(
+              pushNotificationService.sendPushNotification(adminUser.id, {
+                title: "새로운 가입 신청",
+                body: `${data.profileName}님이 ${community.name}에 가입 신청했습니다`,
+                data: {
+                  type: "application",
+                  community_slug: community.slug,
+                  url: `https://${process.env.BASE_DOMAIN || "commu.ng"}/communities/${community.slug}/applications`,
+                },
+              }),
+            );
+            return tasks;
+          }),
+        );
       } catch (emailError: unknown) {
         logger.service.error("Failed to send application notification email", {
           error: emailError,
