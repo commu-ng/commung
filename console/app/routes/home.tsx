@@ -452,7 +452,34 @@ function NotificationsSection() {
 
   const notifications = data?.data ?? [];
   if (notifications.length === 0) {
-    return null;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/15 text-primary shadow-marsh">
+              <Bell className="h-4 w-4" />
+            </span>
+            알림
+          </CardTitle>
+          <CardDescription className="ml-10">
+            모든 커뮤의 새 알림을 한곳에서 확인해요
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-mint/40 text-mint-ink shadow-marsh mb-3">
+              <Check className="h-6 w-6" />
+            </span>
+            <p className="font-display text-base font-bold mb-1">
+              새로운 알림이 없어요
+            </p>
+            <p className="text-xs text-muted-foreground">
+              모두 확인했어요. 잠시 쉬어가요!
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   // Group by group.kind + group.id, preserving order of first appearance
