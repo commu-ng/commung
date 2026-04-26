@@ -19,6 +19,7 @@ import {
   Users,
 } from "lucide-react";
 import MarkdownIt from "markdown-it";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -194,6 +195,57 @@ function DashboardSkeleton() {
       <Skeleton className="h-64 rounded-3xl" />
     </div>
   );
+}
+
+const SKELETON_DELAY_MS = 150;
+
+/**
+ * Returns true once `active` has been continuously true for `delayMs`.
+ * Suppresses skeleton flashes when a query resolves quickly (cache hit
+ * or fast network).
+ */
+function useDelayedFlag(active: boolean, delayMs = SKELETON_DELAY_MS) {
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    if (!active) {
+      setShown(false);
+      return;
+    }
+    const t = setTimeout(() => setShown(true), delayMs);
+    return () => clearTimeout(t);
+  }, [active, delayMs]);
+  return shown;
+}
+
+/**
+ * Wraps a section's loading/loaded swap in a coordinated reveal:
+ *   - the skeleton is mounted immediately so layout space is reserved,
+ *     but stays at opacity 0 until SKELETON_DELAY_MS passes
+ *   - if the query resolves before that, no skeleton ever flashes
+ *   - when the data arrives, the content fades in cleanly
+ */
+function SectionLoader({
+  isLoading,
+  skeleton,
+  children,
+}: {
+  isLoading: boolean;
+  skeleton: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const showSkeleton = useDelayedFlag(isLoading);
+  if (isLoading) {
+    return (
+      <div
+        className={`transition-opacity duration-200 ${
+          showSkeleton ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        {skeleton}
+      </div>
+    );
+  }
+  return <div className="animate-in fade-in duration-300">{children}</div>;
 }
 
 const ENDING_SOON_DAYS = 7;
@@ -450,39 +502,50 @@ function NotificationsSection() {
     },
   });
 
-  if (isLoading) {
-    return <Skeleton className="h-48 rounded-3xl" />;
-  }
-
   const notifications = data?.data ?? [];
+  if (isLoading) {
+    return (
+      <SectionLoader
+        isLoading
+        skeleton={<Skeleton className="h-48 rounded-3xl" />}
+      >
+        {null}
+      </SectionLoader>
+    );
+  }
   if (notifications.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/15 text-primary shadow-marsh">
-              <Bell className="h-4 w-4" />
-            </span>
-            알림
-          </CardTitle>
-          <CardDescription className="ml-10">
-            모든 커뮤의 새 알림을 한곳에서 확인해요
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-mint/40 text-mint-ink shadow-marsh mb-3">
-              <Check className="h-6 w-6" />
-            </span>
-            <p className="font-display text-base font-bold mb-1">
-              새로운 알림이 없어요
-            </p>
-            <p className="text-xs text-muted-foreground">
-              모두 확인했어요. 잠시 쉬어가요!
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <SectionLoader
+        isLoading={false}
+        skeleton={<Skeleton className="h-48 rounded-3xl" />}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/15 text-primary shadow-marsh">
+                <Bell className="h-4 w-4" />
+              </span>
+              알림
+            </CardTitle>
+            <CardDescription className="ml-10">
+              모든 커뮤의 새 알림을 한곳에서 확인해요
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-mint/40 text-mint-ink shadow-marsh mb-3">
+                <Check className="h-6 w-6" />
+              </span>
+              <p className="font-display text-base font-bold mb-1">
+                새로운 알림이 없어요
+              </p>
+              <p className="text-xs text-muted-foreground">
+                모두 확인했어요. 잠시 쉬어가요!
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </SectionLoader>
     );
   }
 
@@ -513,119 +576,124 @@ function NotificationsSection() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/15 text-primary shadow-marsh">
-                <Bell className="h-4 w-4" />
-              </span>
-              알림
-              {data && data.total_unread > 0 && (
-                <Badge className="bg-primary/15 text-primary dark:bg-primary/25">
-                  {data.total_unread}
-                </Badge>
-              )}
-            </CardTitle>
-            <CardDescription className="ml-10">
-              모든 커뮤의 새 알림을 한곳에서 확인해요
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-5">
-          {groups.map((g) => (
-            <div key={g.key} className="space-y-2">
-              <p className="text-[11px] uppercase tracking-[0.18em] font-semibold text-muted-foreground/80 ml-1">
-                {g.label}
-              </p>
-              <div className="space-y-2">
-                {g.items.map((n) => {
-                  const isExternal = n.link.startsWith("http");
-                  const linkClass =
-                    "flex flex-1 min-w-0 gap-3 group/link rounded-l-2xl py-3 pl-3";
-                  const linkBody = (
-                    <>
-                      <div className="flex-shrink-0">
-                        {n.sender?.profile_picture_url ? (
-                          <img
-                            src={n.sender.profile_picture_url}
-                            alt=""
-                            className="h-10 w-10 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-mint/40 to-lilac/40 flex items-center justify-center">
-                            <Bell className="h-4 w-4 text-foreground/40" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold truncate group-hover/link:text-primary transition-colors">
-                          {n.title}
-                        </p>
-                        <div
-                          className="text-xs text-muted-foreground mt-0.5 prose prose-xs max-w-none [&_p]:my-0 [&_p]:leading-relaxed [&_a]:text-primary [&_a:hover]:underline line-clamp-3"
-                          // biome-ignore lint/security/noDangerouslySetInnerHtml: markdown is sanitized by markdown-it
-                          dangerouslySetInnerHTML={{
-                            __html: notificationMd.render(n.message),
-                          }}
-                        />
-                        <p className="text-[11px] text-muted-foreground/80 mt-1">
-                          {n.sender && (
-                            <>
-                              <span className="font-medium">
-                                {n.sender.name}
-                              </span>
-                              <span className="mx-1">·</span>
-                            </>
-                          )}
-                          <span>{relativeTime(n.created_at)}</span>
-                        </p>
-                      </div>
-                    </>
-                  );
-                  return (
-                    <div
-                      key={n.id}
-                      className="flex items-stretch rounded-2xl border border-border/60 hover:border-primary/30 hover:bg-accent/40 transition-all"
-                    >
-                      {isExternal ? (
-                        <a
-                          href={n.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={linkClass}
-                        >
-                          {linkBody}
-                        </a>
-                      ) : (
-                        <Link to={n.link} className={linkClass}>
-                          {linkBody}
-                        </Link>
-                      )}
-                      <button
-                        type="button"
-                        aria-label="읽음으로 표시"
-                        title="읽음으로 표시"
-                        onClick={() =>
-                          markRead.mutate({ source: n.source, id: n.id })
-                        }
-                        disabled={markRead.isPending}
-                        className="flex-shrink-0 px-3 my-3 ml-2 mr-3 rounded-full text-muted-foreground/60 hover:text-primary hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Check className="h-4 w-4" />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
+    <SectionLoader
+      isLoading={false}
+      skeleton={<Skeleton className="h-48 rounded-3xl" />}
+    >
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/15 text-primary shadow-marsh">
+                  <Bell className="h-4 w-4" />
+                </span>
+                알림
+                {data && data.total_unread > 0 && (
+                  <Badge className="bg-primary/15 text-primary dark:bg-primary/25">
+                    {data.total_unread}
+                  </Badge>
+                )}
+              </CardTitle>
+              <CardDescription className="ml-10">
+                모든 커뮤의 새 알림을 한곳에서 확인해요
+              </CardDescription>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-5">
+            {groups.map((g) => (
+              <div key={g.key} className="space-y-2">
+                <p className="text-[11px] uppercase tracking-[0.18em] font-semibold text-muted-foreground/80 ml-1">
+                  {g.label}
+                </p>
+                <div className="space-y-2">
+                  {g.items.map((n) => {
+                    const isExternal = n.link.startsWith("http");
+                    const linkClass =
+                      "flex flex-1 min-w-0 gap-3 group/link rounded-l-2xl py-3 pl-3";
+                    const linkBody = (
+                      <>
+                        <div className="flex-shrink-0">
+                          {n.sender?.profile_picture_url ? (
+                            <img
+                              src={n.sender.profile_picture_url}
+                              alt=""
+                              className="h-10 w-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-mint/40 to-lilac/40 flex items-center justify-center">
+                              <Bell className="h-4 w-4 text-foreground/40" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold truncate group-hover/link:text-primary transition-colors">
+                            {n.title}
+                          </p>
+                          <div
+                            className="text-xs text-muted-foreground mt-0.5 prose prose-xs max-w-none [&_p]:my-0 [&_p]:leading-relaxed [&_a]:text-primary [&_a:hover]:underline line-clamp-3"
+                            // biome-ignore lint/security/noDangerouslySetInnerHtml: markdown is sanitized by markdown-it
+                            dangerouslySetInnerHTML={{
+                              __html: notificationMd.render(n.message),
+                            }}
+                          />
+                          <p className="text-[11px] text-muted-foreground/80 mt-1">
+                            {n.sender && (
+                              <>
+                                <span className="font-medium">
+                                  {n.sender.name}
+                                </span>
+                                <span className="mx-1">·</span>
+                              </>
+                            )}
+                            <span>{relativeTime(n.created_at)}</span>
+                          </p>
+                        </div>
+                      </>
+                    );
+                    return (
+                      <div
+                        key={n.id}
+                        className="flex items-stretch rounded-2xl border border-border/60 hover:border-primary/30 hover:bg-accent/40 transition-all"
+                      >
+                        {isExternal ? (
+                          <a
+                            href={n.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={linkClass}
+                          >
+                            {linkBody}
+                          </a>
+                        ) : (
+                          <Link to={n.link} className={linkClass}>
+                            {linkBody}
+                          </Link>
+                        )}
+                        <button
+                          type="button"
+                          aria-label="읽음으로 표시"
+                          title="읽음으로 표시"
+                          onClick={() =>
+                            markRead.mutate({ source: n.source, id: n.id })
+                          }
+                          disabled={markRead.isPending}
+                          className="flex-shrink-0 px-3 my-3 ml-2 mr-3 rounded-full text-muted-foreground/60 hover:text-primary hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Check className="h-4 w-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </SectionLoader>
   );
 }
 
@@ -635,117 +703,121 @@ function LatestBoardPosts() {
     queryFn: fetchBoardsWithRecentPosts,
   });
 
-  if (isLoading) {
-    return <Skeleton className="h-48 rounded-3xl" />;
-  }
-
   const boardsWithPosts = (data ?? []).filter(
     (entry) => entry.posts.length > 0,
   );
 
-  if (boardsWithPosts.length === 0) {
+  if (!isLoading && boardsWithPosts.length === 0) {
     return null;
   }
 
   return (
-    <div className="space-y-6">
-      {boardsWithPosts.map(({ board, posts }) => (
-        <Card key={board.id}>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-lilac/40 text-lilac-ink shadow-marsh">
-                    <MessageSquare className="h-4 w-4" />
-                  </span>
-                  {board.name}
-                </CardTitle>
-                {board.description && (
-                  <CardDescription className="ml-10">
-                    {board.description}
-                  </CardDescription>
-                )}
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild
-                className="rounded-full text-muted-foreground"
-              >
-                <Link to={`/boards/${board.slug}`}>
-                  전체 보기
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {posts.map((post) => (
-                <Link
-                  key={post.id}
-                  to={`/boards/${board.slug}/posts/${post.id}`}
-                  className="group flex gap-3 p-3 rounded-2xl border border-border/60 hover:bg-accent/40 hover:border-primary/30 transition-all"
+    <SectionLoader
+      isLoading={isLoading}
+      skeleton={<Skeleton className="h-48 rounded-3xl" />}
+    >
+      <div className="space-y-6">
+        {boardsWithPosts.map(({ board, posts }) => (
+          <Card key={board.id}>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-lilac/40 text-lilac-ink shadow-marsh">
+                      <MessageSquare className="h-4 w-4" />
+                    </span>
+                    {board.name}
+                  </CardTitle>
+                  {board.description && (
+                    <CardDescription className="ml-10">
+                      {board.description}
+                    </CardDescription>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  asChild
+                  className="rounded-full text-muted-foreground"
                 >
-                  <div className="flex-shrink-0">
-                    {post.image ? (
-                      <img
-                        src={post.image.url}
-                        alt=""
-                        className="h-14 w-14 rounded-xl object-cover"
-                      />
-                    ) : (
-                      <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-mint/40 to-sky-soft/40 flex items-center justify-center">
-                        <ImageIcon className="h-5 w-5 text-foreground/40" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
-                      {post.title}
-                    </p>
-                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                      <span className="font-medium">
-                        {post.author.login_name}
-                      </span>
-                      <span>·</span>
-                      <span>
-                        {new Date(post.created_at).toLocaleDateString("ko-KR", {
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </span>
-                      {post.reply_count > 0 && (
-                        <>
-                          <span>·</span>
-                          <span className="inline-flex items-center gap-0.5">
-                            <MessageSquare className="h-3 w-3" />
-                            {post.reply_count}
-                          </span>
-                        </>
+                  <Link to={`/boards/${board.slug}`}>
+                    전체 보기
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {posts.map((post) => (
+                  <Link
+                    key={post.id}
+                    to={`/boards/${board.slug}/posts/${post.id}`}
+                    className="group flex gap-3 p-3 rounded-2xl border border-border/60 hover:bg-accent/40 hover:border-primary/30 transition-all"
+                  >
+                    <div className="flex-shrink-0">
+                      {post.image ? (
+                        <img
+                          src={post.image.url}
+                          alt=""
+                          className="h-14 w-14 rounded-xl object-cover"
+                        />
+                      ) : (
+                        <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-mint/40 to-sky-soft/40 flex items-center justify-center">
+                          <ImageIcon className="h-5 w-5 text-foreground/40" />
+                        </div>
                       )}
-                    </p>
-                    {post.hashtags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1.5">
-                        {post.hashtags.map((hashtag) => (
-                          <Badge
-                            key={hashtag.id}
-                            variant="outline"
-                            className="text-xs h-5 px-1.5 py-0"
-                          >
-                            #{hashtag.tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
+                        {post.title}
+                      </p>
+                      <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                        <span className="font-medium">
+                          {post.author.login_name}
+                        </span>
+                        <span>·</span>
+                        <span>
+                          {new Date(post.created_at).toLocaleDateString(
+                            "ko-KR",
+                            {
+                              month: "long",
+                              day: "numeric",
+                            },
+                          )}
+                        </span>
+                        {post.reply_count > 0 && (
+                          <>
+                            <span>·</span>
+                            <span className="inline-flex items-center gap-0.5">
+                              <MessageSquare className="h-3 w-3" />
+                              {post.reply_count}
+                            </span>
+                          </>
+                        )}
+                      </p>
+                      {post.hashtags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {post.hashtags.map((hashtag) => (
+                            <Badge
+                              key={hashtag.id}
+                              variant="outline"
+                              className="text-xs h-5 px-1.5 py-0"
+                            >
+                              #{hashtag.tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </SectionLoader>
   );
 }
 
@@ -755,80 +827,82 @@ function AppsShowcase() {
     queryFn: fetchCatalogShowcase,
   });
 
-  if (isLoading) {
-    return <Skeleton className="h-64 rounded-3xl" />;
-  }
-  if (!data || data.length === 0) {
+  if (!isLoading && (!data || data.length === 0)) {
     return null;
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-butter/40 text-butter-ink shadow-marsh">
-                <LayoutGrid className="h-4 w-4" />
-              </span>
-              앱 카탈로그
-            </CardTitle>
-            <CardDescription className="ml-10">
-              슬래시 명령으로 커뮤를 더 재미있게 만들어보세요
-            </CardDescription>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className="rounded-full text-muted-foreground"
-          >
-            <Link to="/apps">
-              전체 보기
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {data.map((app) => (
-            <Link
-              key={app.builtin_id}
-              to={`/apps/${app.builtin_id}`}
-              className="group flex flex-col gap-2 p-4 rounded-2xl border border-border/70 bg-card/60 hover:border-primary/30 hover:bg-accent/40 transition-all hover:-translate-y-0.5 hover:shadow-marsh"
+    <SectionLoader
+      isLoading={isLoading}
+      skeleton={<Skeleton className="h-64 rounded-3xl" />}
+    >
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-butter/40 text-butter-ink shadow-marsh">
+                  <LayoutGrid className="h-4 w-4" />
+                </span>
+                앱 카탈로그
+              </CardTitle>
+              <CardDescription className="ml-10">
+                슬래시 명령으로 커뮤를 더 재미있게 만들어보세요
+              </CardDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="rounded-full text-muted-foreground"
             >
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="font-semibold text-sm">{app.profile.name}</p>
-                <Badge variant="secondary" className="text-xs">
-                  v{app.version}
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground line-clamp-2">
-                {app.description}
-              </p>
-              {app.commands.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {app.commands.slice(0, 4).map((cmd) => (
-                    <code
-                      key={cmd.name}
-                      className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-foreground/80 font-mono"
-                    >
-                      /{cmd.name}
-                    </code>
-                  ))}
-                  {app.commands.length > 4 && (
-                    <span className="text-[10px] text-muted-foreground self-center">
-                      +{app.commands.length - 4}
-                    </span>
-                  )}
+              <Link to="/apps">
+                전체 보기
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {data.map((app) => (
+              <Link
+                key={app.builtin_id}
+                to={`/apps/${app.builtin_id}`}
+                className="group flex flex-col gap-2 p-4 rounded-2xl border border-border/70 bg-card/60 hover:border-primary/30 hover:bg-accent/40 transition-all hover:-translate-y-0.5 hover:shadow-marsh"
+              >
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-semibold text-sm">{app.profile.name}</p>
+                  <Badge variant="secondary" className="text-xs">
+                    v{app.version}
+                  </Badge>
                 </div>
-              )}
-            </Link>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  {app.description}
+                </p>
+                {app.commands.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {app.commands.slice(0, 4).map((cmd) => (
+                      <code
+                        key={cmd.name}
+                        className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-foreground/80 font-mono"
+                      >
+                        /{cmd.name}
+                      </code>
+                    ))}
+                    {app.commands.length > 4 && (
+                      <span className="text-[10px] text-muted-foreground self-center">
+                        +{app.commands.length - 4}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </Link>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </SectionLoader>
   );
 }
 
@@ -918,21 +992,22 @@ function MyCommunitiesSection() {
     queryFn: fetchMyCommunities,
   });
 
-  if (isLoading) {
-    return <Skeleton className="h-48 rounded-3xl" />;
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">내 커뮤를 불러오지 못했어요</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return <MyCommunitiesGrid communities={data ?? []} />;
+  return (
+    <SectionLoader
+      isLoading={isLoading}
+      skeleton={<Skeleton className="h-48 rounded-3xl" />}
+    >
+      {error ? (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground">내 커뮤를 불러오지 못했어요</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <MyCommunitiesGrid communities={data ?? []} />
+      )}
+    </SectionLoader>
+  );
 }
 
 function WelcomeHeroLive({ userName }: { userName?: string }) {
