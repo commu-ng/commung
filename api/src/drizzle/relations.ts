@@ -5,6 +5,7 @@ import {
   boardHashtag,
   boardPost,
   boardPostHashtag,
+  boardPostReply,
   community,
   communityApplication,
   communityBannerImage,
@@ -44,6 +45,7 @@ import {
   session,
   user,
   userBlock,
+  userNotification,
 } from "./schema";
 
 export const groupChatRelations = relations(groupChat, ({ one, many }) => ({
@@ -570,6 +572,30 @@ export const notificationRelations = relations(notification, ({ one }) => ({
     references: [directMessage.id],
   }),
 }));
+
+export const userNotificationRelations = relations(
+  userNotification,
+  ({ one }) => ({
+    recipientUser: one(user, {
+      fields: [userNotification.recipientUserId],
+      references: [user.id],
+      relationName: "userNotification_recipientUserId_user_id",
+    }),
+    actorUser: one(user, {
+      fields: [userNotification.actorUserId],
+      references: [user.id],
+      relationName: "userNotification_actorUserId_user_id",
+    }),
+    boardPost: one(boardPost, {
+      fields: [userNotification.boardPostId],
+      references: [boardPost.id],
+    }),
+    boardPostReply: one(boardPostReply, {
+      fields: [userNotification.boardPostReplyId],
+      references: [boardPostReply.id],
+    }),
+  }),
+);
 
 export const communityHashtagRelations = relations(
   communityHashtag,

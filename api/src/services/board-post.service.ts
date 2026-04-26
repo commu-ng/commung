@@ -19,6 +19,7 @@ import {
   boardPostReply as boardPostReplyTable,
   image as imageTable,
   user as userTable,
+  userNotification as userNotificationTable,
 } from "../drizzle/schema";
 import { AppException } from "../exception";
 import { BoardErrorCode } from "../types/api-responses";
@@ -1138,6 +1139,15 @@ export async function createBoardPostReply(
 
   // Send push notification for direct comments on post (depth 0 only)
   if (!inReplyToId && depth === 0 && post.authorId !== authorId) {
+    await db.insert(userNotificationTable).values({
+      type: "board_reply",
+      title: "새로운 댓글",
+      message: `**${user.loginName}**님이 _${post.title}_ 게시글에 댓글을 작성했습니다`,
+      recipientUserId: post.authorId,
+      actorUserId: authorId,
+      boardPostId,
+      boardPostReplyId: newReply.id,
+    });
     await pushNotificationService.sendPushNotification(post.authorId, {
       title: "새로운 댓글",
       body: `${user.loginName}님이 회원님의 게시글에 댓글을 작성했습니다`,
@@ -1162,6 +1172,15 @@ export async function createBoardPostReply(
 
     // Only send if not replying to own comment
     if (parentReply && parentReply.authorId !== authorId) {
+      await db.insert(userNotificationTable).values({
+        type: "board_reply",
+        title: "새로운 답글",
+        message: `**${user.loginName}**님이 _${post.title}_ 게시글의 댓글에 답글을 작성했습니다`,
+        recipientUserId: parentReply.authorId,
+        actorUserId: authorId,
+        boardPostId,
+        boardPostReplyId: newReply.id,
+      });
       await pushNotificationService.sendPushNotification(parentReply.authorId, {
         title: "새로운 답글",
         body: `${user.loginName}님이 회원님의 댓글에 답글을 작성했습니다`,

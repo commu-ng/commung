@@ -162,6 +162,13 @@
       "when": 1777122869539,
       "tag": "0022_steep_turbo",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1777162071746,
+      "tag": "0023_perfect_oracle",
+      "breakpoints": true
     }
   ]
 }

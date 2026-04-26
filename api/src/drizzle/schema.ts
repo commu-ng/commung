@@ -27,6 +27,10 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "reaction",
 ]);
 
+export const userNotificationTypeEnum = pgEnum("user_notification_type", [
+  "board_reply",
+]);
+
 export const profileOwnershipRoleEnum = pgEnum("profile_ownership_role", [
   "owner",
   "admin",
@@ -1441,6 +1445,51 @@ export const notification = pgTable(
     }),
     index("idx_notification_unread").on(table.recipientId, table.readAt),
     sql`CONSTRAINT valid_notification_read_at CHECK (read_at IS NULL OR read_at >= created_at)`,
+  ],
+);
+
+export const userNotification = pgTable(
+  "user_notification",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    type: userNotificationTypeEnum().notNull(),
+    title: text().notNull(),
+    message: text().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    recipientUserId: uuid("recipient_user_id").notNull(),
+    actorUserId: uuid("actor_user_id"),
+    boardPostId: uuid("board_post_id"),
+    boardPostReplyId: uuid("board_post_reply_id"),
+    readAt: timestamp("read_at", { withTimezone: true, mode: "string" }),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.recipientUserId],
+      foreignColumns: [user.id],
+      name: "user_notification_recipient_user_id_fkey",
+    }),
+    foreignKey({
+      columns: [table.actorUserId],
+      foreignColumns: [user.id],
+      name: "user_notification_actor_user_id_fkey",
+    }),
+    foreignKey({
+      columns: [table.boardPostId],
+      foreignColumns: [boardPost.id],
+      name: "user_notification_board_post_id_fkey",
+    }),
+    foreignKey({
+      columns: [table.boardPostReplyId],
+      foreignColumns: [boardPostReply.id],
+      name: "user_notification_board_post_reply_id_fkey",
+    }),
+    index("idx_user_notification_unread").on(
+      table.recipientUserId,
+      table.readAt,
+    ),
+    sql`CONSTRAINT valid_user_notification_read_at CHECK (read_at IS NULL OR read_at >= created_at)`,
   ],
 );
 

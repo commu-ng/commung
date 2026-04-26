@@ -4,6 +4,7 @@ import {
   notification as notificationTable,
   profile as profileTable,
   profileOwnership as profileOwnershipTable,
+  userNotification as userNotificationTable,
 } from "../drizzle/schema";
 import { AppException } from "../exception";
 import { GENERAL_ERROR_CODE } from "../types/api-responses";
@@ -195,53 +196,93 @@ export async function getNotificationsForProfile(
   };
 }
 
+interface ConsoleNotification {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  created_at: string;
+  read_at: string | null;
+  sender: {
+    name: string;
+    profile_picture_url: string | null;
+  } | null;
+  link: string;
+  group: {
+    kind: "community" | "board";
+    id: string;
+    name: string;
+    slug: string;
+  };
+}
+
 /**
- * Get recent unread notifications across every profile the user owns.
- * Powers the console home dashboard — one query covers every community.
+ * Get recent unread notifications across every profile the user owns
+ * AND every user-level notification they've received (board replies, etc.).
+ * Powers the console home dashboard.
  */
 export async function getRecentNotificationsForUser(
   userId: string,
   limit: number = 10,
 ) {
+  const baseDomain = process.env.BASE_DOMAIN || "commu.ng";
+
   const ownerships = await db.query.profileOwnership.findMany({
     where: eq(profileOwnershipTable.userId, userId),
     columns: { profileId: true },
   });
   const profileIds = ownerships.map((o) => o.profileId);
 
-  if (profileIds.length === 0) {
-    return { data: [], total_unread: 0 };
-  }
-
-  const unreadCondition = and(
-    inArray(notificationTable.recipientId, profileIds),
-    isNull(notificationTable.readAt),
+  const profileUnreadCond =
+    profileIds.length > 0
+      ? and(
+          inArray(notificationTable.recipientId, profileIds),
+          isNull(notificationTable.readAt),
+        )
+      : null;
+  const userUnreadCond = and(
+    eq(userNotificationTable.recipientUserId, userId),
+    isNull(userNotificationTable.readAt),
   );
 
-  const [totalUnreadResult, notificationRows] = await Promise.all([
-    db
-      .select({ count: count() })
-      .from(notificationTable)
-      .where(unreadCondition),
-    db.query.notification.findMany({
-      where: unreadCondition,
-      orderBy: [desc(notificationTable.id)],
-      limit,
-      with: {
-        profile_profileId: {
-          with: {
-            profilePictures: { with: { image: true } },
-          },
+  const [profileUnreadResult, userUnreadResult, profileRows, userRows] =
+    await Promise.all([
+      profileUnreadCond
+        ? db
+            .select({ count: count() })
+            .from(notificationTable)
+            .where(profileUnreadCond)
+        : Promise.resolve([{ count: 0 }]),
+      db
+        .select({ count: count() })
+        .from(userNotificationTable)
+        .where(userUnreadCond),
+      profileUnreadCond
+        ? db.query.notification.findMany({
+            where: profileUnreadCond,
+            orderBy: [desc(notificationTable.id)],
+            limit,
+            with: {
+              profile_profileId: {
+                with: { profilePictures: { with: { image: true } } },
+              },
+              profile_recipientId: { with: { community: true } },
+              post: { with: { profile: true } },
+            },
+          })
+        : Promise.resolve([]),
+      db.query.userNotification.findMany({
+        where: userUnreadCond,
+        orderBy: [desc(userNotificationTable.id)],
+        limit,
+        with: {
+          actorUser: true,
+          boardPost: { with: { board: true } },
         },
-        profile_recipientId: {
-          with: { community: true },
-        },
-        post: true,
-      },
-    }),
-  ]);
+      }),
+    ]);
 
-  const data = notificationRows
+  const profileItems: ConsoleNotification[] = profileRows
     .filter(
       (n) =>
         n.profile_recipientId &&
@@ -258,9 +299,15 @@ export async function getRecentNotificationsForUser(
         ? addImageUrl(senderPicture).url
         : null;
 
-      const recipient = n.profile_recipientId;
       // biome-ignore lint/style/noNonNullAssertion: filter above guarantees community exists
-      const community = recipient!.community!;
+      const community = n.profile_recipientId!.community!;
+      const customHost =
+        community.customDomain && community.domainVerifiedAt
+          ? community.customDomain
+          : `${community.slug}.${baseDomain}`;
+      const link = n.post?.profile
+        ? `https://${customHost}/@${n.post.profile.username}/${n.post.id}`
+        : `https://${customHost}/`;
 
       return {
         id: n.id,
@@ -271,33 +318,63 @@ export async function getRecentNotificationsForUser(
         read_at: n.readAt ? new Date(n.readAt).toISOString() : null,
         sender: sender
           ? {
-              id: sender.id,
               name: sender.name,
-              username: sender.username,
               profile_picture_url: senderProfilePictureUrl,
             }
           : null,
-        recipient_profile: {
-          // biome-ignore lint/style/noNonNullAssertion: filter above guarantees recipient exists
-          id: recipient!.id,
-          // biome-ignore lint/style/noNonNullAssertion: filter above guarantees recipient exists
-          username: recipient!.username,
-        },
-        community: {
+        link,
+        group: {
+          kind: "community" as const,
           id: community.id,
           name: community.name,
           slug: community.slug,
-          custom_domain: community.customDomain,
-          domain_verified: community.domainVerifiedAt !== null,
         },
-        post_id: n.postId,
       };
     });
 
-  return {
-    data,
-    total_unread: Number(totalUnreadResult[0]?.count ?? 0),
-  };
+  const userItems: ConsoleNotification[] = userRows
+    .filter((n) => n.boardPost)
+    .map((n) => {
+      // biome-ignore lint/style/noNonNullAssertion: filter above guarantees boardPost exists
+      const boardPost = n.boardPost!;
+      const board = boardPost.board;
+      const actor = n.actorUser;
+
+      return {
+        id: n.id,
+        type: n.type,
+        title: n.title,
+        message: n.message,
+        created_at: new Date(n.createdAt).toISOString(),
+        read_at: n.readAt ? new Date(n.readAt).toISOString() : null,
+        sender: actor
+          ? {
+              name: actor.loginName,
+              profile_picture_url: null,
+            }
+          : null,
+        link: `/boards/${board.slug}/posts/${boardPost.id}`,
+        group: {
+          kind: "board" as const,
+          id: board.id,
+          name: board.name,
+          slug: board.slug,
+        },
+      };
+    });
+
+  const data = [...profileItems, ...userItems]
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    )
+    .slice(0, limit);
+
+  const totalUnread =
+    Number(profileUnreadResult[0]?.count ?? 0) +
+    Number(userUnreadResult[0]?.count ?? 0);
+
+  return { data, total_unread: totalUnread };
 }
 
 /**

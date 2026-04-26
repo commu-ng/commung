@@ -127,20 +127,16 @@ interface NotificationItem {
   created_at: string;
   read_at: string | null;
   sender: {
-    id: string;
     name: string;
-    username: string;
     profile_picture_url: string | null;
   } | null;
-  recipient_profile: { id: string; username: string };
-  community: {
+  link: string;
+  group: {
+    kind: "community" | "board";
     id: string;
     name: string;
     slug: string;
-    custom_domain: string | null;
-    domain_verified: boolean;
   };
-  post_id: string | null;
 }
 
 interface RecentNotificationsResponse {
@@ -157,13 +153,6 @@ async function fetchRecentNotifications(): Promise<RecentNotificationsResponse> 
 }
 
 const notificationMd = new MarkdownIt({ linkify: true, breaks: true });
-
-function communityHostFor(community: NotificationItem["community"]): string {
-  if (community.custom_domain && community.domain_verified) {
-    return community.custom_domain;
-  }
-  return `${community.slug}.${env.domain}`;
-}
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -419,6 +408,32 @@ function NotificationsSection() {
     return null;
   }
 
+  // Group by group.kind + group.id, preserving order of first appearance
+  // (which is sorted by created_at desc on the server).
+  const groups: Array<{
+    key: string;
+    label: string;
+    kind: "community" | "board";
+    items: NotificationItem[];
+  }> = [];
+  const groupIndex = new Map<string, number>();
+  for (const n of notifications) {
+    const key = `${n.group.kind}:${n.group.id}`;
+    let idx = groupIndex.get(key);
+    if (idx === undefined) {
+      idx = groups.length;
+      groupIndex.set(key, idx);
+      groups.push({
+        key,
+        label:
+          n.group.kind === "board" ? `${n.group.name} 게시판` : n.group.name,
+        kind: n.group.kind,
+        items: [],
+      });
+    }
+    groups[idx]?.items.push(n);
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -442,65 +457,76 @@ function NotificationsSection() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-2">
-          {notifications.map((n) => {
-            const host = communityHostFor(n.community);
-            const href = n.post_id
-              ? `https://${host}/posts/${n.post_id}`
-              : `https://${host}/`;
-            return (
-              <a
-                key={n.id}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex gap-3 p-3 rounded-2xl border border-border/60 hover:bg-accent/40 hover:border-primary/30 transition-all"
-              >
-                <div className="flex-shrink-0">
-                  {n.sender?.profile_picture_url ? (
-                    <img
-                      src={n.sender.profile_picture_url}
-                      alt=""
-                      className="h-10 w-10 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-mint/40 to-lilac/40 flex items-center justify-center">
-                      <Bell className="h-4 w-4 text-foreground/40" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
-                      {n.title}
-                    </p>
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] h-4 px-1.5 py-0 flex-shrink-0"
+        <div className="space-y-5">
+          {groups.map((g) => (
+            <div key={g.key} className="space-y-2">
+              <p className="text-[11px] uppercase tracking-[0.18em] font-semibold text-muted-foreground/80 ml-1">
+                {g.label}
+              </p>
+              <div className="space-y-2">
+                {g.items.map((n) => {
+                  const isExternal = n.link.startsWith("http");
+                  const itemBody = (
+                    <>
+                      <div className="flex-shrink-0">
+                        {n.sender?.profile_picture_url ? (
+                          <img
+                            src={n.sender.profile_picture_url}
+                            alt=""
+                            className="h-10 w-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-mint/40 to-lilac/40 flex items-center justify-center">
+                            <Bell className="h-4 w-4 text-foreground/40" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
+                          {n.title}
+                        </p>
+                        <div
+                          className="text-xs text-muted-foreground mt-0.5 prose prose-xs max-w-none [&_p]:my-0 [&_p]:leading-relaxed [&_a]:text-primary [&_a:hover]:underline line-clamp-3"
+                          // biome-ignore lint/security/noDangerouslySetInnerHtml: markdown is sanitized by markdown-it
+                          dangerouslySetInnerHTML={{
+                            __html: notificationMd.render(n.message),
+                          }}
+                        />
+                        <p className="text-[11px] text-muted-foreground/80 mt-1">
+                          {n.sender && (
+                            <>
+                              <span className="font-medium">
+                                {n.sender.name}
+                              </span>
+                              <span className="mx-1">·</span>
+                            </>
+                          )}
+                          <span>{relativeTime(n.created_at)}</span>
+                        </p>
+                      </div>
+                    </>
+                  );
+                  const className =
+                    "group flex gap-3 p-3 rounded-2xl border border-border/60 hover:bg-accent/40 hover:border-primary/30 transition-all";
+                  return isExternal ? (
+                    <a
+                      key={n.id}
+                      href={n.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={className}
                     >
-                      {n.community.name}
-                    </Badge>
-                  </div>
-                  <div
-                    className="text-xs text-muted-foreground mt-0.5 prose prose-xs max-w-none [&_p]:my-0 [&_p]:leading-relaxed [&_a]:text-primary [&_a:hover]:underline line-clamp-3"
-                    // biome-ignore lint/security/noDangerouslySetInnerHtml: markdown is sanitized by markdown-it
-                    dangerouslySetInnerHTML={{
-                      __html: notificationMd.render(n.message),
-                    }}
-                  />
-                  <p className="text-[11px] text-muted-foreground/80 mt-1">
-                    {n.sender && (
-                      <>
-                        <span className="font-medium">{n.sender.name}</span>
-                        <span className="mx-1">·</span>
-                      </>
-                    )}
-                    <span>{relativeTime(n.created_at)}</span>
-                  </p>
-                </div>
-              </a>
-            );
-          })}
+                      {itemBody}
+                    </a>
+                  ) : (
+                    <Link key={n.id} to={n.link} className={className}>
+                      {itemBody}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>
