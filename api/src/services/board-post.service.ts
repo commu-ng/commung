@@ -46,6 +46,34 @@ export async function getBoards() {
 }
 
 /**
+ * Get the latest N posts for each board in a single round trip.
+ * Boards are returned in canonical order; each entry carries up to perBoardLimit posts.
+ */
+export async function getRecentPostsAcrossBoards(
+  perBoardLimit: number = 5,
+  blockedUserIds?: string[],
+) {
+  const boards = await getBoards();
+
+  const postsPerBoard = await Promise.all(
+    boards.map((board) =>
+      getBoardPosts(
+        board.id,
+        perBoardLimit,
+        undefined,
+        undefined,
+        blockedUserIds,
+      ),
+    ),
+  );
+
+  return boards.map((board, i) => ({
+    board,
+    posts: postsPerBoard[i]?.data ?? [],
+  }));
+}
+
+/**
  * Get a single board by ID
  */
 export async function getBoard(boardId: string) {
@@ -342,6 +370,27 @@ export async function getBoardPosts(
         })
       : [];
 
+  // Batch load reply counts grouped by post
+  const replyCountRows =
+    postIds.length > 0
+      ? await db
+          .select({
+            postId: boardPostReplyTable.boardPostId,
+            count: count(),
+          })
+          .from(boardPostReplyTable)
+          .where(
+            and(
+              inArray(boardPostReplyTable.boardPostId, postIds),
+              isNull(boardPostReplyTable.deletedAt),
+            ),
+          )
+          .groupBy(boardPostReplyTable.boardPostId)
+      : [];
+  const replyCountByPostId = new Map(
+    replyCountRows.map((r) => [r.postId, Number(r.count)]),
+  );
+
   // Group hashtags by post ID
   const hashtagsByPostId = new Map<string, typeof allHashtags>();
   allHashtags.forEach((h) => {
@@ -393,6 +442,7 @@ export async function getBoardPosts(
           id: author.id,
           login_name: author.loginName,
         },
+        reply_count: replyCountByPostId.get(post.id) ?? 0,
         created_at: post.createdAt,
         updated_at: post.updatedAt,
       };

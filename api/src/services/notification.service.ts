@@ -1,8 +1,9 @@
-import { and, count, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "../db";
 import {
   notification as notificationTable,
   profile as profileTable,
+  profileOwnership as profileOwnershipTable,
 } from "../drizzle/schema";
 import { AppException } from "../exception";
 import { GENERAL_ERROR_CODE } from "../types/api-responses";
@@ -191,6 +192,111 @@ export async function getNotificationsForProfile(
       has_more: hasMore,
       total_count: totalCount,
     },
+  };
+}
+
+/**
+ * Get recent unread notifications across every profile the user owns.
+ * Powers the console home dashboard — one query covers every community.
+ */
+export async function getRecentNotificationsForUser(
+  userId: string,
+  limit: number = 10,
+) {
+  const ownerships = await db.query.profileOwnership.findMany({
+    where: eq(profileOwnershipTable.userId, userId),
+    columns: { profileId: true },
+  });
+  const profileIds = ownerships.map((o) => o.profileId);
+
+  if (profileIds.length === 0) {
+    return { data: [], total_unread: 0 };
+  }
+
+  const unreadCondition = and(
+    inArray(notificationTable.recipientId, profileIds),
+    isNull(notificationTable.readAt),
+  );
+
+  const [totalUnreadResult, notificationRows] = await Promise.all([
+    db
+      .select({ count: count() })
+      .from(notificationTable)
+      .where(unreadCondition),
+    db.query.notification.findMany({
+      where: unreadCondition,
+      orderBy: [desc(notificationTable.id)],
+      limit,
+      with: {
+        profile_profileId: {
+          with: {
+            profilePictures: { with: { image: true } },
+          },
+        },
+        profile_recipientId: {
+          with: { community: true },
+        },
+        post: true,
+      },
+    }),
+  ]);
+
+  const data = notificationRows
+    .filter(
+      (n) =>
+        n.profile_recipientId &&
+        n.profile_recipientId.deletedAt === null &&
+        n.profile_recipientId.community &&
+        n.profile_recipientId.community.deletedAt === null,
+    )
+    .map((n) => {
+      const sender = n.profile_profileId;
+      const senderPicture = sender?.profilePictures.find(
+        (pp: ProfilePicture) => pp.deletedAt === null,
+      )?.image;
+      const senderProfilePictureUrl = senderPicture
+        ? addImageUrl(senderPicture).url
+        : null;
+
+      const recipient = n.profile_recipientId;
+      // biome-ignore lint/style/noNonNullAssertion: filter above guarantees community exists
+      const community = recipient!.community!;
+
+      return {
+        id: n.id,
+        type: n.type,
+        title: n.title,
+        message: n.message,
+        created_at: new Date(n.createdAt).toISOString(),
+        read_at: n.readAt ? new Date(n.readAt).toISOString() : null,
+        sender: sender
+          ? {
+              id: sender.id,
+              name: sender.name,
+              username: sender.username,
+              profile_picture_url: senderProfilePictureUrl,
+            }
+          : null,
+        recipient_profile: {
+          // biome-ignore lint/style/noNonNullAssertion: filter above guarantees recipient exists
+          id: recipient!.id,
+          // biome-ignore lint/style/noNonNullAssertion: filter above guarantees recipient exists
+          username: recipient!.username,
+        },
+        community: {
+          id: community.id,
+          name: community.name,
+          slug: community.slug,
+          custom_domain: community.customDomain,
+          domain_verified: community.domainVerifiedAt !== null,
+        },
+        post_id: n.postId,
+      };
+    });
+
+  return {
+    data,
+    total_unread: Number(totalUnreadResult[0]?.count ?? 0),
   };
 }
 

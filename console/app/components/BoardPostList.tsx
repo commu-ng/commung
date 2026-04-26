@@ -56,6 +56,7 @@ interface BoardPost {
     id: string;
     login_name: string;
   };
+  reply_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -218,11 +219,11 @@ export function BoardPostList({ boardSlug, hashtags }: BoardPostListProps) {
                       </Button>
                     )}
                   </div>
-                  <CardDescription className="text-xs mt-1">
+                  <CardDescription className="text-xs mt-1 flex items-center gap-1.5 flex-wrap">
                     <span className="font-medium">
                       {post.author.login_name}
                     </span>
-                    <span className="mx-1">•</span>
+                    <span>•</span>
                     <span>
                       {new Date(post.created_at).toLocaleDateString("ko-KR", {
                         year: "numeric",
@@ -234,6 +235,15 @@ export function BoardPostList({ boardSlug, hashtags }: BoardPostListProps) {
                         minute: "2-digit",
                       })}
                     </span>
+                    {post.reply_count > 0 && (
+                      <>
+                        <span>•</span>
+                        <span className="inline-flex items-center gap-0.5">
+                          <MessageSquare className="h-3 w-3" />
+                          {post.reply_count}
+                        </span>
+                      </>
+                    )}
                   </CardDescription>
                   <div className="flex flex-wrap gap-1 items-center mt-1.5">
                     {post.hashtags.map((hashtag) => (

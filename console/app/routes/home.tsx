@@ -1,9 +1,11 @@
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
+  Bell,
   BookOpen,
   Bookmark,
   Bot,
+  Clock,
   ExternalLink,
   ImageIcon,
   LayoutGrid,
@@ -14,6 +16,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
+import MarkdownIt from "markdown-it";
 import { Link } from "react-router";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -67,6 +70,7 @@ interface BoardPost {
   } | null;
   hashtags: { id: string; tag: string }[];
   author: { id: string; login_name: string };
+  reply_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -89,13 +93,15 @@ async function fetchMyCommunities(): Promise<Community[]> {
   return json.data;
 }
 
-async function fetchBoards(): Promise<Board[]> {
-  const res = await api.console.boards.$get();
+async function fetchBoardsWithRecentPosts(): Promise<
+  Array<{ board: Board; posts: BoardPost[] }>
+> {
+  const res = await api.console.boards["recent-posts"].$get();
   if (!res.ok) {
-    throw new Error("Failed to fetch boards");
+    throw new Error("Failed to fetch recent posts");
   }
   const json = await res.json();
-  return json.data;
+  return json.data as unknown as Array<{ board: Board; posts: BoardPost[] }>;
 }
 
 interface CatalogShowcaseEntry {
@@ -113,16 +119,65 @@ async function fetchCatalogShowcase(): Promise<CatalogShowcaseEntry[]> {
   return json.data as unknown as CatalogShowcaseEntry[];
 }
 
-async function fetchBoardPosts(boardSlug: string): Promise<BoardPost[]> {
-  const res = await api.console.board[":board_slug"].posts.$get({
-    param: { board_slug: boardSlug },
-    query: { limit: "5" },
-  });
+interface NotificationItem {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  created_at: string;
+  read_at: string | null;
+  sender: {
+    id: string;
+    name: string;
+    username: string;
+    profile_picture_url: string | null;
+  } | null;
+  recipient_profile: { id: string; username: string };
+  community: {
+    id: string;
+    name: string;
+    slug: string;
+    custom_domain: string | null;
+    domain_verified: boolean;
+  };
+  post_id: string | null;
+}
+
+interface RecentNotificationsResponse {
+  data: NotificationItem[];
+  total_unread: number;
+}
+
+async function fetchRecentNotifications(): Promise<RecentNotificationsResponse> {
+  const res = await api.console.notifications.recent.$get();
   if (!res.ok) {
-    throw new Error("Failed to fetch board posts");
+    throw new Error("Failed to fetch notifications");
   }
-  const json = await res.json();
-  return json.data;
+  return (await res.json()) as unknown as RecentNotificationsResponse;
+}
+
+const notificationMd = new MarkdownIt({ linkify: true, breaks: true });
+
+function communityHostFor(community: NotificationItem["community"]): string {
+  if (community.custom_domain && community.domain_verified) {
+    return community.custom_domain;
+  }
+  return `${community.slug}.${env.domain}`;
+}
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 1) return "방금";
+  if (minutes < 60) return `${minutes}분 전`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}시간 전`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}일 전`;
+  return new Date(iso).toLocaleDateString("ko-KR", {
+    month: "long",
+    day: "numeric",
+  });
 }
 
 function DashboardSkeleton() {
@@ -135,12 +190,27 @@ function DashboardSkeleton() {
   );
 }
 
+const ENDING_SOON_DAYS = 7;
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+function daysUntil(ends_at: string): number {
+  const diff = new Date(ends_at).getTime() - Date.now();
+  return Math.ceil(diff / MS_PER_DAY);
+}
+
+function isEndingSoon(community: Community): boolean {
+  const days = daysUntil(community.ends_at);
+  return days >= 0 && days <= ENDING_SOON_DAYS;
+}
+
 function WelcomeHero({
   userName,
   pendingCount,
+  endingSoonCount,
 }: {
   userName?: string;
   pendingCount: number;
+  endingSoonCount: number;
 }) {
   return (
     <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-card shadow-marsh px-6 sm:px-10 py-9">
@@ -182,6 +252,15 @@ function WelcomeHero({
             >
               <Sparkles className="h-3.5 w-3.5" />
               검토 대기 {pendingCount}건
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          )}
+          {endingSoonCount > 0 && (
+            <Link
+              to="/communities/mine"
+              className="inline-flex items-center gap-2 rounded-full bg-blossom/40 text-blossom-ink px-4 py-2 text-sm font-semibold hover:bg-blossom/60 transition-colors"
+            >
+              <Clock className="h-3.5 w-3.5" />곧 종료 {endingSoonCount}개
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           )}
@@ -280,13 +359,24 @@ function MyCommunitiesGrid({ communities }: { communities: Community[] }) {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <Users className="h-5 w-5 text-foreground/40 m-auto h-full w-full p-3.5" />
+                    <Users className="h-full w-full p-3.5 text-foreground/40" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">
-                    {community.name}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-semibold text-sm truncate">
+                      {community.name}
+                    </p>
+                    {isEndingSoon(community) && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] h-4 px-1.5 py-0 bg-blossom/20 text-blossom-ink border-blossom/40 dark:bg-blossom/15 flex-shrink-0"
+                      >
+                        <Clock className="h-2.5 w-2.5" />
+                        {daysUntil(community.ends_at)}일
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     {community.role === "owner"
                       ? "운영자"
@@ -314,33 +404,122 @@ function MyCommunitiesGrid({ communities }: { communities: Community[] }) {
   );
 }
 
-function LatestBoardPosts() {
-  const { data: boards, isLoading: boardsLoading } = useQuery({
-    queryKey: ["boards"],
-    queryFn: fetchBoards,
+function NotificationsSection() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["notifications-recent"],
+    queryFn: fetchRecentNotifications,
   });
-
-  const postQueries = useQueries({
-    queries: (boards ?? []).map((board) => ({
-      queryKey: ["board-posts-home", board.slug],
-      queryFn: () => fetchBoardPosts(board.slug),
-      enabled: !!boards,
-    })),
-  });
-
-  const isLoading = boardsLoading || postQueries.some((q) => q.isLoading);
 
   if (isLoading) {
     return <Skeleton className="h-48 rounded-3xl" />;
   }
 
-  if (!boards || boards.length === 0) {
+  const notifications = data?.data ?? [];
+  if (notifications.length === 0) {
     return null;
   }
 
-  const boardsWithPosts = boards
-    .map((board, i) => ({ board, posts: postQueries[i]?.data ?? [] }))
-    .filter((entry) => entry.posts.length > 0);
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/15 text-primary shadow-marsh">
+                <Bell className="h-4 w-4" />
+              </span>
+              알림
+              {data && data.total_unread > 0 && (
+                <Badge className="bg-primary/15 text-primary dark:bg-primary/25">
+                  {data.total_unread}
+                </Badge>
+              )}
+            </CardTitle>
+            <CardDescription className="ml-10">
+              모든 커뮤의 새 알림을 한곳에서 확인해요
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {notifications.map((n) => {
+            const host = communityHostFor(n.community);
+            const href = n.post_id
+              ? `https://${host}/posts/${n.post_id}`
+              : `https://${host}/`;
+            return (
+              <a
+                key={n.id}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex gap-3 p-3 rounded-2xl border border-border/60 hover:bg-accent/40 hover:border-primary/30 transition-all"
+              >
+                <div className="flex-shrink-0">
+                  {n.sender?.profile_picture_url ? (
+                    <img
+                      src={n.sender.profile_picture_url}
+                      alt=""
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-mint/40 to-lilac/40 flex items-center justify-center">
+                      <Bell className="h-4 w-4 text-foreground/40" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
+                      {n.title}
+                    </p>
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] h-4 px-1.5 py-0 flex-shrink-0"
+                    >
+                      {n.community.name}
+                    </Badge>
+                  </div>
+                  <div
+                    className="text-xs text-muted-foreground mt-0.5 prose prose-xs max-w-none [&_p]:my-0 [&_p]:leading-relaxed [&_a]:text-primary [&_a:hover]:underline line-clamp-3"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: markdown is sanitized by markdown-it
+                    dangerouslySetInnerHTML={{
+                      __html: notificationMd.render(n.message),
+                    }}
+                  />
+                  <p className="text-[11px] text-muted-foreground/80 mt-1">
+                    {n.sender && (
+                      <>
+                        <span className="font-medium">{n.sender.name}</span>
+                        <span className="mx-1">·</span>
+                      </>
+                    )}
+                    <span>{relativeTime(n.created_at)}</span>
+                  </p>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function LatestBoardPosts() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["boards-recent-posts-home"],
+    queryFn: fetchBoardsWithRecentPosts,
+  });
+
+  if (isLoading) {
+    return <Skeleton className="h-48 rounded-3xl" />;
+  }
+
+  const boardsWithPosts = (data ?? []).filter(
+    (entry) => entry.posts.length > 0,
+  );
 
   if (boardsWithPosts.length === 0) {
     return null;
@@ -403,17 +582,26 @@ function LatestBoardPosts() {
                     <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
                       {post.title}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
                       <span className="font-medium">
                         {post.author.login_name}
                       </span>
-                      <span className="mx-1">·</span>
+                      <span>·</span>
                       <span>
                         {new Date(post.created_at).toLocaleDateString("ko-KR", {
                           month: "long",
                           day: "numeric",
                         })}
                       </span>
+                      {post.reply_count > 0 && (
+                        <>
+                          <span>·</span>
+                          <span className="inline-flex items-center gap-0.5">
+                            <MessageSquare className="h-3 w-3" />
+                            {post.reply_count}
+                          </span>
+                        </>
+                      )}
                     </p>
                     {post.hashtags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1.5">
@@ -602,45 +790,59 @@ function ResourcesAndNews() {
   );
 }
 
-function AuthenticatedHome() {
-  const {
-    data: communities,
-    isLoading,
-    error,
-  } = useQuery({
+function MyCommunitiesSection() {
+  const { data, isLoading, error } = useQuery({
     queryKey: ["communities", "mine"],
     queryFn: fetchMyCommunities,
   });
-  const { user } = useAuth();
 
   if (isLoading) {
-    return <DashboardSkeleton />;
+    return <Skeleton className="h-48 rounded-3xl" />;
   }
 
   if (error) {
     return (
       <Card>
         <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">
-            데이터를 불러오는데 실패했습니다
-          </p>
+          <p className="text-muted-foreground">내 커뮤를 불러오지 못했어요</p>
         </CardContent>
       </Card>
     );
   }
 
-  const communityList = communities || [];
-  const totalPending = communityList
+  return <MyCommunitiesGrid communities={data ?? []} />;
+}
+
+function WelcomeHeroLive({ userName }: { userName?: string }) {
+  const { data } = useQuery({
+    queryKey: ["communities", "mine"],
+    queryFn: fetchMyCommunities,
+  });
+  const communities = data ?? [];
+  const totalPending = communities
     .filter((c) => c.role === "owner" || c.role === "moderator")
     .reduce((sum, c) => sum + (c.pending_application_count || 0), 0);
+  const endingSoonCount = communities.filter(
+    (c) => (c.role === "owner" || c.role === "moderator") && isEndingSoon(c),
+  ).length;
+
+  return (
+    <WelcomeHero
+      userName={userName}
+      pendingCount={totalPending}
+      endingSoonCount={endingSoonCount}
+    />
+  );
+}
+
+function AuthenticatedHome() {
+  const { user } = useAuth();
 
   return (
     <div className="space-y-6">
-      <WelcomeHero
-        userName={user?.login_name ?? undefined}
-        pendingCount={totalPending}
-      />
-      <MyCommunitiesGrid communities={communityList} />
+      <WelcomeHeroLive userName={user?.login_name ?? undefined} />
+      <NotificationsSection />
+      <MyCommunitiesSection />
       <AppsShowcase />
       <LatestBoardPosts />
       <ResourcesAndNews />
@@ -677,6 +879,12 @@ function GuestHero() {
             </Link>
           </Button>
           <Button asChild size="lg" variant="outline" className="rounded-full">
+            <Link to="/communities">
+              <Search className="h-4 w-4" />
+              둘러보기
+            </Link>
+          </Button>
+          <Button asChild size="lg" variant="ghost" className="rounded-full">
             <Link to="/login">로그인</Link>
           </Button>
         </div>

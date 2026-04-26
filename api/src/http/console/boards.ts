@@ -29,6 +29,21 @@ export const consoleBoardsRouter = new Hono<{ Variables: AuthVariables }>()
     return c.json({ data: boards });
   })
 
+  // Get the latest posts across all boards in one batched call.
+  // Replaces the client-side N+1 fan-out from the home page.
+  .get("/boards/recent-posts", optionalAuthMiddleware, async (c) => {
+    const user = c.get("user");
+    const blockedUserIds = user
+      ? await blockService.getBlockedUserIds(user.id)
+      : undefined;
+
+    const data = await boardPostService.getRecentPostsAcrossBoards(
+      5,
+      blockedUserIds,
+    );
+    return c.json({ data });
+  })
+
   // Create a new board (admin only)
   .post(
     "/boards",
