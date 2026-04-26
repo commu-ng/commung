@@ -1,11 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import {
+  Bookmark,
   ChevronDown,
   ChevronUp,
   Compass,
   Hash,
   Plus,
   Search,
+  Sparkles,
   X,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
@@ -23,7 +25,6 @@ import {
   EmptyTitle,
 } from "~/components/ui/empty";
 import { Input } from "~/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { useAuth } from "~/hooks/useAuth";
 import { api } from "~/lib/api-client";
 import type { Route } from "./+types/communities._index";
@@ -77,15 +78,6 @@ async function fetchOngoingCommunities(): Promise<Community[]> {
   return result.data;
 }
 
-async function fetchMyCommunities(): Promise<Community[]> {
-  const res = await api.console.communities.mine.$get();
-  if (!res.ok) {
-    throw new Error("Failed to fetch communities");
-  }
-  const result = await res.json();
-  return result.data;
-}
-
 export default function Communities() {
   const { isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
@@ -110,12 +102,6 @@ export default function Communities() {
   } = useQuery({
     queryKey: ["communities", "ongoing"],
     queryFn: fetchOngoingCommunities,
-  });
-
-  const { data: myCommunities, isLoading: isLoadingMine } = useQuery({
-    queryKey: ["communities", "mine"],
-    queryFn: fetchMyCommunities,
-    enabled: isAuthenticated,
   });
 
   const isLoading = isLoadingRecruiting || isLoadingOngoing;
@@ -180,11 +166,6 @@ export default function Communities() {
   const filteredOngoing = useMemo(
     () => filterCommunities(ongoingCommunities),
     [filterCommunities, ongoingCommunities],
-  );
-
-  const filteredMine = useMemo(
-    () => filterCommunities(myCommunities),
-    [filterCommunities, myCommunities],
   );
 
   const toggleHashtag = (hashtag: string) => {
@@ -273,12 +254,21 @@ export default function Communities() {
         title="마음에 드는 커뮤를 만나봐요"
         description="모집 중인 새 커뮤와 진행 중인 커뮤를 한 자리에서 둘러보세요."
         actions={
-          <Button asChild className="rounded-full">
-            <Link to="/communities/create">
-              <Plus className="h-4 w-4" />
-              커뮤 만들기
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {isAuthenticated && (
+              <Button asChild variant="outline" className="rounded-full">
+                <Link to="/communities/mine">
+                  <Bookmark className="h-4 w-4" />내 커뮤
+                </Link>
+              </Button>
+            )}
+            <Button asChild className="rounded-full">
+              <Link to="/communities/create">
+                <Plus className="h-4 w-4" />
+                커뮤 만들기
+              </Link>
+            </Button>
+          </div>
         }
       >
         <div className="space-y-3">
@@ -356,94 +346,43 @@ export default function Communities() {
         </div>
       </PageHeader>
 
-      <Tabs defaultValue="recruiting" className="w-full">
-        <TabsList className="w-full sm:w-auto justify-start mb-6">
-          <TabsTrigger value="recruiting" className="flex-1 sm:flex-none">
+      <div className="space-y-10">
+        <section>
+          <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-mint/40 text-mint-ink shadow-marsh">
+              <Sparkles className="h-3.5 w-3.5" />
+            </span>
             모집 중
-            <span className="ml-1.5 text-xs bg-mint/40 text-mint-ink px-1.5 py-0.5 rounded-full">
-              {filteredRecruiting.length}
+            <span className="text-xs font-normal text-muted-foreground">
+              {filteredRecruiting.length}개
             </span>
-          </TabsTrigger>
-          <TabsTrigger value="ongoing" className="flex-1 sm:flex-none">
-            진행 중
-            <span className="ml-1.5 text-xs bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">
-              {filteredOngoing.length}
-            </span>
-          </TabsTrigger>
-          {isAuthenticated && (
-            <TabsTrigger value="mine" className="flex-1 sm:flex-none">
-              내 커뮤
-              <span className="ml-1.5 text-xs bg-blossom/40 text-blossom-ink px-1.5 py-0.5 rounded-full">
-                {isLoadingMine ? "..." : filteredMine.length}
-              </span>
-            </TabsTrigger>
-          )}
-        </TabsList>
-
-        <TabsContent value="recruiting">
+          </h2>
           {filteredRecruiting.length === 0
             ? renderEmpty(
                 "모집 중인 커뮤가 없어요",
                 "새로운 커뮤가 곧 모집을 시작할 예정이에요.",
               )
             : renderGrid(filteredRecruiting)}
-        </TabsContent>
+        </section>
 
-        <TabsContent value="ongoing">
+        <section>
+          <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/15 text-primary shadow-marsh">
+              <Compass className="h-3.5 w-3.5" />
+            </span>
+            진행 중
+            <span className="text-xs font-normal text-muted-foreground">
+              {filteredOngoing.length}개
+            </span>
+          </h2>
           {filteredOngoing.length === 0
             ? renderEmpty(
                 "진행 중인 커뮤가 없어요",
                 "지금은 진행 중인 커뮤가 없어요.",
               )
             : renderGrid(filteredOngoing)}
-        </TabsContent>
-
-        {isAuthenticated && (
-          <TabsContent value="mine">
-            {isLoadingMine ? (
-              <LoadingState message="내 커뮤를 불러오는 중..." />
-            ) : filteredMine.length === 0 ? (
-              <Empty className="rounded-3xl border border-border/70 bg-card/70 shadow-marsh py-12">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <Search />
-                  </EmptyMedia>
-                  <EmptyTitle className="font-display">
-                    {hasActiveFilters
-                      ? "검색 결과가 없어요"
-                      : "참여 중인 커뮤가 없어요"}
-                  </EmptyTitle>
-                  <EmptyDescription>
-                    {hasActiveFilters
-                      ? "다른 검색어나 해시태그를 시도해보세요."
-                      : "새로운 커뮤를 만들거나 둘러보세요!"}
-                  </EmptyDescription>
-                </EmptyHeader>
-                {hasActiveFilters ? (
-                  <Button
-                    variant="outline"
-                    onClick={clearFilters}
-                    className="rounded-full"
-                  >
-                    필터 초기화
-                  </Button>
-                ) : (
-                  <div className="flex gap-2">
-                    <Button asChild className="rounded-full">
-                      <Link to="/communities/create">
-                        <Plus className="h-4 w-4" />
-                        커뮤 만들기
-                      </Link>
-                    </Button>
-                  </div>
-                )}
-              </Empty>
-            ) : (
-              renderGrid(filteredMine)
-            )}
-          </TabsContent>
-        )}
-      </Tabs>
+        </section>
+      </div>
     </div>
   );
 }
