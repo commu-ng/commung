@@ -146,7 +146,6 @@ commu-ng/
 │   └── package.json
 │
 ├── Caddyfile              # Local development proxy
-├── docker-compose.yml     # Docker setup
 ├── pnpm-workspace.yaml    # Workspace configuration
 └── package.json           # Root package.json
 ```

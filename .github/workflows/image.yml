@@ -1,0 +1,100 @@
+# Builds commu-ng's three images for every commit on main and pushes them to
+# GHCR as ghcr.io/commu-ng/{api,console,app}:<commit>, which is what a deploy
+# has the server pull. Deploys are run from the infra repository
+# (`mise run deploy commu-ng`, apps/commu-ng there), which waits for the last
+# push below and releases all three together, blue/green.
+name: Image
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Only main's newest commit is ever deployed, so a build that a newer push has
+# overtaken is not worth finishing.
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io/commu-ng
+
+jobs:
+  build:
+    # The server is arm64 too, so this builds natively rather than under QEMU.
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Each a target of the one Dockerfile; the dependency layers they share
+      # are built once and come from the cache for the others. No provenance
+      # attestation, so what the server pulls is one plain arm64 manifest.
+      - name: Build and push the api image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: api
+          platforms: linux/arm64
+          tags: ${{ env.REGISTRY }}/api:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          provenance: false
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # The VITE_* are baked into the bundle, so they are the production
+      # server's here.
+      - name: Build and push the console image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: console
+          platforms: linux/arm64
+          build-args: |
+            VITE_DOMAIN=commu.ng
+            VITE_API_BASE_URL=https://api.commu.ng
+            VITE_SENTRY_DSN=https://a26d4d096d25426361e90c9d33458658@o4504757655764992.ingest.us.sentry.io/4510068295860224
+          tags: ${{ env.REGISTRY }}/console:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          provenance: false
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # The last push: a deploy waits for this step by name, not for the run,
+      # so renaming it breaks that.
+      - name: Build and push the app image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: app
+          platforms: linux/arm64
+          build-args: |
+            VITE_DOMAIN=limeburst.net
+            VITE_API_BASE_URL=https://api.commu.ng
+            VITE_SENTRY_DSN=https://b8b067bcb03256211d74251f057afc78@o4504757655764992.ingest.us.sentry.io/4510068303069184
+          tags: ${{ env.REGISTRY }}/app:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          provenance: false
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
