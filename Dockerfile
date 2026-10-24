@@ -106,4 +106,7 @@ COPY api/src/ ./api/src/
 
 EXPOSE 3000
 WORKDIR /app/api
-CMD ["pnpm", "exec", "tsx", "src/index.ts"]
+# Node itself rather than through pnpm, which corepack would download at every
+# start for api/package.json's packageManager, and rather than tsx's shell
+# shim, so that node is what receives SIGTERM.
+CMD ["node", "--import", "tsx", "src/index.ts"]
