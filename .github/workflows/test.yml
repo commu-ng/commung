@@ -44,3 +44,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: node scripts/deploy-naru.mjs dist commung
+      # The same build is the 커뮹! template's next version, offered to every
+      # site that installed it. NARU_TEMPLATE_ID (a repository variable) is
+      # the template's ID, from its edit page on naru.pub; the template's
+      # GitHub source must be naru-pub/commung, main.
+      - if: vars.NARU_TEMPLATE_ID != ''
+        uses: naru-pub/naru/actions/deploy@main
+        with:
+          dir: dist
+          template: ${{ vars.NARU_TEMPLATE_ID }}
