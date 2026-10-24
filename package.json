@@ -12,11 +12,5 @@
   "devDependencies": {
     "@biomejs/biome": "2.2.5",
     "typescript": "^5.9.3"
-  },
-  "pnpm": {
-    "overrides": {
-      "typescript": "^5.9.3",
-      "hono": "^4.12.8"
-    }
   }
 }
