@@ -15,7 +15,10 @@
 // uploads (_naru_member_roles, _naru_uploads; tables here, which a test
 // fills with site.setRoles and site.upload); ctx.media.types; guest
 // passwords (hashed here as a plain marker, not a real hash); a
-// statement's limits (100 bound values, 1,000 rows). What it does not: Naru's checks on names, a call's limits,
+// statement's limits (100 bound values, 1,000 rows) and a call's 100
+// operations, each ctx.sql statement and Math.random() counted as Naru counts
+// them (site.operations is the last call's count). What it does not:
+// Naru's checks on names, a call's other limits,
 // and the 3-second statement time.
 import { DatabaseSync } from "node:sqlite";
 import { readdir, readFile } from "node:fs/promises";
@@ -234,6 +237,8 @@ export async function testSite({
      * only from a mutation that returned. { members, title, body, path }.
      */
     notifications: [],
+    /** The last call's operations. */
+    operations: 0,
     /**
      * Records an upload as Naru Media does once it is finished (member null:
      * the owner's), and answers its address.
@@ -274,9 +279,39 @@ export async function testSite({
     },
   };
 
+  // Naru's limit: 100 operations a call, each ctx.sql statement and each
+  // Math.random() (which Naru answers on the host) counted.
+  const MATH_RANDOM = Math.random;
+  function operation() {
+    site.operations += 1;
+    if (site.operations > 100)
+      throw new Error("Function failed: more than 100 database operations.");
+  }
+  /** Runs `body` as one call: its operations counted from 0. */
+  async function counted(body) {
+    site.operations = 0;
+    Math.random = () => {
+      operation();
+      return MATH_RANDOM();
+    };
+    try {
+      return await body();
+    } finally {
+      Math.random = MATH_RANDOM;
+    }
+  }
+
   /** `ctx` for one call; `who` is { member } or { owner: true }, else a visitor. */
   function context(kind, { member = null, owner = false } = {}, outbox = []) {
-    const sql = sqlOf(db, kind);
+    const run = sqlOf(db, kind);
+    const sql = (...args) => {
+      try {
+        operation();
+      } catch (error) {
+        return Promise.reject(error);
+      }
+      return run(...args);
+    };
     const passwords = {
       verify: async (password, hash) => hash === `hash:${password}`,
       ...(kind === "mutation"
@@ -343,12 +378,16 @@ export async function testSite({
     const input = JSON.parse(JSON.stringify(args ?? null));
     if (kind === "query")
       return JSON.parse(
-        JSON.stringify((await fn(context(kind, who), input)) ?? null),
+        JSON.stringify(
+          (await counted(() => fn(context(kind, who), input))) ?? null,
+        ),
       );
     db.exec("BEGIN");
     try {
       const outbox = [];
-      const result = await fn(context(kind, who, outbox), input);
+      const result = await counted(() =>
+        fn(context(kind, who, outbox), input),
+      );
       db.exec("COMMIT");
       site.notifications.push(...outbox);
       return JSON.parse(JSON.stringify(result ?? null));

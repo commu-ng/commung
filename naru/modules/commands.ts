@@ -1,14 +1,11 @@
-// Slash commands in posts (commung's builtin-commands and their dispatch):
-// a post that is just `/name args` runs the installed app's command inside
-// the posting mutation, so the shop commands change balances in the same
-// transaction, and answers the reply its bot profile posts. The posts area
-// calls `commandReply` after a post is published and writes the reply.
-import {
-  type CommandRole,
-  listEnabledCommands,
-  requiredRoleOf,
-} from "./apps.js";
-import type { MutationCtx } from "./core.js";
+// Slash commands in posts (commung's builtin-commands and their dispatch),
+// built in and always on: a post that is just `/name args` runs the command
+// inside the posting mutation, so the shop commands change balances in the
+// same transaction, and answers the reply the community's bot profile
+// (@bot) posts. The posts area calls `commandReply` after a post is
+// published and writes the reply.
+import { type MutationCtx, uuidv7 } from "./core.js";
+import { randomInt } from "./random.js";
 import {
   consumeItem,
   getCurrencyByName,
@@ -37,6 +34,45 @@ interface CommandInput {
 }
 
 type Handler = (ctx: MutationCtx, input: CommandInput) => Promise<string>;
+
+export type CommandRole = "owner" | "moderator";
+
+/** The built-in commands, as the composer suggests them and /help lists them. */
+export const BUILTIN_COMMANDS: readonly {
+  name: string;
+  description: string;
+  requiredRole?: CommandRole;
+}[] = [
+  {
+    name: "roll",
+    description:
+      "주사위 굴리기: 3d6, 1d20+5, 2d20kh1 (어드밴티지), 4d6dl1 (최저값 버림).",
+  },
+  { name: "coin", description: "동전을 던져 앞면/뒷면을 결정합니다." },
+  {
+    name: "choose",
+    description:
+      "옵션 중 하나를 무작위로 선택합니다 (쉼표 또는 공백으로 구분).",
+  },
+  { name: "help", description: "사용 가능한 명령어 목록을 보여줍니다." },
+  { name: "balance", description: "내 잔액을 확인합니다." },
+  { name: "items", description: "판매 중인 상품 목록을 봅니다." },
+  {
+    name: "buy",
+    description: "상품을 구매합니다. 사용법: /buy <상품 이름>",
+  },
+  { name: "inventory", description: "보유 중인 상품 목록을 봅니다." },
+  {
+    name: "use",
+    description:
+      "보유한 상품을 사용/꺼내 보입니다. 소모품은 1개 차감됩니다. 사용법: /use <상품 이름>",
+  },
+  {
+    name: "grant",
+    description: "소유자 전용. 사용법: /grant <사용자명> <금액> <통화> [사유]",
+    requiredRole: "owner",
+  },
+];
 
 const SLASH_COMMAND_PATTERN = /^\/([a-z][a-z0-9_-]{0,30})(?:\s+([\s\S]*))?$/i;
 
@@ -106,8 +142,6 @@ function parseDice(input: string): ParsedRoll | string {
   return { count, sides, modifier, constant, raw: trimmed };
 }
 
-/** 0 to n - 1 (Math.random: QuickJS has no crypto). */
-const randomInt = (n: number) => Math.floor(Math.random() * n);
 
 function applyModifier(rolls: number[], modifier: ParsedRoll["modifier"]) {
   if (!modifier) return { kept: rolls, dropped: [] as number[] };
@@ -181,27 +215,23 @@ function itemNotFound(name: string) {
 }
 
 const HANDLERS: Record<string, Handler> = {
-  "dice.roll": async (_ctx, { args }) => {
+  roll: async (_ctx, { args }) => {
     const parsed = parseDice(args);
     return typeof parsed === "string" ? parsed : rollDice(parsed);
   },
-  "coin.flip": async () => `🪙 ${Math.random() < 0.5 ? "앞면" : "뒷면"}`,
-  "choose.pick": async (_ctx, { args }) => {
+  coin: async () => `🪙 ${randomInt(2) === 0 ? "앞면" : "뒷면"}`,
+  choose: async (_ctx, { args }) => {
     const options = chooseOptions(args);
     if (!options.length) return CHOOSE_USAGE;
     return `🎯 ${options[randomInt(options.length)]}`;
   },
-  "help.list": async (ctx) => {
-    const commands = await listEnabledCommands(ctx);
-    if (!commands.length) return "사용 가능한 명령어가 없습니다.";
-    const lines = commands.map((cmd) =>
-      cmd.description
-        ? `- \`/${cmd.name}\` — ${cmd.description}`
-        : `- \`/${cmd.name}\``,
+  help: async () => {
+    const lines = BUILTIN_COMMANDS.map(
+      (cmd) => `- \`/${cmd.name}\` — ${cmd.description}`,
     );
     return `**사용 가능한 명령어**\n\n${lines.join("\n")}`;
   },
-  "shop.balance": async (ctx, { trigger }) => {
+  balance: async (ctx, { trigger }) => {
     const balances = await listBalances(ctx, trigger.authorProfileId);
     if (!balances.length) return "잔액이 없습니다.";
     const lines = balances.map(
@@ -210,7 +240,7 @@ const HANDLERS: Record<string, Handler> = {
     );
     return `**잔액**\n\n${lines.join("\n")}`;
   },
-  "shop.items": async (ctx) => {
+  items: async (ctx) => {
     const items = await listItems(ctx);
     if (!items.length) return "판매 중인 상품이 없습니다.";
     const lines = items.map((i) => {
@@ -223,7 +253,7 @@ const HANDLERS: Record<string, Handler> = {
     });
     return `**상점**\n\n${lines.join("\n")}`;
   },
-  "shop.buy": async (ctx, { args, trigger }) => {
+  buy: async (ctx, { args, trigger }) => {
     const name = args.trim();
     if (!name) return "사용법: `/buy <상품 이름>`";
     return await orShopMessage(async () => {
@@ -237,7 +267,7 @@ const HANDLERS: Record<string, Handler> = {
       return `🛒 **${item.name}** 구매 완료!`;
     });
   },
-  "shop.inventory": async (ctx, { trigger }) => {
+  inventory: async (ctx, { trigger }) => {
     const inventory = await listInventory(ctx, trigger.authorProfileId);
     if (!inventory.length) return "보유 중인 상품이 없습니다.";
     const lines = inventory.map(
@@ -245,7 +275,7 @@ const HANDLERS: Record<string, Handler> = {
     );
     return `**보유 상품**\n\n${lines.join("\n")}`;
   },
-  "shop.use": async (ctx, { args, trigger }) => {
+  use: async (ctx, { args, trigger }) => {
     const name = args.trim();
     if (!name) return "사용법: `/use <상품 이름>`";
     return await orShopMessage(async () => {
@@ -276,7 +306,7 @@ const HANDLERS: Record<string, Handler> = {
       return content;
     });
   },
-  "shop_admin.grant": async (ctx, { args, trigger }) => {
+  grant: async (ctx, { args, trigger }) => {
     const usage = "사용법: `/grant <사용자명> <금액> <통화> [사유]`";
     const match = args.trim().match(/^(\S+)\s+(\d+)\s+(\S+)(?:\s+([\s\S]+))?$/);
     if (!match) return usage;
@@ -312,10 +342,38 @@ function roleSatisfies(actor: string | null, required: CommandRole) {
   return actor === "moderator" && required === "moderator";
 }
 
+const BOT_NAME = "봇";
+const BOT_USERNAME = "bot";
+
 /**
- * The reply a command in `trigger` answers with, as the installed app's bot
- * profile, or null when the post holds no command. The caller writes the
- * reply as a post in reply to `trigger.id`.
+ * The community's bot profile, which posts every command's reply: the one
+ * the settings name, or a new one (@bot, or @bot_<n> when a member has
+ * @bot) that no member owns.
+ */
+async function botProfileId(ctx: MutationCtx): Promise<string> {
+  const { rows } = await ctx.sql<{ id: string }>`
+    SELECT p.id FROM settings s JOIN profiles p ON p.id = s.command_bot_profile_id
+    WHERE s.id = 1 AND p.deleted_at IS NULL`;
+  if (rows[0]) return rows[0].id;
+  const { rows: taken } = await ctx.sql<{ username: string }>`
+    SELECT lower(username) AS username FROM profiles
+    WHERE deleted_at IS NULL AND (lower(username) = ${BOT_USERNAME}
+      OR lower(username) GLOB ${`${BOT_USERNAME}_[0-9]*`})`;
+  const used = new Set(taken.map((row) => row.username));
+  let username = BOT_USERNAME;
+  for (let n = 2; used.has(username); n++) username = `${BOT_USERNAME}_${n}`;
+  const id = uuidv7(ctx.now);
+  await ctx.sql`
+    INSERT INTO profiles (id, name, username, is_primary, activated_at, created_at, updated_at)
+    VALUES (${id}, ${BOT_NAME}, ${username}, 0, ${ctx.now}, ${ctx.now}, ${ctx.now})`;
+  await ctx.sql`UPDATE settings SET command_bot_profile_id = ${id} WHERE id = 1`;
+  return id;
+}
+
+/**
+ * The reply a command in `trigger` answers with, as the community's bot
+ * profile, or null when the post holds no built-in command. The caller
+ * writes the reply as a post in reply to `trigger.id`.
  */
 export async function commandReply(
   ctx: MutationCtx,
@@ -323,32 +381,20 @@ export async function commandReply(
 ): Promise<{ authorProfileId: string; content: string } | null> {
   const parsed = parseSlashCommand(trigger.content);
   if (!parsed) return null;
-  const { rows } = await ctx.sql<{
-    handler_builtin_id: string;
-    enabled: number;
-    profile_id: string;
-  }>`
-    SELECT c.handler_builtin_id, c.enabled, a.profile_id
-    FROM bot_commands c JOIN installed_apps a ON a.id = c.installed_app_id
-    WHERE lower(c.name) = ${parsed.name} AND c.deleted_at IS NULL
-      AND a.deleted_at IS NULL`;
-  const command = rows[0];
-  if (!command || command.enabled !== 1) return null;
-  const handler = Object.hasOwn(HANDLERS, command.handler_builtin_id)
-    ? HANDLERS[command.handler_builtin_id]
-    : undefined;
+  const command = BUILTIN_COMMANDS.find((cmd) => cmd.name === parsed.name);
+  if (!command) return null;
+  const handler = HANDLERS[command.name];
   if (!handler) return null;
-  const authorProfileId = command.profile_id;
+  const authorProfileId = await botProfileId(ctx);
 
-  const requiredRole = requiredRoleOf(command.handler_builtin_id);
-  if (requiredRole) {
+  if (command.requiredRole) {
     let role: string | null = null;
     if (trigger.actorMember) {
       const { rows: members } = await ctx.sql<{ role: string }>`
         SELECT role FROM members WHERE member = ${trigger.actorMember}`;
       role = members[0]?.role ?? null;
     }
-    if (!roleSatisfies(role, requiredRole))
+    if (!roleSatisfies(role, command.requiredRole))
       return {
         authorProfileId,
         content: "이 명령어를 사용할 권한이 없습니다.",

@@ -1,10 +1,11 @@
 // Making and managing bots and their tokens (the console's community bots,
 // owner only). A token is shown once, when it is made.
 import { requireOwner } from "../modules/access.js";
-import { botProfileFields, createBotProfile } from "../modules/apps.js";
 import {
   type BotRow,
   botJson,
+  botProfileFields,
+  createBotProfile,
   newSecret,
   requireBot,
 } from "../modules/bots.js";

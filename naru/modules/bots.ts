@@ -4,15 +4,20 @@
 // ctx.passwords.verify under the key `bot-token:<token id>`, which Naru
 // allows ten wrong secrets an hour.
 import { settingsOf } from "./community.js";
+import { hostWord } from "./random.js";
 import {
   type Ctx,
   denied,
+  invalid,
   iso,
   list,
   type MutationCtx,
   notFound,
   type SqlValue,
+  uuidv7,
 } from "./core.js";
+
+const USERNAME_PATTERN = /^[a-zA-Z0-9_]+$/;
 
 // ---------- Bots and tokens ----------
 
@@ -90,12 +95,81 @@ export async function listTokens(ctx: Ctx, botId: string) {
 const ALPHABET =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-/** A token's secret: 40 random letters and digits (Math.random: no crypto in QuickJS). */
+/**
+ * A token's secret: 40 letters and digits from 256 bits the host draws with
+ * crypto.getRandomValues (8 of the call's operations).
+ */
 export function newSecret(): string {
+  let n = 0n;
+  for (let i = 0; i < 8; i++) n = (n << 32n) | BigInt(hostWord());
+  const base = BigInt(ALPHABET.length);
   let out = "";
-  for (let i = 0; i < 40; i++)
-    out += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+  for (let i = 0; i < 40; i++) {
+    out += ALPHABET[Number(n % base)];
+    n /= base;
+  }
   return out;
+}
+
+// ---------- Bot profiles ----------
+
+/**
+ * Makes an active, non-primary profile owned by `member`, for a bot to post
+ * as (commung's createBotProfile).
+ */
+export async function createBotProfile(
+  ctx: MutationCtx,
+  name: string,
+  username: string,
+  member: string,
+) {
+  const { rows: taken } = await ctx.sql<{ id: string }>`
+    SELECT id FROM profiles
+    WHERE lower(username) = ${username.toLowerCase()} AND deleted_at IS NULL`;
+  if (taken[0])
+    invalid(ctx, "이 커뮤에서 이미 사용 중인 사용자명입니다", "username_taken");
+  const profileId = uuidv7(ctx.now);
+  const { rows } = await ctx.sql<{
+    id: string;
+    name: string;
+    username: string;
+    bio: string | null;
+    created_at: number;
+    updated_at: number;
+    activated_at: number;
+  }>`
+    INSERT INTO profiles (id, name, username, is_primary, activated_at, created_at, updated_at)
+    VALUES (${profileId}, ${name}, ${username}, 0, ${ctx.now}, ${ctx.now}, ${ctx.now})
+    RETURNING id, name, username, bio, created_at, updated_at, activated_at`;
+  await ctx.sql`
+    INSERT INTO profile_owners (profile_id, member, role, created_at, created_by)
+    VALUES (${profileId}, ${member}, 'owner', ${ctx.now}, ${member})`;
+  const profile = rows[0];
+  return {
+    id: profile.id,
+    username: profile.username,
+    name: profile.name,
+    bio: profile.bio,
+    created_at: iso(profile.created_at),
+    updated_at: iso(profile.updated_at),
+    activatedAt: iso(profile.activated_at),
+  };
+}
+
+/** A bot profile's name and username, checked as the console's schemas did. */
+export function botProfileFields(ctx: Ctx, a: Record<string, unknown>) {
+  const name = a.profile_name;
+  if (typeof name !== "string" || name.length < 1 || name.length > 100)
+    invalid(ctx, "프로필 이름은 1~100자여야 합니다.");
+  const username = a.profile_username;
+  if (
+    typeof username !== "string" ||
+    username.length < 1 ||
+    username.length > 50 ||
+    !USERNAME_PATTERN.test(username)
+  )
+    invalid(ctx, "사용자명은 영문, 숫자, 밑줄(_)로 50자 이하여야 합니다.");
+  return { name, username };
 }
 
 // ---------- The bot API's caller ----------

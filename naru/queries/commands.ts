@@ -1,17 +1,14 @@
 // The slash commands members can use (commung's GET /app/commands), for the
-// composer's suggestions.
+// composer's suggestions: the built-in ones, always on.
 import { requireMembership } from "../modules/access.js";
-import { listEnabledCommands } from "../modules/apps.js";
+import { BUILTIN_COMMANDS } from "../modules/commands.js";
 import type { QueryCtx } from "../modules/core.js";
 
 export async function list(ctx: QueryCtx) {
   await requireMembership(ctx);
-  return (await listEnabledCommands(ctx)).map((row) => ({
-    id: row.id,
-    name: row.name,
-    description: row.description,
-    handlerBuiltinId: row.handler_builtin_id,
-    installedAppId: row.installed_app_id,
-    builtinId: row.builtin_id,
+  return BUILTIN_COMMANDS.map((cmd) => ({
+    id: cmd.name,
+    name: cmd.name,
+    description: cmd.description,
   }));
 }

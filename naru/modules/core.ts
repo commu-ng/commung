@@ -5,6 +5,7 @@ import type {
   QueryCtx,
   SqlValue,
 } from "../../types/functions";
+import { randomInt } from "./random.js";
 
 export type { MutationCtx, QueryCtx, SqlValue };
 export type Ctx = QueryCtx | MutationCtx;
@@ -13,14 +14,14 @@ export type Row = Record<string, SqlValue>;
 const HEX = "0123456789abcdef";
 const randomHex = (length: number) => {
   let out = "";
-  for (let i = 0; i < length; i++) out += HEX[Math.floor(Math.random() * 16)];
+  for (let i = 0; i < length; i++) out += HEX[randomInt(16)];
   return out;
 };
 
-/** A UUIDv7 for a new row, from the call's time and Math.random. */
+/** A UUIDv7 for a new row, from the call's time and random bits. */
 export function uuidv7(now: number): string {
   const time = Math.floor(now).toString(16).padStart(12, "0").slice(-12);
-  const variant = HEX[8 + Math.floor(Math.random() * 4)];
+  const variant = HEX[8 + randomInt(4)];
   return `${time.slice(0, 8)}-${time.slice(8, 12)}-7${randomHex(3)}-${variant}${randomHex(3)}-${randomHex(12)}`;
 }
 

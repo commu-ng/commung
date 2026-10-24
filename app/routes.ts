@@ -20,8 +20,6 @@ export default [
   route("/messages/:username", "routes/messages.$username.tsx"),
   route("/group-chats/:group_chat_id", "routes/group-chats.$group_chat_id.tsx"),
   route("/shop", "routes/shop.tsx"),
-  route("/apps", "routes/apps.tsx"),
-  route("/apps/:builtinId", "routes/apps.$builtinId.tsx"),
   route("/boards", "routes/boards.tsx"),
   route("/boards/:slug", "routes/boards.$slug.tsx"),
   route("/boards/:slug/:postId", "routes/boards.$slug.$postId.tsx"),
@@ -39,7 +37,6 @@ export default [
   route("/admin/boards", "routes/admin.boards.tsx"),
   route("/admin/shop", "routes/admin.shop.tsx"),
   route("/admin/bots", "routes/admin.bots.tsx"),
-  route("/admin/apps", "routes/admin.apps.tsx"),
   route("/:username/:post_id", "routes/$username.$post_id.tsx"),
   route("/:username", "routes/$username.tsx"),
 ] satisfies RouteConfig;

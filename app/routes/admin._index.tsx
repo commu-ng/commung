@@ -3,7 +3,6 @@
 // sections (commung's console community page for its staff).
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AppWindow,
   BarChart3,
   Bot,
   CheckCircle,
@@ -112,12 +111,6 @@ const SECTIONS: {
     icon: Bot,
     title: "봇",
     description: "커뮤의 봇을 관리합니다",
-  },
-  {
-    to: "/admin/apps",
-    icon: AppWindow,
-    title: "앱",
-    description: "커뮤에 설치한 앱을 관리합니다",
   },
 ];
 

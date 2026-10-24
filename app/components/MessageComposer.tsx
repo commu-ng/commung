@@ -134,7 +134,6 @@ export function MessageComposer({
     id: string;
     name: string;
     description: string | null;
-    builtinId: string;
   };
   const [showSlashDropdown, setShowSlashDropdown] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");

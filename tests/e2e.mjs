@@ -88,6 +88,16 @@ try {
   }, alice.headers);
   console.log("ok alice posted over the API");
 
+  const coin = await call("mutate", "posts:create", { profile_id: aliceProfile, content: "/coin" }, alice.headers);
+  const replies = await call("query", "posts:replies", { post_id: coin.id, profile_id: aliceProfile }, alice.headers);
+  assert.match(JSON.stringify(replies), /🪙 (앞면|뒷면)/);
+  assert.match(JSON.stringify(replies), /"username":"bot"/);
+  console.log("ok /coin is answered by the community's bot");
+  const dice = await call("mutate", "posts:create", { profile_id: aliceProfile, content: "/roll 1000d6" }, alice.headers);
+  const rolled = await call("query", "posts:replies", { post_id: dice.id, profile_id: aliceProfile }, alice.headers);
+  assert.match(JSON.stringify(rolled), /🎲 1000d6/);
+  console.log("ok a thousand dice fit in one call");
+
   // Pages: a visitor, alice and the owner each load theirs.
   const visitor = await person(null);
   await visitor.goto(naru.url("/"));
@@ -115,7 +125,7 @@ try {
   await bossPage.goto(naru.url("/notifications"));
   await bossPage.getByText("앨리스").first().waitFor({ timeout: 15000 });
   console.log("ok the owner was notified of the mention");
-  for (const path of ["/admin", "/admin/applications", "/admin/members", "/admin/settings", "/admin/analytics", "/admin/boards", "/admin/shop", "/admin/bots", "/admin/apps"]) {
+  for (const path of ["/admin", "/admin/applications", "/admin/members", "/admin/settings", "/admin/analytics", "/admin/boards", "/admin/shop", "/admin/bots"]) {
     await bossPage.goto(naru.url(path));
     await bossPage.waitForLoadState("networkidle");
   }

@@ -42,6 +42,9 @@ naru-dev, from a Naru checkout's `control-plane/`:
     `requireUnmuted`, `membersOfProfiles` (for `ctx.notify`).
   - `community.ts` (the settings row), `profiles.ts` (`profileJson`,
     `profilesById`), `images.ts` (`imageJson`, `ownImages`, `imagesById`).
+- Slash commands are built in and always on (`modules/commands.ts`): a
+  post that is just `/name args` gets a reply from the community's bot
+  profile (`settings.command_bot_profile_id`, made at the first command).
 - `routes.json`/`routes.ts` answer every page address with `index.html`
   (the SPA); `assets/` and the other files are served as they are.
 
@@ -85,8 +88,11 @@ Korean messages; pages show `error.message` (`errorMessage()` in
 
 ## What Naru limits
 
-- A call makes at most 100 SQL statements, binds 100 values per
-  statement, returns 1,000 rows per statement.
+- A call makes at most 100 operations: each `ctx.sql` statement, and
+  each `Math.random()`, which Naru answers on the host. Site code takes
+  its randomness from `modules/random.ts`: a generator seeded once per
+  call with 128 host bits for IDs and dice, and host bits directly for
+  bot token secrets. A statement binds 100 values and returns 1,000 rows.
 - A member makes 30 mutations a minute; queries 600 a minute.
 - Members upload 30 files an hour; the site holds 250 MiB and 10,000 files
   of media, and 100 MiB of tables.

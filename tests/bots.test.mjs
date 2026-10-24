@@ -1,21 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { as, community, refusal, VISITOR } from "./helpers.mjs";
-
-const install = (site, builtin, extra = {}) => {
-  const app = {
-    dice: ["DiceBot", "dicebot"],
-    help: ["Help", "help"],
-    coin: ["CoinBot", "coinbot"],
-    shop: ["ShopBot", "shopbot"],
-    shop_admin: ["ShopAdmin", "shopadmin"],
-  }[builtin];
-  return site.mutate(
-    "apps:adminInstall",
-    { builtin_id: builtin, profile_name: app[0], profile_username: app[1], ...extra },
-    as("m-owner"),
-  );
-};
+import { addProfile, as, community, refusal, VISITOR } from "./helpers.mjs";
 
 /** Posts as a member's profile and answers the reply a command left, or null. */
 async function post(site, member, profile, content) {
@@ -29,74 +14,47 @@ async function post(site, member, profile, content) {
   return replies[0] ?? null;
 }
 
-test("the catalog is public; installing makes the app's bot profile and commands", async () => {
+test("the built-in commands are listed for members, and always on", async () => {
   const { site } = await community();
-  const catalog = await site.query("apps:catalog", null, VISITOR);
-  assert.ok(catalog.some((app) => app.builtin_id === "shop"));
-  assert.equal(await refusal(site.query("apps:catalogApp", { builtin_id: "nope" }, VISITOR)), "not_found");
-
-  assert.equal(
-    await refusal(
-      site.mutate("apps:adminInstall", { builtin_id: "dice", profile_name: "D", profile_username: "d" }, as("m-alice")),
-    ),
-    "not_owner",
-  );
-  const result = await install(site, "dice", { command_overrides: { roll: { name: "r" } } });
-  assert.equal(result.profile.username, "dicebot");
-  assert.deepEqual(result.commands.map((c) => c.name), ["r"]);
-  assert.deepEqual(
-    site.rows("SELECT member, role FROM profile_owners WHERE profile_id = ?", result.profile.id),
-    [{ member: "m-owner", role: "owner" }],
-  );
-  assert.equal(await refusal(install(site, "dice")), "duplicate_entry");
-  // A command name another app holds is refused, and so is a taken username.
-  assert.equal(
-    await refusal(install(site, "coin", { command_overrides: { coin: { name: "r" } } })),
-    "duplicate_entry",
-  );
-  assert.equal(
-    await refusal(
-      site.mutate("apps:adminInstall", { builtin_id: "coin", profile_name: "C", profile_username: "ALICE" }, as("m-owner")),
-    ),
-    "username_taken",
-  );
-
-  const apps = await site.query("apps:list", null, as("m-alice"));
-  assert.deepEqual(apps.map((a) => [a.builtin_id, a.commands.map((c) => c.name)]), [["dice", ["r"]]]);
-  assert.equal((await site.query("apps:get", { builtin_id: "dice" }, as("m-alice"))).profile.username, "dicebot");
-  assert.deepEqual((await site.query("commands:list", null, as("m-bob"))).map((c) => c.name), ["r"]);
-
-  const detail = await site.query("apps:adminGet", { install_id: result.install.id }, as("m-owner"));
-  const command = detail.commands[0];
-  await site.mutate(
-    "apps:adminUpdateCommand",
-    { install_id: result.install.id, command_id: command.id, enabled: false },
-    as("m-owner"),
-  );
-  assert.deepEqual(await site.query("commands:list", null, as("m-bob")), []);
-  assert.equal(
-    await refusal(site.mutate("apps:adminConfigure", { install_id: result.install.id, config: { x: 1 } }, as("m-owner"))),
-    "invalid",
-  );
-  await site.mutate("apps:adminUninstall", { install_id: result.install.id }, as("m-owner"));
-  assert.deepEqual(await site.query("apps:adminList", null, as("m-owner")), []);
-  assert.equal(
-    site.rows("SELECT deleted_at FROM profiles WHERE id = ?", result.profile.id)[0].deleted_at,
-    site.now,
-  );
-  // Uninstalled, its username and commands are free again.
-  await install(site, "dice");
+  assert.equal(await refusal(site.query("commands:list", null, VISITOR)), "signed_out");
+  const names = (await site.query("commands:list", null, as("m-bob"))).map((c) => c.name);
+  assert.deepEqual(names, [
+    "roll",
+    "coin",
+    "choose",
+    "help",
+    "balance",
+    "items",
+    "buy",
+    "inventory",
+    "use",
+    "grant",
+  ]);
 });
 
-test("slash commands reply as the app's bot, inside the posting mutation", async () => {
+test("one bot profile replies to every command, made when first needed", async () => {
   const { site, profiles } = await community();
-  await install(site, "dice");
-  await install(site, "help");
-  await install(site, "coin");
+  // A member already has @bot: the commands' bot takes the next name.
+  addProfile(site, "m-bob", "bot", { primary: false });
+  assert.equal(site.rows("SELECT command_bot_profile_id FROM settings")[0].command_bot_profile_id, null);
+  const first = await post(site, "m-alice", profiles.alice, "/coin");
+  const second = await post(site, "m-alice", profiles.alice, "/roll 1d6");
+  assert.equal(first.username, "bot_2");
+  assert.equal(second.username, "bot_2");
+  const [bot] = site.rows(
+    "SELECT p.id, p.name FROM settings s JOIN profiles p ON p.id = s.command_bot_profile_id",
+  );
+  assert.equal(bot.name, "봇");
+  // No member owns it, so no one can act as it.
+  assert.deepEqual(site.rows("SELECT * FROM profile_owners WHERE profile_id = ?", bot.id), []);
+});
+
+test("slash commands reply as the bot, inside the posting mutation", async () => {
+  const { site, profiles } = await community();
   assert.equal(await post(site, "m-alice", profiles.alice, "그냥 글"), null);
   assert.equal(await post(site, "m-alice", profiles.alice, "/unknown"), null);
   const roll = await post(site, "m-alice", profiles.alice, "/roll 2d6+3");
-  assert.equal(roll.username, "dicebot");
+  assert.equal(roll.username, "bot");
   const [, a, b, total] = roll.content.match(/^🎲 2d6\+3: \[(\d), (\d)\] \+ 3 = (\d+)$/);
   assert.equal(Number(a) + Number(b) + 3, Number(total));
   assert.match((await post(site, "m-alice", profiles.alice, "/roll 4d6dl1")).content, /사용 \[/);
@@ -108,14 +66,17 @@ test("slash commands reply as the app's bot, inside the posting mutation", async
   const help = await post(site, "m-alice", profiles.alice, "/help");
   assert.match(help.content, /^\*\*사용 가능한 명령어\*\*/);
   assert.match(help.content, /`\/roll`/);
+  // A thousand dice fit in one call: Naru counts each Math.random() as an
+  // operation, so dice come from a generator seeded once.
+  const many = await post(site, "m-alice", profiles.alice, "/roll 1000d6");
+  assert.match(many.content, /^🎲 1000d6: \[/);
+  assert.ok(site.operations <= 100);
   // A command must be the whole post, on one line.
   assert.equal(await post(site, "m-alice", profiles.alice, "/coin\n둘째 줄"), null);
 });
 
 test("shop commands change balances in the same transaction, and refusals reply", async () => {
   const { site, profiles } = await community();
-  await install(site, "shop");
-  await install(site, "shop_admin");
   const gold = await site.mutate("shop:adminCreateCurrency", { name: "골드", is_default: true }, as("m-owner"));
   const potion = await site.mutate(
     "shop:adminCreateItem",
@@ -201,7 +162,6 @@ test("the owner makes bots and tokens; a token is shown once and kept as a hash"
 
 test("the bot API: a token acts as the bot's profile", async () => {
   const { site, profiles } = await community();
-  await install(site, "coin");
   const bot = await site.mutate(
     "bots:adminCreate",
     { name: "봇", profile_name: "봇", profile_username: "bot" },
