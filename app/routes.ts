@@ -1,0 +1,30 @@
+import { index, type RouteConfig, route } from "@react-router/dev/routes";
+
+export default [
+  index("routes/home.tsx"),
+  route("/settings", "routes/settings.tsx"),
+  route("/settings/profile", "routes/settings.profile.tsx"),
+  route("/settings/profiles", "routes/settings.profiles.tsx"),
+  route(
+    "/settings/profiles/:profileId",
+    "routes/settings.profiles.$profileId.tsx",
+  ),
+  route("/settings/account", "routes/settings.account.tsx"),
+  route("/settings/community", "routes/settings.community.tsx"),
+  route("/announcements", "routes/announcements.tsx"),
+  route("/profiles", "routes/profiles.tsx"),
+  route("/notifications", "routes/notifications.tsx"),
+  route("/bookmarks", "routes/bookmarks.tsx"),
+  route("/search", "routes/search.tsx"),
+  route("/messages", "routes/messages.tsx"),
+  route("/messages/:username", "routes/messages.$username.tsx"),
+  route("/group-chats/:group_chat_id", "routes/group-chats.$group_chat_id.tsx"),
+  route("/shop", "routes/shop.tsx"),
+  route("/apps", "routes/apps.tsx"),
+  route("/apps/:builtinId", "routes/apps.$builtinId.tsx"),
+  route("/boards", "routes/boards.tsx"),
+  route("/boards/:slug", "routes/boards.$slug.tsx"),
+  route("/boards/:slug/:postId", "routes/boards.$slug.$postId.tsx"),
+  route("/:username/:post_id", "routes/$username.$post_id.tsx"),
+  route("/:username", "routes/$username.tsx"),
+] satisfies RouteConfig;
