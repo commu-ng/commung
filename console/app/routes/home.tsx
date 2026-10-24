@@ -9,11 +9,9 @@ import {
   Clock,
   CircleHelp,
   ExternalLink,
-  LogIn,
   ImageIcon,
   LayoutGrid,
   MessageSquare,
-  Plus,
   Search,
   Smile,
   Sparkles,
@@ -22,6 +20,11 @@ import {
 import MarkdownIt from "markdown-it";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import {
+  COMMUNG_APP_URL,
+  CommungOnNaruLanding,
+  CommungOnNaruNotice,
+} from "~/components/CommungOnNaru";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -295,10 +298,10 @@ function WelcomeHero({
 
         <div className="flex flex-wrap items-center gap-2 mt-6">
           <Button asChild size="lg" className="rounded-full">
-            <Link to="/communities/create">
-              <Plus className="h-4 w-4" />
-              커뮤 만들기
-            </Link>
+            <a href={COMMUNG_APP_URL} target="_blank" rel="noreferrer">
+              <ExternalLink className="h-4 w-4" />
+              나루에서 커뮤 열기
+            </a>
           </Button>
           <Button asChild size="lg" variant="outline" className="rounded-full">
             <Link to="/communities">
@@ -354,14 +357,14 @@ function MyCommunitiesGrid({ communities }: { communities: Community[] }) {
             첫 커뮤를 시작해볼까요?
           </h3>
           <p className="text-sm text-muted-foreground mb-5 max-w-sm mx-auto">
-            취향을 나눌 사람들과 공간을 꾸려보세요.
+            새 커뮤는 나루에 커뮹을 설치해서 열고, 원하는 대로 꾸밀 수 있어요.
           </p>
           <div className="flex justify-center gap-2">
             <Button asChild className="rounded-full">
-              <Link to="/communities/create">
-                <Plus className="h-4 w-4" />
-                커뮤 만들기
-              </Link>
+              <a href={COMMUNG_APP_URL} target="_blank" rel="noreferrer">
+                <ExternalLink className="h-4 w-4" />
+                나루에서 커뮤 열기
+              </a>
             </Button>
             <Button asChild variant="outline" className="rounded-full">
               <Link to="/communities">
@@ -1040,129 +1043,10 @@ function AuthenticatedHome() {
 
   return (
     <div className="space-y-6">
+      <CommungOnNaruNotice />
       <WelcomeHeroLive userName={user?.login_name ?? undefined} />
       <NotificationsSection />
       <MyCommunitiesSection />
-      <AppsShowcase />
-      <LatestBoardPosts />
-      <ResourcesAndNews />
-    </div>
-  );
-}
-
-function GuestHero() {
-  return (
-    <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-card shadow-marsh-lg px-6 sm:px-12 py-12 text-center">
-      <div className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-gradient-to-br from-blossom/50 via-primary/30 to-transparent blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-gradient-to-tr from-mint/40 via-lilac/30 to-transparent blur-3xl" />
-
-      <div className="relative">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary px-4 py-1.5 text-xs font-semibold tracking-wide">
-          <Sparkles className="h-3 w-3" />
-          타임라인 기반 커뮤 플랫폼
-        </span>
-        <h1 className="font-display text-4xl sm:text-6xl font-bold mt-5 leading-[1.1] tracking-tight">
-          <span className="text-primary">커뮹</span>에서
-          <br />
-          커뮤를 시작하세요
-        </h1>
-        <p className="text-base sm:text-lg text-muted-foreground mt-5 max-w-xl mx-auto leading-relaxed">
-          커뮤를 만들고, 멤버를 모집하고, 함께 운영해요.
-        </p>
-
-        <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
-          <Button asChild size="lg" className="rounded-full">
-            <Link to="/signup">
-              <Sparkles className="h-4 w-4" />
-              지금 시작하기
-            </Link>
-          </Button>
-          <Button asChild size="lg" variant="outline" className="rounded-full">
-            <Link to="/communities">
-              <Search className="h-4 w-4" />
-              둘러보기
-            </Link>
-          </Button>
-          <Button asChild size="lg" variant="outline" className="rounded-full">
-            <Link to="/faq">
-              <CircleHelp className="h-4 w-4" />
-              자주 묻는 질문
-            </Link>
-          </Button>
-          <Button asChild size="lg" variant="outline" className="rounded-full">
-            <Link to="/login">
-              <LogIn className="h-4 w-4" />
-              로그인
-            </Link>
-          </Button>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-const FEATURES = [
-  {
-    icon: Sparkles,
-    tone: "primary" as const,
-    title: "간편한 커뮤 개설",
-    body: "복잡한 설정 없이도 커뮤 전용 공간이 자동으로 준비돼요.",
-  },
-  {
-    icon: Users,
-    tone: "mint" as const,
-    title: "커뮤별 프로필",
-    body: "사이트마다 새 계정을 만들 필요 없이, 커뮤별 프로필로 부드럽게 오가요.",
-  },
-  {
-    icon: Search,
-    tone: "lilac" as const,
-    title: "취향 탐색",
-    body: "해시태그와 모집 상태로, 마음에 드는 커뮤를 쉽게 발견할 수 있어요.",
-  },
-];
-
-function FeatureGrid() {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {FEATURES.map((f) => {
-        const Icon = f.icon;
-        const tonePalette = {
-          primary: { bg: "bg-primary/15", ink: "text-primary" },
-          mint: { bg: "bg-mint/40", ink: "text-mint-ink" },
-          lilac: { bg: "bg-lilac/40", ink: "text-lilac-ink" },
-        };
-        const t = tonePalette[f.tone];
-        return (
-          <Card
-            key={f.title}
-            className="text-center hover:-translate-y-0.5 hover:shadow-marsh-lg transition-all duration-300"
-          >
-            <CardContent className="pt-6">
-              <span
-                className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl ${t.bg} ${t.ink} shadow-marsh mb-3`}
-              >
-                <Icon className="h-6 w-6" />
-              </span>
-              <h3 className="font-display text-lg font-bold mb-1.5">
-                {f.title}
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {f.body}
-              </p>
-            </CardContent>
-          </Card>
-        );
-      })}
-    </div>
-  );
-}
-
-function UnauthenticatedHome() {
-  return (
-    <div className="space-y-8">
-      <GuestHero />
-      <FeatureGrid />
       <AppsShowcase />
       <LatestBoardPosts />
       <ResourcesAndNews />
@@ -1183,7 +1067,7 @@ export default function Home() {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-5xl">
-      {isAuthenticated ? <AuthenticatedHome /> : <UnauthenticatedHome />}
+      {isAuthenticated ? <AuthenticatedHome /> : <CommungOnNaruLanding />}
     </div>
   );
 }
