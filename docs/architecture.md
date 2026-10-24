@@ -92,3 +92,14 @@ Korean messages; pages show `error.message` (`errorMessage()` in
   of media, and 100 MiB of tables.
 - No background jobs: scheduled posts are published by the next call that
   reads or writes posts after their time (`posts` area).
+
+## Deploying
+
+Pushes to `main` of `naru-pub/neo-commung` deploy the site from GitHub
+Actions (`.github/workflows/test.yml`): after the lint, typecheck and tests
+pass, the deploy job builds `dist/` and runs `scripts/deploy-naru.mjs dist
+neo-commung`. That script signs its requests with the run's OIDC token,
+uploads the files Naru asks for, finalizes, and waits until Naru activates
+the release of `_naru/` (failing the job if Naru refuses it, as when a
+migration fails). The Naru site `neo-commung` needs a GitHub Actions deploy
+target for this repository and `refs/heads/main` (Naru's `/github` page).

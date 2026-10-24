@@ -11,9 +11,10 @@
       "**/*.tsx",
       "**/*.json",
       "**/*.css",
-      "!api/src/drizzle/meta/**/*",
-      "!app/app/components/ui/**/*",
-      "!console/app/components/ui/**/*"
+      "!app/components/ui/**/*",
+      "!types/**/*",
+      "!dist/**/*",
+      "!build/**/*"
     ],
     "ignoreUnknown": false
   },
