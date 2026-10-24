@@ -98,6 +98,13 @@ try {
   await alicePage.goto(naru.url("/"));
   await alicePage.getByText("첫 글입니다").first().waitFor({ timeout: 15000 });
   console.log("ok alice sees her post on the timeline");
+  // Through the page's composer, as members post: no content warning, which
+  // the composer sends as undefined.
+  await alicePage.getByPlaceholder("무슨 일이 일어나고 있나요?").fill("화면에서 쓴 글");
+  await alicePage.getByRole("button", { name: "게시", exact: true }).click();
+  await alicePage.getByText("메시지가 성공적으로 게시되었습니다!").waitFor({ timeout: 15000 });
+  await alicePage.getByText("화면에서 쓴 글").first().waitFor({ timeout: 15000 });
+  console.log("ok alice posts from the composer");
   for (const path of ["/notifications", "/messages", "/boards", "/shop", "/profiles", "/search", "/settings/profile", "/@alice"]) {
     await alicePage.goto(naru.url(path));
     await alicePage.waitForLoadState("networkidle");

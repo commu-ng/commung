@@ -68,10 +68,18 @@ export async function ownerSignIn(): Promise<void> {
   await (await getNaru()).auth.signIn();
 }
 
+/**
+ * A call's arguments as JSON, as commung's fetch sent them: fields left
+ * `undefined` (commung's way of leaving one out) are dropped, which the SDK
+ * would otherwise refuse.
+ */
+const json = (args: object | null | undefined): Json | undefined =>
+  args == null ? undefined : (JSON.parse(JSON.stringify(args)) as Json);
+
 /** Runs `name` from the site's _naru/queries/, as the member if signed in. */
 export async function query<R>(name: string, args?: object): Promise<R> {
   const member = await getMember();
-  return (member ?? (await getNaru())).query<R>(name, args as Json);
+  return (member ?? (await getNaru())).query<R>(name, json(args));
 }
 
 /** Runs `name` from the site's _naru/mutations/ as the signed-in member. */
@@ -81,7 +89,7 @@ export async function mutate<R>(name: string, args?: object): Promise<R> {
     await signIn();
     throw new Error("로그인이 필요합니다");
   }
-  return member.mutate<R>(name, args as Json);
+  return member.mutate<R>(name, json(args));
 }
 
 /**
@@ -98,12 +106,9 @@ export function subscribe<R>(
   let closed = false;
   Promise.all([getMember(), getNaru()]).then(([member, naru]) => {
     if (closed) return;
-    live = (member ?? naru).subscribe<R>(
-      name,
-      (args ?? null) as Json,
-      onResult,
-      { onError: (error) => onError?.(error) },
-    );
+    live = (member ?? naru).subscribe<R>(name, json(args) ?? null, onResult, {
+      onError: (error) => onError?.(error),
+    });
   });
   return () => {
     closed = true;
