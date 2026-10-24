@@ -1,4 +1,4 @@
-# neo-commung
+# 커뮹! (Commung!)
 
 [커뮹!](https://github.com/limeburst/commu-ng) as one community on a
 [Naru](https://naru.pub) site, using Naru SDK 1.1.0: commung's React app
@@ -28,11 +28,12 @@ pnpm build       # dist/: what Naru publishes
 ```
 
 Try it on a local Naru from a Naru checkout's `control-plane/`:
-`pnpm naru-dev ~/Git/neo-commung/dist --site neo-commung`. The end-to-end
+`pnpm naru-dev <this checkout>/dist --site neo-commung`. The end-to-end
 smoke test runs the built site there with Chromium:
 `NARU_DEV=<naru checkout>/naru-dev PLAYWRIGHT_MODULE=<playwright>/index.mjs node tests/e2e.mjs`.
 
-Pushes to `main` deploy to the Naru site `neo-commung` from GitHub Actions.
+Pushes to `main` of `naru-pub/commung` deploy to the Naru site
+`neo-commung` from GitHub Actions.
 
 ## License
 

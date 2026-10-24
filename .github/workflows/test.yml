@@ -32,7 +32,7 @@ jobs:
     permissions:
       contents: read
       # Naru's GitHub CI deploy checks this run's OIDC token against the
-      # site's GitHub Actions target (naru-pub/neo-commung, refs/heads/main).
+      # site's GitHub Actions target (naru-pub/commung, refs/heads/main).
       id-token: write
     steps:
       - uses: actions/checkout@v7

@@ -51,7 +51,7 @@ try {
   const now = Date.now();
   const owner = await naru.signIn(null, "owner");
   await call("mutate", "owner:setup", {
-    name: "네오 커뮹",
+    name: "커뮹!",
     description: "테스트 커뮤입니다",
     starts_at: new Date(now - day).toISOString(),
     ends_at: new Date(now + 30 * day).toISOString(),
