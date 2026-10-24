@@ -9,7 +9,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import { LoginButton } from "~/components/LoginButton";
 import { LoadingState } from "~/components/shared/LoadingState";
 import { Card, CardContent, CardHeader } from "~/components/ui/card";
@@ -159,9 +159,35 @@ export default function Notifications() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [loadMore]);
 
+  const currentProfileId = currentProfile?.id;
+
+  // Each visit to the tab (clicking it again too: a new location key)
+  // reloads the list, then marks everything read so the badge clears; a
+  // visit with nothing unread makes no mutation.
+  const { key: visit } = useLocation();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once per visit; refetch and refreshUnreadCounts are stable enough not to repeat it.
+  useEffect(() => {
+    if (!isAuthenticated || !currentProfileId) return;
+    let cancelled = false;
+    (async () => {
+      await refetch();
+      const { count } = await query<{ count: number }>(
+        "notifications:unreadCount",
+        { profile_id: currentProfileId },
+      );
+      if (cancelled || count === 0) return;
+      await mutate("notifications:markAllRead", {
+        profile_id: currentProfileId,
+      });
+      refreshUnreadCounts();
+    })().catch((err) => console.error("Failed to mark as read:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [visit, isAuthenticated, currentProfileId]);
+
   // Reload when the profile's notifications change (its unread count is
   // live), instead of commung's polling every 30 seconds.
-  const currentProfileId = currentProfile?.id;
   useEffect(() => {
     if (!isAuthenticated || !instanceSlug || !currentProfileId) return;
     let last: number | null = null;

@@ -60,7 +60,7 @@ try {
     recruiting_ends_at: new Date(now + 7 * day).toISOString(),
   }, owner.headers);
   const boss = await naru.signIn(null, "boss");
-  await call("mutate", "owner:claim", {
+  const { profile_id: bossProfile } = await call("mutate", "owner:claim", {
     member: boss.memberId,
     profile_name: "운영자",
     profile_username: "boss",
@@ -125,6 +125,14 @@ try {
   await bossPage.goto(naru.url("/notifications"));
   await bossPage.getByText("앨리스").first().waitFor({ timeout: 15000 });
   console.log("ok the owner was notified of the mention");
+  // Opening the tab marks them read.
+  const unread = () =>
+    call("query", "notifications:unreadCount", { profile_id: bossProfile }, boss.headers).then((r) => r.count);
+  for (let tries = 0; (await unread()) !== 0; tries++) {
+    if (tries > 50) throw new Error("Opening notifications did not mark them read.");
+    await new Promise((done) => setTimeout(done, 200));
+  }
+  console.log("ok opening notifications marks them read");
   for (const path of ["/admin", "/admin/applications", "/admin/members", "/admin/settings", "/admin/analytics", "/admin/boards", "/admin/shop", "/admin/bots"]) {
     await bossPage.goto(naru.url(path));
     await bossPage.waitForLoadState("networkidle");
