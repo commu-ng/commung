@@ -3,6 +3,7 @@
 // is made; the site keeps only ctx.passwords.hash(secret) and checks it with
 // ctx.passwords.verify under the key `bot-token:<token id>`, which Naru
 // allows ten wrong secrets an hour.
+import { BUILTIN_COMMANDS, parseSlashCommand } from "./commands.js";
 import { settingsOf } from "./community.js";
 import { hostWord } from "./random.js";
 import {
@@ -265,6 +266,7 @@ interface PostRow {
   published_at: number | null;
   created_at: number;
   updated_at: number;
+  shown_at: number;
   author_name: string;
   author_username: string;
   author_picture_url: string | null;
@@ -278,7 +280,9 @@ const SHOWN =
 
 const POST_SELECT = `SELECT po.id, po.content, po.content_warning, po.announcement,
   po.author_id, po.in_reply_to_id, po.root_post_id, po.depth, po.published_at,
-  po.created_at, po.updated_at, p.name AS author_name,
+  po.created_at, po.updated_at,
+  COALESCE(po.published_at, po.scheduled_at, po.created_at) AS shown_at,
+  p.name AS author_name,
   p.username AS author_username, pic.url AS author_picture_url,
   (SELECT count(*) FROM posts r WHERE r.in_reply_to_id = po.id
      AND r.deleted_at IS NULL AND (r.published_at IS NOT NULL OR r.scheduled_at <= ?)) AS reply_count
@@ -434,4 +438,86 @@ export async function livePost(ctx: Ctx, postId: string, message: string) {
     FROM posts po JOIN profiles p ON p.id = po.author_id
     WHERE po.id = ${postId} AND po.deleted_at IS NULL`;
   return rows[0] ?? notFound(ctx, message);
+}
+
+// ---------- What the bot is asked ----------
+
+/** How many candidates each source offers, newest first, before filtering. */
+const CANDIDATES = 200;
+
+/**
+ * Posts for the bot to answer, newest first by when they appeared, at most
+ * `limit`: those that mention it, reply to its posts, or are a slash command
+ * no built-in command answers (`/weather 서울`). Each says why (`reasons`)
+ * and, for a command, its name and arguments. A scheduled post appears when
+ * it is published, with an ID older than posts before it, so a bot keeps
+ * the IDs it has answered rather than a cursor; `since` (milliseconds or an
+ * ISO time) leaves out posts that appeared before it.
+ */
+export async function botMentions(
+  ctx: Ctx,
+  caller: BotCaller,
+  limit: number,
+  since: number | null,
+) {
+  const bot = caller.profileId;
+  const { rows: mentioned } = await ctx.sql<{ id: string }>`
+    SELECT post_id AS id FROM mentions WHERE profile_id = ${bot}
+    ORDER BY post_id DESC LIMIT ${CANDIDATES}`;
+  const { rows: replied } = await ctx.sql<{ id: string }>`
+    SELECT r.id FROM posts b JOIN posts r ON r.in_reply_to_id = b.id
+    WHERE b.author_id = ${bot} ORDER BY r.id DESC LIMIT ${CANDIDATES}`;
+  const { rows: slashed } = await ctx.sql<{ id: string }>`
+    SELECT id FROM posts WHERE substr(content, 1, 1) = '/'
+    ORDER BY id DESC LIMIT ${CANDIDATES}`;
+  const reasons = new Map<string, Set<string>>();
+  const add = (rows: readonly { id: string }[], reason: string) => {
+    for (const { id } of rows) {
+      if (!reasons.has(id)) reasons.set(id, new Set());
+      reasons.get(id)?.add(reason);
+    }
+  };
+  add(mentioned, "mention");
+  add(replied, "reply");
+  add(slashed, "command");
+  if (!reasons.size) return { data: [] };
+
+  const { rows } = await ctx.sql<PostRow>(
+    `${POST_SELECT}
+     WHERE po.id IN (SELECT value FROM json_each(?)) AND ${SHOWN}
+       AND po.author_id <> ? AND (? IS NULL OR shown_at >= ?)
+     ORDER BY shown_at DESC, po.id DESC`,
+    [ctx.now, list([...reasons.keys()]), ctx.now, bot, since, since],
+  );
+  const builtin = new Set(BUILTIN_COMMANDS.map((command) => command.name));
+  const wanted: {
+    row: PostRow;
+    reasons: string[];
+    command: { name: string; args: string } | null;
+  }[] = [];
+  for (const row of rows) {
+    const why = reasons.get(row.id) ?? new Set<string>();
+    let command: { name: string; args: string } | null = null;
+    if (why.has("command")) {
+      const parsed = parseSlashCommand(row.content);
+      if (parsed && !builtin.has(parsed.name)) command = parsed;
+      else why.delete("command");
+    }
+    if (!why.size) continue;
+    wanted.push({ row, reasons: [...why], command });
+    if (wanted.length >= limit) break;
+  }
+  const posts = await botPosts(
+    ctx,
+    wanted.map((w) => w.row),
+    bot,
+  );
+  return {
+    data: posts.map((post, i) => ({
+      ...post,
+      shown_at: iso(wanted[i].row.shown_at),
+      reasons: wanted[i].reasons,
+      command: wanted[i].command,
+    })),
+  };
 }

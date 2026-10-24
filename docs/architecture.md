@@ -42,9 +42,12 @@ naru-dev, from a Naru checkout's `control-plane/`:
     `requireUnmuted`, `membersOfProfiles` (for `ctx.notify`).
   - `community.ts` (the settings row), `profiles.ts` (`profileJson`,
     `profilesById`), `images.ts` (`imageJson`, `ownImages`, `imagesById`).
-- Slash commands are built in and always on (`modules/commands.ts`): a
-  post that is just `/name args` gets a reply from the community's bot
-  profile (`settings.command_bot_profile_id`, made at the first command).
+- Slash commands are built in and always on: one file each in
+  `modules/commands/`, listed in `modules/commands.ts`. A post that is just
+  `/name args` gets a reply from the community's bot profile
+  (`settings.command_bot_profile_id`, made at the first command). Bot
+  programs subscribe to `bot:mentions` for the rest. How to write either:
+  [commands.md](commands.md).
 - `routes.json`/`routes.ts` answer every page address with `index.html`
   (the SPA); `assets/` and the other files are served as they are.
 

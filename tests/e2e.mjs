@@ -98,6 +98,39 @@ try {
   assert.match(JSON.stringify(rolled), /🎲 1000d6/);
   console.log("ok a thousand dice fit in one call");
 
+  // A bot program, subscribed with its token, hears a mention as it is
+  // written, and answers it.
+  const weather = await call("mutate", "bots:adminCreate", {
+    name: "날씨", profile_name: "날씨봇", profile_username: "weather",
+  }, boss.headers);
+  const { token } = await call("mutate", "bots:adminCreateToken", { bot_id: weather.id }, boss.headers);
+  const botPage = await person(null);
+  await botPage.goto(naru.url("/"));
+  await botPage.evaluate(async (token) => {
+    const { createNaru } = await import("https://sdk.naru.pub/sdk/1.1.0/naru.js");
+    const naru = createNaru();
+    window.heard = [];
+    await new Promise((ready) => {
+      naru.subscribe("bot:mentions", { token }, async ({ data }) => {
+        ready();
+        for (const post of data) {
+          if (window.heard.includes(post.id)) continue;
+          window.heard.push(post.id);
+          await naru.mutate("bot:createPost", { token, content: "맑음 ☀️", in_reply_to_id: post.id });
+        }
+      });
+    });
+  }, token);
+  const asked = await call("mutate", "posts:create", { profile_id: aliceProfile, content: "@weather 서울은?" }, alice.headers);
+  await botPage.waitForFunction((id) => window.heard.includes(id), asked.id, { timeout: 15000 });
+  for (let tries = 0; ; tries++) {
+    const answers = await call("query", "posts:replies", { post_id: asked.id, profile_id: aliceProfile }, alice.headers);
+    if (JSON.stringify(answers).includes("맑음")) break;
+    if (tries > 50) throw new Error("The bot did not answer.");
+    await new Promise((done) => setTimeout(done, 200));
+  }
+  console.log("ok a subscribed bot hears a mention and answers it");
+
   // Pages: a visitor, alice and the owner each load theirs.
   const visitor = await person(null);
   await visitor.goto(naru.url("/"));

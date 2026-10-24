@@ -490,6 +490,7 @@ export default function AdminBots() {
 const BOT_CALLS = [
   'query("bot:posts", { token, limit?, cursor? })',
   'query("bot:post", { token, post_id })',
+  'subscribe("bot:mentions", { token, since?, limit? }, onResult)',
   'mutate("bot:createPost", { token, content, in_reply_to_id?, content_warning? })',
   'mutate("bot:updatePost", { token, post_id, content, content_warning? })',
   'mutate("bot:deletePost", { token, post_id })',

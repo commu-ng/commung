@@ -228,3 +228,54 @@ test("the bot API: a token acts as the bot's profile", async () => {
   site.now += 2000;
   assert.equal(await refusal(site.query("bot:posts", { token: expiring.token }, VISITOR)), "invalid_token");
 });
+
+test("bot:mentions: posts that mention the bot, reply to it, or hold a command for it", async () => {
+  const { site, profiles } = await community();
+  const bot = await site.mutate(
+    "bots:adminCreate",
+    { name: "날씨", profile_name: "날씨봇", profile_username: "weather" },
+    as("m-owner"),
+  );
+  const { token } = await site.mutate("bots:adminCreateToken", { bot_id: bot.id }, as("m-owner"));
+  const write = (content, extra = {}) => {
+    site.now += 1000;
+    return site.mutate("posts:create", { profile_id: profiles.alice, content, ...extra }, as("m-alice"));
+  };
+  assert.deepEqual(await site.query("bot:mentions", { token }, VISITOR), { data: [] });
+  assert.equal(await refusal(site.query("bot:mentions", { token: "nope" }, VISITOR)), "invalid_token");
+
+  const start = site.now;
+  const mention = await write("@weather 서울 날씨 알려줘");
+  await write("그냥 글");
+  await write("/roll 1d6"); // built in: answered by @bot, not this bot
+  const command = await write("/weather 부산");
+  site.now += 1000;
+  const own = await site.mutate("bot:createPost", { token, content: "맑음" }, VISITOR);
+  const reply = await write("고마워", { in_reply_to_id: own.id });
+
+  const { data } = await site.query("bot:mentions", { token }, VISITOR);
+  assert.deepEqual(
+    data.map((post) => [post.content, post.reasons, post.command]),
+    [
+      ["고마워", ["reply"], null],
+      ["/weather 부산", ["command"], { name: "weather", args: "부산" }],
+      ["@weather 서울 날씨 알려줘", ["mention"], null],
+    ],
+  );
+  assert.equal(data[2].id, mention.id);
+  assert.equal(data[1].author.username, "alice");
+  assert.ok(site.operations <= 100);
+
+  // since leaves out what appeared before it; limit keeps the newest.
+  const later = await site.query("bot:mentions", { token, since: start + 3500 }, VISITOR);
+  assert.deepEqual(later.data.map((post) => post.id), [reply.id, command.id]);
+  const one = await site.query("bot:mentions", { token, limit: 1 }, VISITOR);
+  assert.deepEqual(one.data.map((post) => post.id), [reply.id]);
+
+  // A deleted post is no longer asked.
+  await site.mutate("posts:remove", { post_id: reply.id, profile_id: profiles.alice }, as("m-alice"));
+  assert.deepEqual(
+    (await site.query("bot:mentions", { token }, VISITOR)).data.map((post) => post.id),
+    [command.id, mention.id],
+  );
+});
