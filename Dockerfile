@@ -3,10 +3,12 @@ FROM node:24-slim AS base
 
 WORKDIR /app
 
-# Setup pnpm in single layer
+# Setup pnpm in single layer. pnpm 10 as corepack's default rather than
+# `corepack use`, whose packageManager pin the package.json copied below
+# would overwrite, leaving corepack to fetch the newest pnpm.
 RUN npm install --global corepack@latest && \
      corepack enable pnpm && \
-     corepack use pnpm@latest-10
+     corepack prepare pnpm@10.34.8 --activate
 
 # Copy workspace files for dependency resolution
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml* ./
