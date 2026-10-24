@@ -255,7 +255,7 @@ export default function BoardPostDetail() {
     return (
       <div
         key={reply.id}
-        className={`${depth > 0 ? "ml-8 border-l-2 border-border pl-4" : ""}`}
+        className={depth > 0 ? "ml-8 border-l-2 border-border pl-4" : "px-4"}
       >
         <div className="py-4">
           <div className="flex items-start gap-3">
