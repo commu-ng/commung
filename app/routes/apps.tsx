@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
-import { client } from "~/lib/api-client";
+import { query } from "~/lib/naru";
 
 export function meta() {
   return [
@@ -29,10 +29,7 @@ interface AppListEntry {
 }
 
 async function fetchApps(): Promise<AppListEntry[]> {
-  const r = await client.app.apps.$get();
-  if (!r.ok) throw new Error("앱 목록을 가져오지 못했습니다");
-  const result = await r.json();
-  return result.data as unknown as AppListEntry[];
+  return await query<AppListEntry[]>("apps:list");
 }
 
 export default function AppsDirectoryPage() {

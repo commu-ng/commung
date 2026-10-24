@@ -24,7 +24,7 @@ import { Textarea } from "~/components/ui/textarea";
 import { useAuth } from "~/hooks/useAuth";
 import { useImageUpload } from "~/hooks/useImageUpload";
 import { useMarkdownWithMentions } from "~/hooks/useMarkdownWithMentions";
-import { client } from "~/lib/api-client";
+import { query } from "~/lib/naru";
 import type { PostImage } from "~/types/post";
 import type { Profile } from "~/types/profile";
 import { MarkdownHelpModal } from "./markdown-help-modal";
@@ -174,28 +174,21 @@ export function MessageComposer({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Fetch profiles for mention autocomplete
-  const fetchProfiles = useCallback(async (query: string) => {
+  const fetchProfiles = useCallback(async (search: string) => {
     try {
-      const response = await client.app.profiles.$get({
-        query: {},
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const allProfiles: Profile[] = Array.isArray(result?.data)
-          ? result.data
-          : [];
+      const result = await query<Profile[]>("profiles:list", {});
+      const allProfiles: Profile[] = Array.isArray(result) ? result : [];
 
-        const filteredProfiles = query
-          ? allProfiles.filter(
-              (profile) =>
-                profile.name.toLowerCase().includes(query.toLowerCase()) ||
-                profile.username.toLowerCase().includes(query.toLowerCase()),
-            )
-          : allProfiles;
+      const filteredProfiles = search
+        ? allProfiles.filter(
+            (profile) =>
+              profile.name.toLowerCase().includes(search.toLowerCase()) ||
+              profile.username.toLowerCase().includes(search.toLowerCase()),
+          )
+        : allProfiles;
 
-        setMentionProfiles(filteredProfiles.slice(0, 10));
-        setSelectedMentionIndex(0);
-      }
+      setMentionProfiles(filteredProfiles.slice(0, 10));
+      setSelectedMentionIndex(0);
     } catch (error) {
       console.error("Failed to fetch profiles:", error);
     }
@@ -220,15 +213,10 @@ export function MessageComposer({
   // Fetch installed slash commands once when first needed
   const fetchSlashCommands = useCallback(async () => {
     try {
-      const response = await client.app.commands.$get();
-      if (response.ok) {
-        const result = await response.json();
-        const commands: SlashCommand[] = Array.isArray(result?.data)
-          ? result.data
-          : [];
-        setAllSlashCommands(commands);
-        return commands;
-      }
+      const result = await query<SlashCommand[]>("commands:list", {});
+      const commands: SlashCommand[] = Array.isArray(result) ? result : [];
+      setAllSlashCommands(commands);
+      return commands;
     } catch (error) {
       console.error("Failed to fetch slash commands:", error);
     }

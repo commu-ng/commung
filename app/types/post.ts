@@ -55,6 +55,21 @@ export interface Post {
   published_at?: string | null;
   parent_thread?: Post[];
   bookmarked_at?: string | null;
+  parent_summary?: {
+    id: string;
+    content_excerpt: string;
+    author: { id: string; name: string; username: string };
+  } | null;
+}
+
+/** A page of a cursor-paged list, as the posts queries answer. */
+export interface Page<T> {
+  data: T[];
+  pagination: {
+    next_cursor: string | null;
+    has_more: boolean;
+    total_count?: number;
+  };
 }
 
 // Component props interfaces

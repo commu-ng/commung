@@ -7,7 +7,7 @@ import { Card, CardContent } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useAuth } from "~/hooks/useAuth";
 import { type ShopItem, useShopSummary } from "~/hooks/useShopSummary";
-import { client, getErrorMessage } from "~/lib/api-client";
+import { errorMessage, mutate } from "~/lib/naru";
 
 export function meta() {
   return [
@@ -80,12 +80,13 @@ export default function ShopPage() {
   const buy = useMutation({
     mutationFn: async (item: ShopItem) => {
       if (!currentProfile) throw new Error("프로필을 선택하세요");
-      const response = await client.app.shop.buy.$post({
-        json: { profile_id: currentProfile.id, item_id: item.id },
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(getErrorMessage(errorData, "구매에 실패했습니다"));
+      try {
+        await mutate("shop:buy", {
+          profile_id: currentProfile.id,
+          item_id: item.id,
+        });
+      } catch (error) {
+        throw new Error(errorMessage(error, "구매에 실패했습니다"));
       }
       return item;
     },

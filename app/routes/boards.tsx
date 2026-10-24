@@ -3,7 +3,17 @@ import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Spinner } from "~/components/ui/spinner";
 import { useAuth } from "~/hooks/useAuth";
-import { client } from "~/lib/api-client";
+import { errorMessage, query } from "~/lib/naru";
+
+interface CommunityBoard {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  allow_comments: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 export default function Boards() {
   const { isLoading: authLoading, belongsToCurrentInstance } = useAuth();
@@ -15,12 +25,13 @@ export default function Boards() {
   } = useQuery({
     queryKey: ["boards"],
     queryFn: async () => {
-      const response = await client.app.boards.$get();
-      if (!response.ok) {
-        throw new Error("게시판을 불러오는 데 실패했습니다");
+      try {
+        return await query<CommunityBoard[]>("boards:list");
+      } catch (error) {
+        throw new Error(
+          errorMessage(error, "게시판을 불러오는 데 실패했습니다"),
+        );
       }
-      const result = await response.json();
-      return result.data;
     },
     enabled: belongsToCurrentInstance,
   });

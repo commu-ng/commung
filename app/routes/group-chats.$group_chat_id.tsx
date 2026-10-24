@@ -1,24 +1,11 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import type { InferResponseType } from "hono/client";
 import { useAuth } from "~/hooks/useAuth";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
 import { useImageUpload } from "~/hooks/useImageUpload";
-import { client } from "~/lib/api-client";
+import { useLive } from "~/components/messages/useLive";
+import { errorMessage, mutate } from "~/lib/naru";
+import type { GroupChatInfo, GroupChatMessagePage } from "~/types/message";
 import type { Route } from "./+types/group-chats.$group_chat_id";
-
-type GroupChatMessageFromList = InferResponseType<
-  (typeof client.app)["group-chats"][":group_chat_id"]["messages"]["$get"],
-  200
->["data"][number];
-
-type GroupChatMessage = Omit<GroupChatMessageFromList, "reactions"> & {
-  reactions?: GroupChatMessageFromList["reactions"];
-};
-
-type GroupChatInfo = InferResponseType<
-  (typeof client.app)["group-chats"][":group_chat_id"]["$get"],
-  200
->["data"];
 
 import {
   ArrowLeft,
@@ -35,7 +22,6 @@ import {
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
-import { getErrorMessage } from "~/lib/api-client";
 import { GroupChatMessageReactions } from "~/components/GroupChatMessageReactions";
 import { LoginButton } from "~/components/LoginButton";
 import { MessageBubble } from "~/components/MessageBubble";
@@ -58,11 +44,8 @@ export function meta(_args: Route.MetaArgs) {
 
 export default function GroupChatDetail() {
   const { group_chat_id } = useParams();
-  const [groupChat, setGroupChat] = useState<GroupChatInfo | null>(null);
-  const [messages, setMessages] = useState<GroupChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [sendError, setSendError] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [showMemberDialog, setShowMemberDialog] = useState(false);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
@@ -94,6 +77,33 @@ export default function GroupChatDetail() {
   } = useImageUpload();
 
   const { instanceSlug } = useCurrentInstance();
+
+  // The chat and its messages, kept current: anyone's message, reaction,
+  // deletion or rename runs them again.
+  const liveArgs =
+    isAuthenticated && instanceSlug && currentProfile && group_chat_id
+      ? { group_chat_id, profile_id: currentProfile.id }
+      : null;
+  const chatLive = useLive<GroupChatInfo>("groupChats:get", liveArgs);
+  const messagesLive = useLive<GroupChatMessagePage>(
+    "groupChats:messages",
+    liveArgs,
+  );
+  const groupChat = chatLive.data ?? null;
+  const messages = (messagesLive.data?.messages ?? [])
+    .slice()
+    .sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+  const isLoading = chatLive.isLoading || messagesLive.isLoading;
+  const error =
+    sendError ||
+    (chatLive.error
+      ? "그룹 채팅을 찾을 수 없습니다"
+      : messagesLive.error
+        ? "메시지를 불러올 수 없습니다"
+        : "");
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
     messagesEndRef.current?.scrollIntoView({ behavior });
@@ -127,120 +137,28 @@ export default function GroupChatDetail() {
     prevMessageCountRef.current = messages.length;
   }, [messages, isLoading, scrollToBottom, isNearBottom]);
 
-  // Poll for new messages every 5 seconds
+  // Mark the chat read: once per batch of new messages from others, a
+  // moment after they arrive, not once per message.
   const currentProfileId = currentProfile?.id;
+  const latestFromOthersId = messagesLive.data?.messages
+    .filter((message) => !message.is_sender)
+    .at(-1)?.id;
+  const markedUpToRef = useRef<string | null>(null);
   useEffect(() => {
-    if (
-      !isAuthenticated ||
-      !instanceSlug ||
-      !currentProfileId ||
-      !group_chat_id
-    )
-      return;
-
-    const interval = setInterval(async () => {
-      try {
-        const messagesResponse = await client.app["group-chats"][
-          ":group_chat_id"
-        ].messages.$get({
-          param: { group_chat_id },
-          query: { profile_id: currentProfileId },
-        });
-
-        if (messagesResponse.ok) {
-          const messagesResult = await messagesResponse.json();
-          setMessages(
-            messagesResult.data
-              .slice()
-              .sort(
-                (a, b) =>
-                  new Date(a.created_at).getTime() -
-                  new Date(b.created_at).getTime(),
-              ),
-          );
-
-          // Mark messages as read
-          client.app["group-chats"][":group_chat_id"]["mark-read"]
-            .$post({
-              param: { group_chat_id },
-              query: { profile_id: currentProfileId },
-            })
-            .catch((error) => {
-              console.error("Error marking messages as read:", error);
-            });
-        }
-      } catch (err) {
-        console.error("Failed to poll group chat messages:", err);
-      }
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [isAuthenticated, instanceSlug, currentProfileId, group_chat_id]);
-
-  useEffect(() => {
-    if (!isAuthenticated || !instanceSlug || !currentProfile || !group_chat_id)
-      return;
-
-    const fetchGroupChatData = async () => {
-      try {
-        setIsLoading(true);
-
-        // Fetch group chat info and messages in parallel
-        const [chatResponse, messagesResponse] = await Promise.all([
-          client.app["group-chats"][":group_chat_id"].$get({
-            param: { group_chat_id },
-            query: { profile_id: currentProfile.id },
-          }),
-          client.app["group-chats"][":group_chat_id"].messages.$get({
-            param: { group_chat_id },
-            query: { profile_id: currentProfile.id },
-          }),
-        ]);
-
-        // Mark messages as read after fetching
-        client.app["group-chats"][":group_chat_id"]["mark-read"]
-          .$post({
-            param: { group_chat_id },
-            query: { profile_id: currentProfile.id },
-          })
-          .catch((error) => {
-            console.error("Error marking messages as read:", error);
-            // Don't block the UI if marking as read fails
-          });
-
-        if (chatResponse.ok) {
-          const chatResult = await chatResponse.json();
-          const chatData = chatResult.data;
-          setGroupChat(chatData);
-        } else {
-          setError("그룹 채팅을 찾을 수 없습니다");
-          return;
-        }
-
-        if (messagesResponse.ok) {
-          const messagesResult = await messagesResponse.json();
-          // Transform API response to match GroupChatMessage interface
-          setMessages(
-            messagesResult.data
-              .slice()
-              .sort(
-                (a, b) =>
-                  new Date(a.created_at).getTime() -
-                  new Date(b.created_at).getTime(),
-              ),
-          );
-        } else {
-          setError("메시지를 불러올 수 없습니다");
-        }
-      } catch (_err) {
-        setError("그룹 채팅을 불러오는 중 오류가 발생했습니다");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchGroupChatData();
-  }, [isAuthenticated, instanceSlug, currentProfile, group_chat_id]);
+    if (!latestFromOthersId || !currentProfileId || !group_chat_id) return;
+    if (markedUpToRef.current === latestFromOthersId) return;
+    const timer = setTimeout(() => {
+      markedUpToRef.current = latestFromOthersId;
+      mutate("groupChats:markRead", {
+        group_chat_id,
+        profile_id: currentProfileId,
+      }).catch((err) => {
+        markedUpToRef.current = null;
+        console.error("Error marking messages as read:", err);
+      });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [latestFromOthersId, currentProfileId, group_chat_id]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -255,105 +173,33 @@ export default function GroupChatDetail() {
     try {
       setIsSending(true);
 
-      const response = await client.app["group-chats"][
-        ":group_chat_id"
-      ].messages.$post({
-        param: { group_chat_id },
-        json: {
-          content: newMessage.trim(),
-          profile_id: currentProfile.id,
-          image_ids: uploadedImageIds.length > 0 ? uploadedImageIds : undefined,
-        },
+      // The live messages show the new one by itself.
+      await mutate("groupChats:send", {
+        group_chat_id,
+        content: newMessage.trim(),
+        profile_id: currentProfile.id,
+        image_ids: uploadedImageIds.length > 0 ? uploadedImageIds : undefined,
       });
-
-      if (response.ok) {
-        const result = await response.json();
-        const messageData = result.data;
-        setMessages((prev) => [...prev, messageData]);
-        setNewMessage("");
-        clearImages();
-      } else {
-        setError("메시지 전송에 실패했습니다");
-      }
-    } catch (_err) {
-      setError("메시지 전송 중 오류가 발생했습니다");
+      setNewMessage("");
+      clearImages();
+    } catch (err) {
+      setSendError(errorMessage(err, "메시지 전송 중 오류가 발생했습니다"));
     } finally {
       setIsSending(false);
     }
   };
 
+  // Reactions: the live messages show them once the call returns.
   const handleAddReaction = async (messageId: string, emoji: string) => {
     if (!currentProfile || !group_chat_id) return;
 
     try {
-      const response = await client.app["group-chats"][
-        ":group_chat_id"
-      ].messages[":message_id"].reactions.$post({
-        param: { group_chat_id, message_id: messageId },
-        json: {
-          profile_id: currentProfile.id,
-          emoji,
-        },
+      await mutate("groupChats:addReaction", {
+        group_chat_id,
+        message_id: messageId,
+        profile_id: currentProfile.id,
+        emoji,
       });
-
-      if (response.ok) {
-        // Optimistically update the UI
-        setMessages((prev) =>
-          prev.map((msg) => {
-            if (msg.id === messageId) {
-              const reactions = msg.reactions || [];
-              const existingReaction = reactions.find((r) => r.emoji === emoji);
-
-              if (existingReaction) {
-                // Add current profile to existing reaction
-                return {
-                  ...msg,
-                  reactions: reactions.map((r) =>
-                    r.emoji === emoji
-                      ? {
-                          ...r,
-                          count: r.count + 1,
-                          profiles: [
-                            ...r.profiles,
-                            {
-                              id: currentProfile.id,
-                              name: currentProfile.name,
-                              username: currentProfile.username,
-                              profile_picture_url:
-                                currentProfile.profile_picture_url,
-                            },
-                          ],
-                        }
-                      : r,
-                  ),
-                };
-              } else {
-                // Create new reaction
-                return {
-                  ...msg,
-                  reactions: [
-                    ...reactions,
-                    {
-                      emoji,
-                      count: 1,
-                      profiles: [
-                        {
-                          id: currentProfile.id,
-                          name: currentProfile.name,
-                          username: currentProfile.username,
-                          profile_picture_url:
-                            currentProfile.profile_picture_url,
-                        },
-                      ],
-                    },
-                  ],
-                };
-              }
-            }
-            return msg;
-          }),
-        );
-      }
     } catch (err) {
       console.error("Error adding reaction:", err);
     }
@@ -363,43 +209,12 @@ export default function GroupChatDetail() {
     if (!currentProfile || !group_chat_id) return;
 
     try {
-      const response = await client.app["group-chats"][
-        ":group_chat_id"
-      ].messages[":message_id"].reactions.$delete({
-        param: { group_chat_id, message_id: messageId },
-        query: {
-          profile_id: currentProfile.id,
-          emoji,
-        },
+      await mutate("groupChats:removeReaction", {
+        group_chat_id,
+        message_id: messageId,
+        profile_id: currentProfile.id,
+        emoji,
       });
-
-      if (response.ok) {
-        // Optimistically update the UI
-        setMessages((prev) =>
-          prev.map((msg) => {
-            if (msg.id === messageId) {
-              const reactions = msg.reactions || [];
-              return {
-                ...msg,
-                reactions: reactions
-                  .map((r) =>
-                    r.emoji === emoji
-                      ? {
-                          ...r,
-                          count: r.count - 1,
-                          profiles: r.profiles.filter(
-                            (p) => p.id !== currentProfile.id,
-                          ),
-                        }
-                      : r,
-                  )
-                  .filter((r) => r.count > 0), // Remove reactions with 0 count
-              };
-            }
-            return msg;
-          }),
-        );
-      }
     } catch (err) {
       console.error("Error removing reaction:", err);
     }
@@ -414,28 +229,15 @@ export default function GroupChatDetail() {
     try {
       setDeletingMessageId(messageId);
 
-      const response = await client.app["group-chats"][
-        ":group_chat_id"
-      ].messages[":message_id"].$delete({
-        param: { group_chat_id, message_id: messageId },
-        query: { profile_id: currentProfile.id, mode },
+      await mutate("groupChats:remove", {
+        group_chat_id,
+        message_id: messageId,
+        profile_id: currentProfile.id,
+        mode,
       });
-
-      if (response.ok) {
-        setMessages((prev) => prev.filter((m) => m.id !== messageId));
-        toast.success("메시지가 삭제되었습니다");
-      } else {
-        try {
-          const errorData = await response.json();
-          toast.error(
-            getErrorMessage(errorData, "메시지를 삭제할 수 없습니다"),
-          );
-        } catch {
-          toast.error("메시지를 삭제할 수 없습니다");
-        }
-      }
-    } catch (_error) {
-      toast.error("메시지 삭제 중 오류가 발생했습니다");
+      toast.success("메시지가 삭제되었습니다");
+    } catch (err) {
+      toast.error(errorMessage(err, "메시지를 삭제할 수 없습니다"));
     } finally {
       setDeletingMessageId(null);
       setConfirmDeleteMessageId(null);
@@ -462,27 +264,15 @@ export default function GroupChatDetail() {
 
     try {
       setIsSavingName(true);
-      const response = await client.app["group-chats"][":group_chat_id"].$patch(
-        {
-          param: { group_chat_id },
-          json: { profile_id: currentProfile.id, name: editName.trim() },
-        },
-      );
-
-      if (response.ok) {
-        setGroupChat((prev) =>
-          prev ? { ...prev, name: editName.trim() } : prev,
-        );
-        setIsEditingName(false);
-        toast.success("그룹 이름이 변경되었습니다");
-      } else {
-        const errorData = await response.json();
-        toast.error(
-          getErrorMessage(errorData, "그룹 이름 변경에 실패했습니다"),
-        );
-      }
-    } catch (_error) {
-      toast.error("그룹 이름 변경 중 오류가 발생했습니다");
+      await mutate("groupChats:update", {
+        group_chat_id,
+        profile_id: currentProfile.id,
+        name: editName.trim(),
+      });
+      setIsEditingName(false);
+      toast.success("그룹 이름이 변경되었습니다");
+    } catch (err) {
+      toast.error(errorMessage(err, "그룹 이름 변경에 실패했습니다"));
     } finally {
       setIsSavingName(false);
     }

@@ -9,7 +9,6 @@ interface MastodonLayoutProps {
   isAuthenticated: boolean;
   isLoading: boolean;
   communityName: string;
-  consoleUrl: string;
   unreadCount: number;
   unreadMessageCount: number;
 }
@@ -19,17 +18,13 @@ export function MastodonLayout({
   isAuthenticated,
   isLoading,
   communityName,
-  consoleUrl,
   unreadCount,
   unreadMessageCount,
 }: MastodonLayoutProps) {
   const headerHidden = useScrollDirection();
 
-  // During loading, assume authenticated if session token exists to prevent layout shift
-  const hasSessionToken =
-    typeof window !== "undefined" && !!localStorage.getItem("session_token");
-  const showAuthenticatedLayout =
-    isAuthenticated || (isLoading && hasSessionToken);
+  // Members get the app's navigation; visitors and applicants a plain page.
+  const showAuthenticatedLayout = isAuthenticated && !isLoading;
 
   return (
     <div className="min-h-screen bg-background">
@@ -40,7 +35,6 @@ export function MastodonLayout({
         >
           <MobileNavDrawer
             communityName={communityName}
-            consoleUrl={consoleUrl}
             unreadCount={unreadCount}
             unreadMessageCount={unreadMessageCount}
           />
@@ -65,7 +59,6 @@ export function MastodonLayout({
             <div className="lg:hidden">
               <SidebarNav
                 communityName={communityName}
-                consoleUrl={consoleUrl}
                 unreadCount={unreadCount}
                 unreadMessageCount={unreadMessageCount}
                 collapsed
@@ -75,7 +68,6 @@ export function MastodonLayout({
             <div className="hidden lg:block">
               <SidebarNav
                 communityName={communityName}
-                consoleUrl={consoleUrl}
                 unreadCount={unreadCount}
                 unreadMessageCount={unreadMessageCount}
               />
@@ -96,7 +88,7 @@ export function MastodonLayout({
       </div>
 
       {/* Mobile Bottom Navigation */}
-      {isAuthenticated && (
+      {showAuthenticatedLayout && (
         <MobileBottomNav
           unreadCount={unreadCount}
           unreadMessageCount={unreadMessageCount}

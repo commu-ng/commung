@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { client } from "~/lib/api-client";
+import { query } from "~/lib/naru";
 import { useAuth } from "./useAuth";
 
 export interface ShopCurrency {
@@ -52,12 +52,9 @@ export function useShopSummary() {
     queryKey: ["shop-summary", profileId],
     queryFn: async () => {
       if (!profileId) return null;
-      const response = await client.app.shop.$get({
-        query: { profile_id: profileId },
-      });
-      if (!response.ok) return null;
-      const result = await response.json();
-      return result.data as unknown as ShopSummary;
+      return await query<ShopSummary>("shop:summary", {
+        profile_id: profileId,
+      }).catch(() => null);
     },
     enabled: !!profileId,
     staleTime: 30_000,

@@ -1,7 +1,6 @@
 import {
   Bell,
   Bookmark,
-  ExternalLink,
   Hash,
   Home,
   Megaphone,
@@ -9,6 +8,7 @@ import {
   MessageCircle,
   Search,
   Settings,
+  ShieldCheck,
   User,
   UserCheck,
 } from "lucide-react";
@@ -25,22 +25,22 @@ import {
   SheetTrigger,
 } from "~/components/ui/sheet";
 import { useAuth } from "~/hooks/useAuth";
+import { useCurrentInstance } from "~/hooks/useCurrentInstance";
 
 interface HeaderProps {
   communityName: string;
-  consoleUrl: string;
   unreadCount: number;
   unreadMessageCount: number;
 }
 
 export function Header({
   communityName,
-  consoleUrl,
   unreadCount,
   unreadMessageCount,
 }: HeaderProps) {
   const location = useLocation();
-  const { currentProfile } = useAuth();
+  const { currentProfile, belongsToCurrentInstance } = useAuth();
+  const { isModerator } = useCurrentInstance();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const getNavLinkClasses = (path: string, isMobile = false) => {
@@ -96,6 +96,9 @@ export function Header({
     { to: "/search", icon: Search, label: "검색", title: "검색" },
     { to: "/profiles", icon: UserCheck, label: "멤버", title: "멤버 목록" },
     { to: "/settings", icon: Settings, label: "설정", title: "설정" },
+    ...(isModerator
+      ? [{ to: "/admin", icon: ShieldCheck, label: "관리", title: "커뮤 관리" }]
+      : []),
   ];
 
   const renderNavItem = (
@@ -150,15 +153,16 @@ export function Header({
               </div>
             </div>
             <div className="h-6 w-px bg-border"></div>
-            <a
-              target="_blank"
-              href={consoleUrl}
-              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
-              title="콘솔로 이동"
-            >
-              <ExternalLink className="h-4 w-4" />
-              <span className="hidden lg:inline">커뮹! 메인으로 가기</span>
-            </a>
+            {belongsToCurrentInstance ? null : (
+              <Link
+                to="/apply"
+                className="inline-flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
+                title="가입 신청"
+              >
+                <UserCheck className="h-4 w-4" />
+                <span className="hidden lg:inline">가입 신청</span>
+              </Link>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />

@@ -5,7 +5,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
-import { client } from "~/lib/api-client";
+import { query } from "~/lib/naru";
 import { getReadOnlyMarkdownInstance } from "~/lib/markdown-utils";
 
 const md = getReadOnlyMarkdownInstance();
@@ -39,12 +39,9 @@ export function meta({ params }: { params: { builtinId?: string } }) {
 }
 
 async function fetchApp(builtinId: string): Promise<AppDetail | null> {
-  const r = await client.app.apps[":builtinId"].$get({
-    param: { builtinId },
-  });
-  if (!r.ok) return null;
-  const result = await r.json();
-  return result.data as unknown as AppDetail;
+  return await query<AppDetail>("apps:get", { builtin_id: builtinId }).catch(
+    () => null,
+  );
 }
 
 function MarkdownProse({ text }: { text: string }) {

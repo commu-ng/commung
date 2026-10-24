@@ -12,6 +12,11 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useAuth } from "~/hooks/useAuth";
+import type { Profile } from "~/types/profile";
+
+/** A profile shared with the member rather than their own (role `admin`). */
+const isShared = (profile: Profile) =>
+  profile.is_owned === false || profile.role === "admin";
 
 interface ProfileSwitcherProps {
   compact?: boolean;
@@ -67,7 +72,7 @@ export function ProfileSwitcher({ compact = false }: ProfileSwitcherProps) {
                   <div className="text-sm font-medium">
                     {displayProfile.name}
                   </div>
-                  {displayProfile.is_owned === false && (
+                  {isShared(displayProfile) && (
                     <Badge variant="secondary" className="text-xs">
                       <div className="flex items-center gap-1">
                         <Users className="h-3 w-3" />
@@ -94,11 +99,9 @@ export function ProfileSwitcher({ compact = false }: ProfileSwitcherProps) {
       <DropdownMenuContent align="start" className="w-80">
         {(() => {
           const ownedProfiles = availableProfiles.filter(
-            (profile) => profile.is_owned !== false,
+            (profile) => !isShared(profile),
           );
-          const sharedProfiles = availableProfiles.filter(
-            (profile) => profile.is_owned === false,
-          );
+          const sharedProfiles = availableProfiles.filter(isShared);
 
           const getRoleIcon = (role?: string) => {
             if (role === "owner") return <Crown className="h-3 w-3" />;

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Package } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
-import { client } from "~/lib/api-client";
+import { query } from "~/lib/naru";
 import { getReadOnlyMarkdownInstance } from "~/lib/markdown-utils";
 
 interface InventoryEntry {
@@ -19,15 +19,10 @@ export function ProfileInventory({ username }: { username: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ["profile-inventory", username],
     queryFn: async () => {
-      const r = await client.app.shop.inventory[":username"].$get({
-        param: { username },
-      });
-      if (!r.ok) return null;
-      const result = await r.json();
-      return result.data as unknown as {
-        profile_id: string;
-        items: InventoryEntry[];
-      };
+      return await query<{ profile_id: string; items: InventoryEntry[] }>(
+        "shop:inventory",
+        { username },
+      ).catch(() => null);
     },
     staleTime: 30_000,
   });

@@ -2,8 +2,8 @@ import { useState } from "react";
 import {
   Bell,
   Bookmark,
-  ExternalLink,
   Home,
+  LogOut,
   LayoutList,
   Megaphone,
   Menu,
@@ -12,6 +12,7 @@ import {
   PenSquare,
   Search,
   Settings,
+  ShieldCheck,
   User,
   UserCheck,
 } from "lucide-react";
@@ -22,23 +23,23 @@ import { ThemeToggle } from "~/components/ThemeToggle";
 import { Button } from "~/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "~/components/ui/sheet";
 import { useAuth } from "~/hooks/useAuth";
+import { useCurrentInstance } from "~/hooks/useCurrentInstance";
 
 interface MobileNavDrawerProps {
   communityName: string;
-  consoleUrl: string;
   unreadCount: number;
   unreadMessageCount: number;
 }
 
 export function MobileNavDrawer({
   communityName,
-  consoleUrl,
   unreadCount,
   unreadMessageCount,
 }: MobileNavDrawerProps) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
-  const { currentProfile } = useAuth();
+  const { currentProfile, logout } = useAuth();
+  const { isModerator } = useCurrentInstance();
 
   const getNavLinkClasses = (path: string) => {
     const isActive =
@@ -89,6 +90,9 @@ export function MobileNavDrawer({
         ]
       : []),
     { to: "/settings", icon: Settings, label: "설정" },
+    ...(isModerator
+      ? [{ to: "/admin", icon: ShieldCheck, label: "커뮤 관리" }]
+      : []),
   ];
 
   return (
@@ -174,16 +178,18 @@ export function MobileNavDrawer({
             {/* Bottom Section */}
             <div className="flex items-center justify-between py-3">
               <ThemeToggle />
-              <a
-                target="_blank"
-                href={consoleUrl}
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  logout();
+                }}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-full transition-colors"
-                title="콘솔로 이동"
-                rel="noreferrer"
+                title="로그아웃"
               >
-                <ExternalLink className="h-3.5 w-3.5" />
-                <span>콘솔</span>
-              </a>
+                <LogOut className="h-3.5 w-3.5" />
+                <span>로그아웃</span>
+              </button>
             </div>
           </div>
         </SheetContent>

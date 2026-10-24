@@ -2,8 +2,8 @@ import { Eye, ImagePlus, Pencil, Send, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "~/hooks/useAuth";
-import { client } from "~/lib/api-client";
 import { getReadOnlyMarkdownInstance } from "~/lib/markdown-utils";
+import { errorMessage, mutate } from "~/lib/naru";
 import {
   ALLOWED_IMAGE_TYPES,
   MAX_IMAGE_FILE_SIZE,
@@ -102,24 +102,17 @@ export function BoardPostForm({
 
     try {
       setIsSubmitting(true);
-      const response = await client.app.boards[":slug"].posts.$post({
-        param: { slug: boardSlug },
-        json: {
-          profile_id: currentProfile.id,
-          title: title.trim(),
-          content: content.trim(),
-        },
+      await mutate("boards:createPost", {
+        slug: boardSlug,
+        profile_id: currentProfile.id,
+        title: title.trim(),
+        content: content.trim(),
       });
-
-      if (response.ok) {
-        toast.success("게시글이 등록되었습니다");
-        onSuccess();
-      } else {
-        toast.error("게시글 등록에 실패했습니다");
-      }
+      toast.success("게시글이 등록되었습니다");
+      onSuccess();
     } catch (err) {
       console.error("Failed to create post:", err);
-      toast.error("게시글 등록에 실패했습니다");
+      toast.error(errorMessage(err, "게시글 등록에 실패했습니다"));
     } finally {
       setIsSubmitting(false);
     }

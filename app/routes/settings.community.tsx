@@ -8,7 +8,8 @@ import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
 import { useAuth } from "~/hooks/useAuth";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
-import { client } from "~/lib/api-client";
+import { SESSION_KEY, type Session } from "~/hooks/useSession";
+import { errorMessage, mutate } from "~/lib/naru";
 
 const DEFAULT_PICKER = "#6b7fb8";
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
@@ -46,12 +47,13 @@ export default function CommunitySettings() {
     }
   }, [instanceLoading, themeKeyColor]);
 
+  // The theme injector reads the color from the session (members) or the
+  // public instance, so a preview writes it there until saved or reset.
   const updateCacheThemeColor = (next: string | null) => {
-    queryClient.setQueryData<{
-      theme_key_color: string | null;
-      [k: string]: unknown;
-    } | null>(["current-instance"], (prev) =>
-      prev ? { ...prev, theme_key_color: next } : prev,
+    queryClient.setQueryData<Session | null>(SESSION_KEY, (prev) =>
+      prev
+        ? { ...prev, instance: { ...prev.instance, theme_key_color: next } }
+        : prev,
     );
   };
 
@@ -59,11 +61,10 @@ export default function CommunitySettings() {
     return () => {
       if (!hasHydratedRef.current) return;
       const saved = savedColorRef.current;
-      queryClient.setQueryData<{
-        theme_key_color: string | null;
-        [k: string]: unknown;
-      } | null>(["current-instance"], (prev) =>
-        prev ? { ...prev, theme_key_color: saved } : prev,
+      queryClient.setQueryData<Session | null>(SESSION_KEY, (prev) =>
+        prev
+          ? { ...prev, instance: { ...prev.instance, theme_key_color: saved } }
+          : prev,
       );
     };
   }, [queryClient]);
@@ -102,16 +103,13 @@ export default function CommunitySettings() {
     const lower = normalized.toLowerCase();
     setIsSaving(true);
     try {
-      const response = await client.app.me.instance.theme.$patch({
-        json: { theme_key_color: lower },
-      });
-      if (!response.ok) throw new Error("저장에 실패했습니다");
+      await mutate("community:setTheme", { theme_key_color: lower });
       savedColorRef.current = lower;
-      await queryClient.invalidateQueries({ queryKey: ["current-instance"] });
+      updateCacheThemeColor(lower);
+      queryClient.invalidateQueries({ queryKey: ["instance"] });
       toast.success("테마 색상이 저장되었습니다");
     } catch (error) {
-      console.error("Failed to save theme color:", error);
-      toast.error("테마 색상 저장에 실패했습니다");
+      toast.error(errorMessage(error, "테마 색상 저장에 실패했습니다"));
       updateCacheThemeColor(savedColorRef.current);
     } finally {
       setIsSaving(false);
@@ -121,19 +119,15 @@ export default function CommunitySettings() {
   const handleRemove = async () => {
     setIsRemoving(true);
     try {
-      const response = await client.app.me.instance.theme.$patch({
-        json: { theme_key_color: null },
-      });
-      if (!response.ok) throw new Error("삭제에 실패했습니다");
+      await mutate("community:setTheme", { theme_key_color: null });
       savedColorRef.current = null;
       setPickerValue(DEFAULT_PICKER);
       setHexValue("");
       updateCacheThemeColor(null);
-      await queryClient.invalidateQueries({ queryKey: ["current-instance"] });
+      queryClient.invalidateQueries({ queryKey: ["instance"] });
       toast.success("사용자 지정 색상이 제거되었습니다");
     } catch (error) {
-      console.error("Failed to remove theme color:", error);
-      toast.error("색상 제거에 실패했습니다");
+      toast.error(errorMessage(error, "색상 제거에 실패했습니다"));
     } finally {
       setIsRemoving(false);
     }

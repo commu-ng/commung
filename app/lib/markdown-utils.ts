@@ -1,6 +1,6 @@
 import mention from "@fedify/markdown-it-mention";
 import MarkdownIt from "markdown-it";
-import { client } from "~/lib/api-client";
+import { query } from "~/lib/naru";
 
 // Cache for profile existence checks
 const profileExistsCache = new Map<string, boolean>();
@@ -89,12 +89,9 @@ export async function validateProfiles(
     await Promise.all(
       uncachedUsernames.map(async (username) => {
         try {
-          const response = await client.app.profiles[":username"].$get({
-            param: { username },
-          });
-          const exists = response.ok;
-          profileExistsCache.set(username, exists);
-          results.set(username, exists);
+          await query("profiles:get", { username });
+          profileExistsCache.set(username, true);
+          results.set(username, true);
         } catch {
           profileExistsCache.set(username, false);
           results.set(username, false);
@@ -134,19 +131,11 @@ export async function validateProfilesViaUsername(
     await Promise.all(
       uncachedUsernames.map(async (username) => {
         try {
-          const response = await client.app.username[":username"].$get({
-            param: { username: encodeURIComponent(username) },
+          const result = await query<{ exists: boolean }>("username:get", {
+            username,
           });
-
-          if (response.ok) {
-            const result = await response.json();
-            const exists = result.data.exists;
-            profileExistsCache.set(username, exists);
-            results.set(username, exists);
-          } else {
-            profileExistsCache.set(username, false);
-            results.set(username, false);
-          }
+          profileExistsCache.set(username, result.exists);
+          results.set(username, result.exists);
         } catch {
           profileExistsCache.set(username, false);
           results.set(username, false);

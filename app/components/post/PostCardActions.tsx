@@ -1,7 +1,7 @@
 import { Bookmark, MessageCircle, Pin, SendIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { client } from "~/lib/api-client";
+import { errorMessage, mutate } from "~/lib/naru";
 
 interface PostCardActionsProps {
   postId: string;
@@ -57,34 +57,20 @@ export function PostCardActions({
 
     setIsBookmarkLoading(true);
     try {
+      const args = { post_id: postId, profile_id: currentProfileId };
       if (isBookmarked) {
-        const response = await client.app.posts[":post_id"].bookmark.$delete({
-          query: { profile_id: currentProfileId },
-          param: { post_id: postId },
-        });
-        if (response.ok) {
-          setIsBookmarked(false);
-          onBookmarkChange(false);
-          toast.success("북마크가 제거되었습니다");
-        } else {
-          throw new Error("북마크 제거에 실패했습니다");
-        }
+        await mutate("posts:unbookmark", args);
+        setIsBookmarked(false);
+        onBookmarkChange(false);
+        toast.success("북마크가 제거되었습니다");
       } else {
-        const response = await client.app.posts[":post_id"].bookmark.$post({
-          query: { profile_id: currentProfileId },
-          param: { post_id: postId },
-        });
-        if (response.ok) {
-          setIsBookmarked(true);
-          onBookmarkChange(true);
-          toast.success("북마크에 추가되었습니다");
-        } else {
-          throw new Error("북마크 추가에 실패했습니다");
-        }
+        await mutate("posts:bookmark", args);
+        setIsBookmarked(true);
+        onBookmarkChange(true);
+        toast.success("북마크에 추가되었습니다");
       }
     } catch (error) {
-      console.error("Error toggling bookmark:", error);
-      toast.error("북마크 처리에 실패했습니다");
+      toast.error(errorMessage(error, "북마크 처리에 실패했습니다"));
     } finally {
       setIsBookmarkLoading(false);
     }
@@ -98,43 +84,20 @@ export function PostCardActions({
 
     setIsPinLoading(true);
     try {
+      const args = { post_id: postId, profile_id: currentProfileId };
       if (isPinned) {
-        const response = await client.app.posts[":post_id"].pin.$delete({
-          query: { profile_id: currentProfileId },
-          param: { post_id: postId },
-        });
-        if (response.ok) {
-          setIsPinned(false);
-          onPinChange?.(false);
-          toast.success("게시물 고정이 해제되었습니다");
-        } else {
-          const errorData = await response.json();
-          throw new Error(
-            (errorData as { error?: string }).error ||
-              "고정 해제에 실패했습니다",
-          );
-        }
+        await mutate("posts:unpin", args);
+        setIsPinned(false);
+        onPinChange?.(false);
+        toast.success("게시물 고정이 해제되었습니다");
       } else {
-        const response = await client.app.posts[":post_id"].pin.$post({
-          query: { profile_id: currentProfileId },
-          param: { post_id: postId },
-        });
-        if (response.ok) {
-          setIsPinned(true);
-          onPinChange?.(true);
-          toast.success("게시물이 고정되었습니다");
-        } else {
-          const errorData = await response.json();
-          throw new Error(
-            (errorData as { error?: string }).error || "고정에 실패했습니다",
-          );
-        }
+        await mutate("posts:pin", args);
+        setIsPinned(true);
+        onPinChange?.(true);
+        toast.success("게시물이 고정되었습니다");
       }
     } catch (error) {
-      console.error("Error toggling pin:", error);
-      toast.error(
-        error instanceof Error ? error.message : "고정 처리에 실패했습니다",
-      );
+      toast.error(errorMessage(error, "고정 처리에 실패했습니다"));
     } finally {
       setIsPinLoading(false);
     }

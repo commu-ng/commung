@@ -9,8 +9,8 @@ import { LoadingState } from "~/components/shared/LoadingState";
 import { Spinner } from "~/components/ui/spinner";
 import { useAuth } from "~/hooks/useAuth";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
-import { client } from "~/lib/api-client";
-import type { Post } from "~/types/post";
+import { query } from "~/lib/naru";
+import type { Page, Post } from "~/types/post";
 
 export function meta() {
   return [{ title: "검색" }, { name: "description", content: "게시물 검색" }];
@@ -62,30 +62,21 @@ export default function SearchPage() {
     queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
       if (!debouncedQuery || debouncedQuery.length < 2) {
         return {
-          data: [],
+          data: [] as Post[],
           pagination: { next_cursor: null, has_more: false, total_count: 0 },
         };
       }
 
-      const response = await client.app.posts.search.$get({
-        query: {
-          q: debouncedQuery,
-          limit: POSTS_PER_PAGE.toString(),
-          ...(pageParam && { cursor: pageParam }),
-          ...(currentProfile?.id && { profile_id: currentProfile.id }),
-        },
+      return query<Page<Post>>("posts:search", {
+        q: debouncedQuery,
+        limit: POSTS_PER_PAGE,
+        ...(pageParam && { cursor: pageParam }),
+        ...(currentProfile?.id && { profile_id: currentProfile.id }),
       });
-
-      if (!response.ok) {
-        throw new Error("검색에 실패했습니다");
-      }
-
-      const result = await response.json();
-      return result;
     },
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.has_more
-        ? lastPage.pagination.next_cursor
+        ? (lastPage.pagination.next_cursor ?? undefined)
         : undefined;
     },
     initialPageParam: undefined as string | undefined,
@@ -140,9 +131,7 @@ export default function SearchPage() {
   }
 
   if (!belongsToCurrentInstance && !authLoading) {
-    const applyUrl = currentInstance?.slug
-      ? `${consoleUrl}/communities/${currentInstance.slug}/apply`
-      : consoleUrl;
+    const applyUrl = consoleUrl;
 
     return (
       <div className="flex items-center justify-center min-h-[80vh]">

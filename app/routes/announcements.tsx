@@ -4,7 +4,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PostCard } from "~/components/post-card";
 import { Spinner } from "~/components/ui/spinner";
 import { useAuth } from "~/hooks/useAuth";
-import { client } from "~/lib/api-client";
+import { query } from "~/lib/naru";
+import type { Post } from "~/types/post";
 
 export default function Announcements() {
   const { currentProfile } = useAuth();
@@ -18,16 +19,9 @@ export default function Announcements() {
   } = useQuery({
     queryKey: ["announcements", currentProfileId],
     queryFn: async () => {
-      const response = await client.app.announcements.$get({
-        query: currentProfileId ? { profile_id: currentProfileId } : {},
+      return query<Post[]>("posts:announcements", {
+        ...(currentProfileId && { profile_id: currentProfileId }),
       });
-
-      if (!response.ok) {
-        throw new Error("공지사항을 불러오는 데 실패했습니다");
-      }
-
-      const result = await response.json();
-      return result.data;
     },
   });
 

@@ -26,22 +26,12 @@ import {
   EmptyDescription,
   EmptyMedia,
 } from "~/components/ui/empty";
-import { useUnreadCount } from "~/contexts/UnreadCountContext";
 import { useAuth } from "~/hooks/useAuth";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
-import type { InferResponseType } from "hono/client";
-import { client, getErrorMessage } from "~/lib/api-client";
-import type { Profile } from "~/types/profile";
+import { useLive } from "~/components/messages/useLive";
+import { errorMessage, mutate, reasonOf } from "~/lib/naru";
+import type { ConversationThread } from "~/types/message";
 import type { Route } from "./+types/messages.$username";
-
-type MessageFromList = InferResponseType<
-  (typeof client.app.conversations)[":other_profile_id"]["$get"],
-  200
->["data"][number];
-
-type Message = Omit<MessageFromList, "receiver"> & {
-  receiver?: MessageFromList["receiver"];
-};
 
 export function meta({ params }: Route.MetaArgs) {
   return [
@@ -52,12 +42,9 @@ export function meta({ params }: Route.MetaArgs) {
 
 export default function MessageConversation() {
   const { username } = useParams();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [otherProfile, setOtherProfile] = useState<Profile | null>(null);
   const [newMessage, setNewMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
-  const [error, setError] = useState("");
+  const [sendError, setSendError] = useState("");
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(
     null,
   );
@@ -66,7 +53,27 @@ export default function MessageConversation() {
   >(null);
   const { isAuthenticated, currentProfile, isLoading: authLoading } = useAuth();
   const { instanceSlug } = useCurrentInstance();
-  const { refreshUnreadCounts } = useUnreadCount();
+
+  // The conversation, kept current: a message sent, read, reacted to or
+  // deleted on either side runs it again.
+  const thread = useLive<ConversationThread>(
+    "messages:conversation",
+    isAuthenticated && instanceSlug && username && currentProfile
+      ? { profile_id: currentProfile.id, username }
+      : null,
+  );
+  const otherProfile = thread.data?.other_profile ?? null;
+  const messages = thread.data?.messages.slice().reverse() ?? [];
+  const isLoading = authLoading || thread.isLoading;
+  const error = sendError
+    ? sendError
+    : thread.error
+      ? reasonOf(thread.error) === "not_found"
+        ? "사용자를 찾을 수 없습니다"
+        : errorMessage(thread.error, "메시지를 불러올 수 없습니다")
+      : !authLoading && isAuthenticated && !currentProfile
+        ? "프로필를 선택해주세요"
+        : "";
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -115,128 +122,29 @@ export default function MessageConversation() {
     prevMessageCountRef.current = messages.length;
   }, [messages, isLoading, scrollToBottom, isNearBottom]);
 
-  // Poll for new messages
+  // Mark what the other profile sent as read: once per batch of unread
+  // messages, a moment after they arrive, not once per message.
   const currentProfileId = currentProfile?.id;
   const otherProfileId = otherProfile?.id;
+  const latestUnreadId = thread.data?.messages
+    .filter((message) => !message.is_sender && !message.read_at)
+    .at(-1)?.id;
+  const markedUpToRef = useRef<string | null>(null);
   useEffect(() => {
-    if (
-      !isAuthenticated ||
-      !instanceSlug ||
-      !username ||
-      !currentProfileId ||
-      !otherProfileId
-    )
-      return;
-
-    const interval = setInterval(async () => {
-      try {
-        const messagesResponse = await client.app.conversations[
-          ":other_profile_id"
-        ].$get({
-          param: { other_profile_id: otherProfileId },
-          query: { profile_id: currentProfileId },
-        });
-        if (messagesResponse.ok) {
-          const messagesResult = await messagesResponse.json();
-          setMessages(messagesResult.data.slice().reverse());
-
-          // Mark messages as read
-          await client.app.conversations[":other_profile_id"][
-            "mark-read"
-          ].$post({
-            param: { other_profile_id: otherProfileId },
-            query: { profile_id: currentProfileId },
-          });
-          refreshUnreadCounts();
-        }
-      } catch (err) {
-        console.error("Failed to poll messages:", err);
-      }
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [
-    isAuthenticated,
-    instanceSlug,
-    username,
-    currentProfileId,
-    otherProfileId,
-    refreshUnreadCounts,
-  ]);
-
-  useEffect(() => {
-    if (!isAuthenticated || !instanceSlug || !username) return;
-
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-
-        // Get profile info first
-        const profileResponse = await client.app.profiles[":username"].$get({
-          param: { username },
-        });
-        if (!profileResponse.ok) {
-          setError("사용자를 찾을 수 없습니다");
-          return;
-        }
-        const profileResult = await profileResponse.json();
-        const profileData = profileResult.data;
-        setOtherProfile(profileData);
-
-        // Get conversation messages
-        if (!authLoading && !currentProfile) {
-          setError("프로필를 선택해주세요");
-          return;
-        }
-
-        // Wait for auth loading to complete
-        if (authLoading || !currentProfile) {
-          return;
-        }
-
-        const messagesResponse = await client.app.conversations[
-          ":other_profile_id"
-        ].$get({
-          param: { other_profile_id: profileData.id },
-          query: { profile_id: currentProfile.id },
-        });
-        if (messagesResponse.ok) {
-          const messagesResult = await messagesResponse.json();
-          // Transform API response to match Message interface
-          setMessages(messagesResult.data.slice().reverse()); // Reverse to show oldest first
-
-          // Mark messages as read
-          try {
-            await client.app.conversations[":other_profile_id"][
-              "mark-read"
-            ].$post({
-              param: { other_profile_id: profileData.id },
-              query: { profile_id: currentProfile.id },
-            });
-            // Refresh unread counts in header
-            refreshUnreadCounts();
-          } catch (err) {
-            console.error("Failed to mark messages as readAt:", err);
-          }
-        } else {
-          setError("메시지를 불러올 수 없습니다");
-        }
-      } catch (_err) {
-        setError("데이터를 불러오는 중 오류가 발생했습니다");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [
-    isAuthenticated,
-    instanceSlug,
-    username,
-    authLoading,
-    currentProfile, // Refresh unread counts in header
-    refreshUnreadCounts,
-  ]);
+    if (!latestUnreadId || !currentProfileId || !otherProfileId) return;
+    if (markedUpToRef.current === latestUnreadId) return;
+    const timer = setTimeout(() => {
+      markedUpToRef.current = latestUnreadId;
+      mutate("messages:markConversationRead", {
+        profile_id: currentProfileId,
+        other_profile_id: otherProfileId,
+      }).catch((err) => {
+        markedUpToRef.current = null;
+        console.error("Failed to mark messages as read:", err);
+      });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [latestUnreadId, currentProfileId, otherProfileId]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -333,30 +241,25 @@ export default function MessageConversation() {
 
     try {
       setIsSending(true);
-      const response = await client.app.messages.$post({
-        query: { profile_id: currentProfile.id },
-        json: {
-          receiver_id: otherProfile.id,
-          content: newMessage.trim(),
-          image_ids: images
-            .map((img) => img.uploadedId)
-            .filter((id): id is string => id !== undefined),
-        },
+      // The live conversation shows the new message by itself.
+      await mutate("messages:send", {
+        profile_id: currentProfile.id,
+        receiver_id: otherProfile.id,
+        content: newMessage.trim(),
+        image_ids: images
+          .map((img) => img.uploadedId)
+          .filter((id): id is string => id !== undefined),
       });
-
-      if (response.ok) {
-        const result = await response.json();
-        setMessages((prev) => [...prev, result.data]);
-        setNewMessage("");
-        setImages([]);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-      } else {
-        setError("메시지 전송에 실패했습니다");
+      setNewMessage("");
+      setImages([]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
       }
-    } catch (_err) {
-      setError("메시지 전송 중 오류가 발생했습니다");
+    } catch (err) {
+      if (reasonOf(err) === "blocked")
+        toast.error(errorMessage(err, "메시지 전송에 실패했습니다"));
+      else
+        setSendError(errorMessage(err, "메시지 전송 중 오류가 발생했습니다"));
     } finally {
       setIsSending(false);
     }
@@ -371,28 +274,14 @@ export default function MessageConversation() {
     try {
       setDeletingMessageId(messageId);
 
-      const response = await client.app.messages[":message_id"].$delete({
-        param: { message_id: messageId },
-        query: { profile_id: currentProfile.id, mode },
+      await mutate("messages:remove", {
+        profile_id: currentProfile.id,
+        message_id: messageId,
+        mode,
       });
-
-      if (response.ok) {
-        setMessages((prevMessages) =>
-          prevMessages.filter((message) => message.id !== messageId),
-        );
-        toast.success("메시지가 삭제되었습니다");
-      } else {
-        try {
-          const errorData = await response.json();
-          toast.error(
-            getErrorMessage(errorData, "메시지를 삭제할 수 없습니다"),
-          );
-        } catch {
-          toast.error("메시지를 삭제할 수 없습니다");
-        }
-      }
-    } catch (_error) {
-      toast.error("메시지 삭제 중 오류가 발생했습니다");
+      toast.success("메시지가 삭제되었습니다");
+    } catch (err) {
+      toast.error(errorMessage(err, "메시지를 삭제할 수 없습니다"));
     } finally {
       setDeletingMessageId(null);
       setConfirmDeleteMessageId(null);
@@ -407,55 +296,18 @@ export default function MessageConversation() {
     setConfirmDeleteMessageId(null);
   };
 
+  // Reactions: the live conversation shows them once the call returns.
   const addReaction = async (messageId: string, emoji: string) => {
     if (!currentProfile) return;
 
     try {
-      const response = await client.app.messages[":message_id"].reactions.$post(
-        {
-          param: { message_id: messageId },
-          json: {
-            profile_id: currentProfile.id,
-            emoji: emoji,
-          },
-        },
-      );
-
-      if (response.ok) {
-        // Refresh messages to get updated reactions
-        if (otherProfile) {
-          const messagesResponse = await client.app.conversations[
-            ":other_profile_id"
-          ].$get({
-            param: { other_profile_id: otherProfile.id },
-            query: { profile_id: currentProfile.id },
-          });
-          if (messagesResponse.ok) {
-            const messagesResult = await messagesResponse.json();
-            setMessages(messagesResult.data.slice().reverse());
-          }
-        }
-      } else {
-        // Handle API error response
-        try {
-          const errorData = await response.json();
-          const errorMessage =
-            errorData && typeof errorData === "object"
-              ? "error" in errorData &&
-                typeof errorData.error === "object" &&
-                errorData.error?.message
-                ? errorData.error.message
-                : "error" in errorData && typeof errorData.error === "string"
-                  ? errorData.error
-                  : undefined
-              : undefined;
-          toast.error(errorMessage || "반응을 추가할 수 없습니다");
-        } catch {
-          toast.error("반응을 추가할 수 없습니다");
-        }
-      }
-    } catch (_err) {
-      toast.error("반응 추가 중 오류가 발생했습니다");
+      await mutate("messages:addReaction", {
+        profile_id: currentProfile.id,
+        message_id: messageId,
+        emoji,
+      });
+    } catch (err) {
+      toast.error(errorMessage(err, "반응을 추가할 수 없습니다"));
     }
   };
 
@@ -463,51 +315,13 @@ export default function MessageConversation() {
     if (!currentProfile) return;
 
     try {
-      const response = await client.app.messages[
-        ":message_id"
-      ].reactions.$delete({
-        param: { message_id: messageId },
-        query: {
-          profile_id: currentProfile.id,
-          emoji: emoji,
-        },
+      await mutate("messages:removeReaction", {
+        profile_id: currentProfile.id,
+        message_id: messageId,
+        emoji,
       });
-
-      if (response.ok) {
-        // Refresh messages to get updated reactions
-        if (otherProfile) {
-          const messagesResponse = await client.app.conversations[
-            ":other_profile_id"
-          ].$get({
-            param: { other_profile_id: otherProfile.id },
-            query: { profile_id: currentProfile.id },
-          });
-          if (messagesResponse.ok) {
-            const messagesResult = await messagesResponse.json();
-            setMessages(messagesResult.data.slice().reverse());
-          }
-        }
-      } else {
-        // Handle API error response
-        try {
-          const errorData = await response.json();
-          const errorMessage =
-            errorData && typeof errorData === "object"
-              ? "error" in errorData &&
-                typeof errorData.error === "object" &&
-                errorData.error?.message
-                ? errorData.error.message
-                : "error" in errorData && typeof errorData.error === "string"
-                  ? errorData.error
-                  : undefined
-              : undefined;
-          toast.error(errorMessage || "반응을 제거할 수 없습니다");
-        } catch {
-          toast.error("반응을 제거할 수 없습니다");
-        }
-      }
-    } catch (_err) {
-      toast.error("반응 제거 중 오류가 발생했습니다");
+    } catch (err) {
+      toast.error(errorMessage(err, "반응을 제거할 수 없습니다"));
     }
   };
 

@@ -1,4 +1,3 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { CheckCheck, Clock, MessageCircle, Plus, Users } from "lucide-react";
 import { useCallback, useEffect, useId, useState } from "react";
 import { Link } from "react-router";
@@ -12,15 +11,12 @@ import {
   EmptyMedia,
 } from "~/components/ui/empty";
 import { LoadingState } from "~/components/shared/LoadingState";
-import { useUnreadCount } from "~/contexts/UnreadCountContext";
 import { useAuth } from "~/hooks/useAuth";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
-import type { InferResponseType } from "hono/client";
-import { client } from "~/lib/api-client";
-import type { Conversation } from "~/types/message";
-
-type GroupChatEndpoint = (typeof client.app)["group-chats"]["$get"];
-type GroupChat = InferResponseType<GroupChatEndpoint, 200>["data"][number];
+import { useLive } from "~/components/messages/useLive";
+import { errorMessage, mutate, query } from "~/lib/naru";
+import type { Conversation, GroupChat } from "~/types/message";
+import type { Profile } from "~/types/profile";
 import type { Route } from "./+types/messages";
 
 export function meta(_args: Route.MetaArgs) {
@@ -52,111 +48,47 @@ export default function Messages() {
 
   const { isAuthenticated, currentProfile, isLoading: authLoading } = useAuth();
   const { instanceSlug, isLoading: instanceLoading } = useCurrentInstance();
-  const { refreshUnreadCounts } = useUnreadCount();
+  // Live lists: more are asked for by raising the limit as the page scrolls.
+  const [conversationLimit, setConversationLimit] = useState(ITEMS_PER_PAGE);
+  const [groupChatLimit, setGroupChatLimit] = useState(ITEMS_PER_PAGE);
+  const listsEnabled = isAuthenticated && !!instanceSlug && !!currentProfile;
+  const conversationsLive = useLive<Conversation[]>(
+    "messages:conversations",
+    listsEnabled
+      ? { profile_id: currentProfile.id, limit: conversationLimit }
+      : null,
+    { keepPrevious: true },
+  );
+  const groupChatsLive = useLive<GroupChat[]>(
+    "groupChats:list",
+    listsEnabled
+      ? { profile_id: currentProfile.id, limit: groupChatLimit }
+      : null,
+    { keepPrevious: true },
+  );
 
-  // Fetch conversations with infinite query
-  const {
-    data: conversationsData,
-    fetchNextPage: fetchNextConversations,
-    hasNextPage: hasNextConversations,
-    isFetchingNextPage: isFetchingNextConversations,
-    isLoading: isLoadingConversations,
-    refetch: refetchConversations,
-  } = useInfiniteQuery({
-    queryKey: ["conversations", currentProfile?.id],
-    queryFn: async ({ pageParam = 0 }): Promise<Conversation[]> => {
-      if (!currentProfile?.id) {
-        return [];
-      }
-
-      const response = await client.app.conversations.$get({
-        query: {
-          profile_id: currentProfile.id,
-          limit: ITEMS_PER_PAGE.toString(),
-          ...(pageParam > 0 && { cursor: pageParam.toString() }),
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("대화 목록을 불러올 수 없습니다");
-      }
-
-      const result = await response.json();
-      return result.data;
-    },
-    getNextPageParam: (lastPage, allPages) => {
-      const totalLoaded = allPages.reduce(
-        (total, page) => total + page.length,
-        0,
-      );
-      return lastPage.length < ITEMS_PER_PAGE ? undefined : totalLoaded;
-    },
-    initialPageParam: 0,
-    enabled: isAuthenticated && !!instanceSlug && !!currentProfile,
-  });
-
-  // Fetch group chats with infinite query
-  const {
-    data: groupChatsData,
-    fetchNextPage: fetchNextGroupChats,
-    hasNextPage: hasNextGroupChats,
-    isFetchingNextPage: isFetchingNextGroupChats,
-    isLoading: isLoadingGroupChats,
-    refetch: refetchGroupChats,
-  } = useInfiniteQuery({
-    queryKey: ["group-chats", currentProfile?.id],
-    queryFn: async ({ pageParam = 0 }): Promise<GroupChat[]> => {
-      if (!currentProfile?.id) {
-        return [];
-      }
-
-      const response = await client.app["group-chats"].$get({
-        query: {
-          profile_id: currentProfile.id,
-          limit: ITEMS_PER_PAGE.toString(),
-          ...(pageParam > 0 && { cursor: pageParam.toString() }),
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("그룹 채팅 목록을 불러올 수 없습니다");
-      }
-
-      const result = await response.json();
-
-      return result.data;
-    },
-    getNextPageParam: (lastPage, allPages) => {
-      const totalLoaded = allPages.reduce(
-        (total, page) => total + page.length,
-        0,
-      );
-      return lastPage.length < ITEMS_PER_PAGE ? undefined : totalLoaded;
-    },
-    initialPageParam: 0,
-    enabled: isAuthenticated && !!instanceSlug && !!currentProfile,
-  });
-
-  const conversations = conversationsData?.pages.flat() ?? [];
-  const groupChats = groupChatsData?.pages.flat() ?? [];
+  const conversations = conversationsLive.data ?? [];
+  const groupChats = groupChatsLive.data ?? [];
+  const hasNextConversations =
+    conversations.length >= conversationLimit && conversationLimit < 100;
+  const hasNextGroupChats =
+    groupChats.length >= groupChatLimit && groupChatLimit < 100;
+  const isFetchingNextConversations =
+    !!conversationsLive.data && conversationsLive.isLoading;
+  const isFetchingNextGroupChats =
+    !!groupChatsLive.data && groupChatsLive.isLoading;
   const isLoading =
-    isLoadingConversations || isLoadingGroupChats || instanceLoading;
+    (conversationsLive.isLoading && !conversationsLive.data) ||
+    (groupChatsLive.isLoading && !groupChatsLive.data) ||
+    instanceLoading;
 
   const markAllAsRead = async () => {
     if (!currentProfile) return;
 
     try {
       setIsMarkingAllRead(true);
-      const response = await client.app.conversations["mark-all-read"].$post({
-        query: { profile_id: currentProfile.id },
-      });
-
-      if (response.ok) {
-        // Refetch conversations to update unread counts
-        refetchConversations();
-        // Refresh unread counts immediately
-        refreshUnreadCounts();
-      }
+      // The live conversation list and unread counts update by themselves.
+      await mutate("messages:markAllRead", { profile_id: currentProfile.id });
     } catch (err) {
       console.error("Failed to mark all as read:", err);
     } finally {
@@ -164,28 +96,19 @@ export default function Messages() {
     }
   };
 
-  // Refresh header unread counts when messages page loads
-  useEffect(() => {
-    if (isAuthenticated && instanceSlug && currentProfile) {
-      refreshUnreadCounts();
-    }
-  }, [isAuthenticated, instanceSlug, currentProfile, refreshUnreadCounts]);
-
   // Infinite scroll trigger
   const loadMore = useCallback(() => {
-    if (hasNextConversations && !isFetchingNextConversations) {
-      fetchNextConversations();
+    if (hasNextConversations && !conversationsLive.isLoading) {
+      setConversationLimit((limit) => Math.min(limit + ITEMS_PER_PAGE, 100));
     }
-    if (hasNextGroupChats && !isFetchingNextGroupChats) {
-      fetchNextGroupChats();
+    if (hasNextGroupChats && !groupChatsLive.isLoading) {
+      setGroupChatLimit((limit) => Math.min(limit + ITEMS_PER_PAGE, 100));
     }
   }, [
     hasNextConversations,
-    isFetchingNextConversations,
-    fetchNextConversations,
+    conversationsLive.isLoading,
     hasNextGroupChats,
-    isFetchingNextGroupChats,
-    fetchNextGroupChats,
+    groupChatsLive.isLoading,
   ]);
 
   // Scroll event listener for infinite scroll
@@ -234,19 +157,19 @@ export default function Messages() {
 
     // Fetch available profiles
     try {
-      const response = await client.app.profiles.$get({
-        query: {},
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const allProfiles = Array.isArray(result?.data) ? result.data : [];
+      const result = await query<Profile[]>("profiles:list", {});
+      const allProfiles = Array.isArray(result) ? result : [];
 
-        // Filter out current profile
-        const otherProfiles = allProfiles.filter(
-          (profile) => profile.id !== currentProfile.id,
-        );
-        setAvailableProfiles(otherProfiles);
-      }
+      // Filter out current profile
+      const otherProfiles = allProfiles
+        .filter((profile) => profile.id !== currentProfile.id)
+        .map((profile) => ({
+          id: profile.id,
+          name: profile.name,
+          username: profile.username,
+          profile_picture_url: profile.profile_picture_url ?? null,
+        }));
+      setAvailableProfiles(otherProfiles);
     } catch (err) {
       console.error("Failed to fetch profiles:", err);
     }
@@ -279,23 +202,15 @@ export default function Messages() {
     setCreateError("");
 
     try {
-      const response = await client.app["group-chats"].$post({
-        json: {
-          name: groupName.trim(),
-          member_profile_ids: selectedMembers,
-          creator_profile_id: currentProfile.id,
-        },
+      // The live group chat list shows the new one by itself.
+      await mutate("groupChats:create", {
+        name: groupName.trim(),
+        member_profile_ids: selectedMembers,
+        creator_profile_id: currentProfile.id,
       });
-
-      if (response.ok) {
-        // Refetch group chats to include the new one
-        refetchGroupChats();
-        handleCloseCreateModal();
-      } else {
-        setCreateError("그룹 채팅 생성에 실패했습니다");
-      }
-    } catch (_err) {
-      setCreateError("그룹 채팅 생성 중 오류가 발생했습니다");
+      handleCloseCreateModal();
+    } catch (err) {
+      setCreateError(errorMessage(err, "그룹 채팅 생성에 실패했습니다"));
     } finally {
       setIsCreating(false);
     }

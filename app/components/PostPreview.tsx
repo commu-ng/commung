@@ -2,7 +2,7 @@ import { ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { ProfileAvatar } from "~/components/profile-avatar";
-import { client } from "~/lib/api-client";
+import { query } from "~/lib/naru";
 import { Skeleton } from "./ui/skeleton";
 
 interface Post {
@@ -50,15 +50,14 @@ export function PostPreview({ postUrl, currentProfileId }: PostPreviewProps) {
           return;
         }
 
-        const response = await client.app.posts[":post_id"].$get({
-          param: { post_id: postId },
-          query: currentProfileId ? { profile_id: currentProfileId } : {},
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          setPost(result.data);
-        } else {
+        try {
+          setPost(
+            await query<Post>("posts:get", {
+              post_id: postId,
+              ...(currentProfileId && { profile_id: currentProfileId }),
+            }),
+          );
+        } catch {
           setError("게시물을 불러올 수 없습니다");
         }
       } catch (err) {

@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
-import { client } from "~/lib/api-client";
+import { query } from "~/lib/naru";
 import type { PostHistoryEntry } from "~/types/post";
 import { ImageModal } from "./ImageModal";
 import { PostCardContent } from "./PostCardContent";
@@ -42,14 +42,9 @@ export function PostEditHistory({ postId }: PostEditHistoryProps) {
     const fetchHistory = async () => {
       setIsLoading(true);
       try {
-        const response = await client.app.posts[":post_id"].history.$get({
-          param: { post_id: postId },
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          setHistory(result.data as PostHistoryEntry[]);
-        }
+        setHistory(
+          await query<PostHistoryEntry[]>("posts:history", { post_id: postId }),
+        );
       } catch (error) {
         console.error("Failed to fetch post history:", error);
       } finally {

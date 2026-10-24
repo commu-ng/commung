@@ -1,29 +1,55 @@
 // The page's Naru client: the site's queries and mutations, as the signed-in
 // member when there is one and as a visitor otherwise, live queries, and
 // sign-in. Every call to the site's code goes through here.
-import {
-  createNaru,
-  type Json,
-  type Live,
-  type Member,
+//
+// The SDK is a URL import Naru serves, loaded on first use in the browser:
+// the build renders index.html in Node, which cannot import it.
+import type {
+  Admin,
+  Json,
+  Live,
+  Member,
+  NaruClient,
   NaruError,
 } from "https://sdk.naru.pub/sdk/1.1.0/naru.js";
 
-export { NaruError };
+export type { NaruError };
 
-export const naru = createNaru();
+const SDK = "https://sdk.naru.pub/sdk/1.1.0/naru.js";
+type Sdk = typeof import("https://sdk.naru.pub/sdk/1.1.0/naru.js");
+
+let sdk: Promise<Sdk> | null = null;
+let client: Promise<NaruClient> | null = null;
+/** The SDK module, once loaded (for `instanceof NaruError`). */
+let loaded: Sdk | null = null;
+
+function loadSdk(): Promise<Sdk> {
+  sdk ??= (import(/* @vite-ignore */ SDK) as Promise<Sdk>).then((module) => {
+    loaded = module;
+    return module;
+  });
+  return sdk;
+}
+
+/** The page's client, bound to this site. */
+export function getNaru(): Promise<NaruClient> {
+  client ??= loadSdk().then(({ createNaru }) => createNaru());
+  return client;
+}
 
 let memberSession: Promise<Member | null> | null = null;
 
 /** The signed-in member, or null; finishes a sign-in Naru redirected back from. */
 export function getMember(): Promise<Member | null> {
-  memberSession ??= naru.members.session().catch(() => null);
+  memberSession ??= getNaru()
+    .then((naru) => naru.members.session())
+    .catch(() => null);
   return memberSession;
 }
 
 /** Sends the visitor to Naru to sign in as a member, and back here. */
-export function signIn(): Promise<void> {
-  return naru.members.signIn();
+export async function signIn(): Promise<void> {
+  await (await getNaru()).members.signIn();
 }
 
 export async function signOut(): Promise<void> {
@@ -32,10 +58,20 @@ export async function signOut(): Promise<void> {
   await member?.signOut();
 }
 
+/** The site's owner signed in on this page as the owner, or null. */
+export async function ownerSession(): Promise<Admin | null> {
+  return (await getNaru()).auth.session();
+}
+
+/** Sends the site's owner to Naru to sign in, with no collections. */
+export async function ownerSignIn(): Promise<void> {
+  await (await getNaru()).auth.signIn();
+}
+
 /** Runs `name` from the site's _naru/queries/, as the member if signed in. */
 export async function query<R>(name: string, args?: object): Promise<R> {
   const member = await getMember();
-  return (member ?? naru).query<R>(name, args as Json);
+  return (member ?? (await getNaru())).query<R>(name, args as Json);
 }
 
 /** Runs `name` from the site's _naru/mutations/ as the signed-in member. */
@@ -60,11 +96,14 @@ export function subscribe<R>(
 ): () => void {
   let live: Live | null = null;
   let closed = false;
-  getMember().then((member) => {
+  Promise.all([getMember(), getNaru()]).then(([member, naru]) => {
     if (closed) return;
-    live = (member ?? naru).subscribe<R>(name, (args ?? null) as Json, onResult, {
-      onError: (error) => onError?.(error),
-    });
+    live = (member ?? naru).subscribe<R>(
+      name,
+      (args ?? null) as Json,
+      onResult,
+      { onError: (error) => onError?.(error) },
+    );
   });
   return () => {
     closed = true;
@@ -72,16 +111,19 @@ export function subscribe<R>(
   };
 }
 
+const isNaruError = (error: unknown): error is NaruError =>
+  loaded !== null && error instanceof loaded.NaruError;
+
 /** The message of a failed call, for a toast; `fallback` for anything else. */
 export function errorMessage(error: unknown, fallback: string): string {
-  if (error instanceof NaruError) return error.message || fallback;
+  if (isNaruError(error)) return error.message || fallback;
   if (error instanceof Error && error.message) return error.message;
   return fallback;
 }
 
 /** The site's own reason a call refused with (`ctx.fail`'s details.reason). */
 export function reasonOf(error: unknown): string | null {
-  if (!(error instanceof NaruError)) return null;
+  if (!isNaruError(error)) return null;
   const details = error.details as { reason?: unknown } | undefined;
   return typeof details?.reason === "string" ? details.reason : null;
 }

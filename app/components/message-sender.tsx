@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 import { useAuth } from "~/hooks/useAuth";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
-import { client, getErrorMessage } from "~/lib/api-client";
+import { errorMessage, mutate } from "~/lib/naru";
 import { MessageComposer } from "./MessageComposer";
 
 interface MessageSenderProps {
@@ -23,13 +23,13 @@ export function MessageSender({
   const { currentInstance, isOwner, isModerator } = useCurrentInstance();
 
   const now = new Date();
-  const communityEnded = currentInstance
+  const communityEnded = currentInstance?.ends_at
     ? now > new Date(currentInstance.ends_at)
     : false;
-  const communityNotStarted = currentInstance
+  const communityNotStarted = currentInstance?.starts_at
     ? now < new Date(currentInstance.starts_at)
     : false;
-  const communityEndsAt = currentInstance
+  const communityEndsAt = currentInstance?.ends_at
     ? new Date(currentInstance.ends_at)
     : undefined;
 
@@ -60,15 +60,11 @@ export function MessageSender({
         profile_id: currentProfile.id,
       };
 
-      const response = await client.app.posts.$post({ json: postData });
-      const responseData = await response.json();
-
-      if (!response.ok) {
+      try {
+        await mutate("posts:create", postData);
+      } catch (error) {
         toast.error(
-          getErrorMessage(
-            responseData,
-            "메시지 게시에 실패했습니다. 다시 시도해주세요.",
-          ),
+          errorMessage(error, "메시지 게시에 실패했습니다. 다시 시도해주세요."),
         );
         throw new Error("Failed to send message");
       }

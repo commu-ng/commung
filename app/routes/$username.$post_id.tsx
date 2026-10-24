@@ -5,8 +5,9 @@ import { useNavigate, useParams } from "react-router";
 import { PostCard } from "~/components/post-card";
 import { Spinner } from "~/components/ui/spinner";
 import { useAuth } from "~/hooks/useAuth";
-import { client } from "~/lib/api-client";
-import type { Post } from "~/types/post";
+import { useCurrentInstance } from "~/hooks/useCurrentInstance";
+import { query, reasonOf } from "~/lib/naru";
+import type { Page, Post } from "~/types/post";
 
 const REPLIES_PER_PAGE = 20;
 
@@ -14,7 +15,7 @@ export default function PostDetail() {
   const { username, post_id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user, currentProfile } = useAuth();
+  const { currentProfile } = useAuth();
 
   const [post, setPost] = useState<Post | null>(null);
   const [parentThread, setParentThread] = useState<Post[]>([]);
@@ -22,8 +23,7 @@ export default function PostDetail() {
   const [error, setError] = useState<string | null>(null);
 
   // Check if user is community owner using data from useAuth
-  const isCommunityOwner =
-    user?.instances?.some((instance) => instance.role === "owner") ?? false;
+  const { isOwner: isCommunityOwner } = useCurrentInstance();
 
   // Fetch post information (without replies — those come from the separate query)
   const fetchPost = useCallback(async () => {
@@ -31,51 +31,40 @@ export default function PostDetail() {
 
     try {
       setIsLoading(true);
-      const response = await client.app.posts[":post_id"].$get({
-        param: { post_id },
-        query: { profile_id: currentProfile?.id },
+      let postData: Post;
+      try {
+        postData = await query<Post>("posts:get", {
+          post_id,
+          ...(currentProfile?.id && { profile_id: currentProfile.id }),
+        });
+      } catch (err) {
+        setError(
+          reasonOf(err) === "not_found" || reasonOf(err) === "invalid"
+            ? "게시물을 찾을 수 없습니다"
+            : "게시물을 불러오는 데 실패했습니다",
+        );
+        return;
+      }
+
+      // Validate that the username matches the post author
+      const cleanUsername = username?.startsWith("@")
+        ? username.slice(1)
+        : username;
+      if (cleanUsername && postData.author.username !== cleanUsername) {
+        setError("게시물을 찾을 수 없습니다");
+        return;
+      }
+
+      setPost({
+        ...postData,
+        depth: 0,
+        replies: [],
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        const postData = result.data;
-
-        // Validate that the username matches the post author
-        const cleanUsername = username?.startsWith("@")
-          ? username.slice(1)
-          : username;
-        if (cleanUsername && postData.author.username !== cleanUsername) {
-          setError("게시물을 찾을 수 없습니다");
-          return;
-        }
-
-        const convertedPost = {
-          ...postData,
-          author: {
-            ...postData.author,
-            profile_picture_url: postData.author.profile_picture_url || null,
-          },
-          content_warning: postData.content_warning || null,
-          in_reply_to_id: postData.in_reply_to_id || null,
-          root_post_id: postData.root_post_id || null,
-          images: postData.images || [],
-          reactions: postData.reactions || [],
-          depth: 0,
-          replies: [],
-        };
-        setPost(convertedPost);
-
-        // Set parent thread from API response
-        if (postData.parent_thread && Array.isArray(postData.parent_thread)) {
-          setParentThread(postData.parent_thread);
-        } else {
-          setParentThread([]);
-        }
-      } else if (response.status === 404) {
-        setError("게시물을 찾을 수 없습니다");
-      } else {
-        setError("게시물을 불러오는 데 실패했습니다");
-      }
+      // Set parent thread from API response
+      setParentThread(
+        Array.isArray(postData.parent_thread) ? postData.parent_thread : [],
+      );
     } catch (_err) {
       console.error("Failed to fetch post:", _err);
       setError("게시물을 불러오는 데 실패했습니다");
@@ -100,22 +89,16 @@ export default function PostDetail() {
   } = useInfiniteQuery({
     queryKey: ["postReplies", post_id, currentProfile?.id],
     queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
-      const response = await client.app.posts[":post_id"].replies.$get({
-        param: { post_id: post_id ?? "" },
-        query: {
-          limit: REPLIES_PER_PAGE.toString(),
-          ...(pageParam && { cursor: pageParam }),
-          ...(currentProfile?.id && { profile_id: currentProfile.id }),
-        },
+      return query<Page<Post>>("posts:replies", {
+        post_id: post_id ?? "",
+        limit: REPLIES_PER_PAGE,
+        ...(pageParam && { cursor: pageParam }),
+        ...(currentProfile?.id && { profile_id: currentProfile.id }),
       });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch replies: ${response.status}`);
-      }
-      return response.json();
     },
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.has_more
-        ? lastPage.pagination.next_cursor
+        ? (lastPage.pagination.next_cursor ?? undefined)
         : undefined;
     },
     initialPageParam: undefined as string | undefined,

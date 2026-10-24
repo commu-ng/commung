@@ -1,28 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { ProfileAvatar } from "~/components/profile-avatar";
-import { client } from "~/lib/api-client";
+import { useCommunityProfilesQuery } from "~/hooks/useCommunityProfiles";
 import { useOnlineStatus } from "~/hooks/useOnlineStatus";
 
 export function OnlineUsers() {
-  // Fetch all profiles in the community
-  const { data: profilesData } = useQuery({
-    queryKey: ["profiles"],
-    queryFn: async () => {
-      const response = await client.app.profiles.$get({
-        query: {},
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch profiles");
-      }
-
-      const result = await response.json();
-      return result.data;
-    },
-    staleTime: 30000, // 30 seconds
-    refetchInterval: 30000, // Refetch every 30 seconds
-  });
+  // All profiles in the community; who is online is kept live below.
+  const { data: profilesData } = useCommunityProfilesQuery();
 
   const allProfiles = profilesData ?? [];
   const profileIds = allProfiles.map((profile) => profile.id);

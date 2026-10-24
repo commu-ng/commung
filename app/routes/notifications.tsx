@@ -24,7 +24,8 @@ import {
 import { useUnreadCount } from "~/contexts/UnreadCountContext";
 import { useAuth } from "~/hooks/useAuth";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
-import { client } from "~/lib/api-client";
+import { mutate, query, subscribe } from "~/lib/naru";
+import type { Page } from "~/types/post";
 import { createMarkdownInstance } from "~/lib/markdown-utils";
 import type { Route } from "./+types/notifications";
 
@@ -89,54 +90,41 @@ export default function Notifications() {
     queryKey: ["notifications", currentProfile?.id],
     queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
       if (!currentProfile?.id) {
-        return { data: [], nextCursor: null, hasMore: false };
+        return {
+          data: [] as Notification[],
+          pagination: { next_cursor: null, has_more: false },
+        };
       }
 
-      const response = await client.app.notifications.$get({
-        query: {
-          profile_id: currentProfile.id,
-          limit: NOTIFICATIONS_PER_PAGE.toString(),
-          ...(pageParam && { cursor: pageParam }),
-        },
+      return query<Page<Notification>>("notifications:list", {
+        profile_id: currentProfile.id,
+        limit: NOTIFICATIONS_PER_PAGE,
+        ...(pageParam && { cursor: pageParam }),
       });
-
-      if (!response.ok) {
-        throw new Error("알림을 불러올 수 없습니다");
-      }
-
-      const result = await response.json();
-      return result;
     },
     getNextPageParam: (lastPage) => {
-      if ("pagination" in lastPage) {
-        return lastPage.pagination.has_more
-          ? lastPage.pagination.next_cursor
-          : undefined;
-      }
-      return undefined;
+      return lastPage.pagination.has_more
+        ? (lastPage.pagination.next_cursor ?? undefined)
+        : undefined;
     },
     initialPageParam: undefined as string | undefined,
     enabled: isAuthenticated && !!instanceSlug && !!currentProfile,
   });
 
-  const notifications =
-    data?.pages.flatMap((page: { data: Notification[] }) => page.data) ?? [];
+  const notifications = data?.pages.flatMap((page) => page.data) ?? [];
 
   const markAllAsRead = async () => {
     if (!currentProfile) return;
 
     try {
       setIsMarkingAllRead(true);
-      const response = await client.app.notifications["mark-all-read"].$post({
-        query: { profile_id: currentProfile.id },
+      await mutate("notifications:markAllRead", {
+        profile_id: currentProfile.id,
       });
-
-      if (response.ok) {
-        // Refetch notifications to update read status
-        refetch();
-        // Refresh unread counts immediately
-        refreshUnreadCounts();
-      }
+      // Refetch notifications to update read status
+      refetch();
+      // Refresh unread counts immediately
+      refreshUnreadCounts();
     } catch (err) {
       console.error("Failed to mark all as readAt:", err);
     } finally {
@@ -171,19 +159,23 @@ export default function Notifications() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [loadMore]);
 
-  // Poll for new notifications every 30 seconds
+  // Reload when the profile's notifications change (its unread count is
+  // live), instead of commung's polling every 30 seconds.
   const currentProfileId = currentProfile?.id;
   useEffect(() => {
     if (!isAuthenticated || !instanceSlug || !currentProfileId) return;
-
-    const interval = setInterval(() => {
-      // Refetch notifications to get new ones
-      refetch();
-      // Refresh unread counts
-      refreshUnreadCounts();
-    }, 30000); // 30 seconds
-
-    return () => clearInterval(interval);
+    let last: number | null = null;
+    return subscribe<{ count: number }>(
+      "notifications:unreadCount",
+      { profile_id: currentProfileId },
+      ({ count }) => {
+        if (last !== null && count !== last) {
+          refetch();
+          refreshUnreadCounts();
+        }
+        last = count;
+      },
+    );
   }, [
     isAuthenticated,
     instanceSlug,
@@ -196,19 +188,14 @@ export default function Notifications() {
     if (!currentProfile) return;
 
     try {
-      const response = await client.app.notifications[
-        ":notification_id"
-      ].read.$post({
-        param: { notification_id: notificationId },
-        query: { profile_id: currentProfile.id },
+      await mutate("notifications:markRead", {
+        notification_id: notificationId,
+        profile_id: currentProfile.id,
       });
-
-      if (response.ok) {
-        // Refetch notifications to update read status
-        refetch();
-        // Refresh unread counts immediately
-        refreshUnreadCounts();
-      }
+      // Refetch notifications to update read status
+      refetch();
+      // Refresh unread counts immediately
+      refreshUnreadCounts();
     } catch (err) {
       console.error("Failed to mark notification as readAt:", err);
     }
@@ -218,19 +205,14 @@ export default function Notifications() {
     if (!currentProfile) return;
 
     try {
-      const response = await client.app.notifications[
-        ":notification_id"
-      ].unread.$post({
-        param: { notification_id: notificationId },
-        query: { profile_id: currentProfile.id },
+      await mutate("notifications:markUnread", {
+        notification_id: notificationId,
+        profile_id: currentProfile.id,
       });
-
-      if (response.ok) {
-        // Refetch notifications to update read status
-        refetch();
-        // Refresh unread counts immediately
-        refreshUnreadCounts();
-      }
+      // Refetch notifications to update read status
+      refetch();
+      // Refresh unread counts immediately
+      refreshUnreadCounts();
     } catch (err) {
       console.error("Failed to mark notification as unread:", err);
     }

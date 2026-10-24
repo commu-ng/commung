@@ -14,7 +14,8 @@ import {
   EmptyMedia,
 } from "~/components/ui/empty";
 import { useAuth } from "~/hooks/useAuth";
-import { client } from "~/lib/api-client";
+import { query } from "~/lib/naru";
+import type { Page, Post } from "~/types/post";
 
 export function meta() {
   return [
@@ -40,40 +41,28 @@ export default function Bookmarks() {
     queryKey: ["bookmarks", currentProfile?.id],
     queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
       if (!currentProfile?.id) {
-        return { data: [], nextCursor: null, hasMore: false };
+        return {
+          data: [] as Post[],
+          pagination: { next_cursor: null, has_more: false },
+        };
       }
 
-      const response = await client.app.bookmarks.$get({
-        query: {
-          profile_id: currentProfile.id,
-          limit: BOOKMARKS_PER_PAGE.toString(),
-          ...(pageParam && { cursor: pageParam }),
-        },
+      return query<Page<Post>>("posts:bookmarks", {
+        profile_id: currentProfile.id,
+        limit: BOOKMARKS_PER_PAGE,
+        ...(pageParam && { cursor: pageParam }),
       });
-
-      if (!response.ok) {
-        throw new Error("북마크를 불러오는 데 실패했습니다");
-      }
-
-      const result = await response.json();
-
-      return {
-        data: result.data,
-        nextCursor: result.pagination.next_cursor,
-        hasMore: result.pagination.has_more,
-      };
     },
     getNextPageParam: (lastPage) => {
-      return lastPage.hasMore ? lastPage.nextCursor : undefined;
+      return lastPage.pagination.has_more
+        ? (lastPage.pagination.next_cursor ?? undefined)
+        : undefined;
     },
     initialPageParam: undefined as string | undefined,
     enabled: !!user && !!currentProfile?.id,
   });
 
-  const bookmarks =
-    data?.pages.flatMap(
-      (page: { data: Record<string, unknown>[] }) => page.data,
-    ) ?? ([] as Record<string, unknown>[]);
+  const bookmarks = data?.pages.flatMap((page) => page.data) ?? [];
 
   // Infinite scroll trigger
   const loadMore = useCallback(() => {

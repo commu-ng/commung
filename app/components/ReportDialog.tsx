@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { Textarea } from "~/components/ui/textarea";
-import { client, getErrorMessage } from "~/lib/api-client";
+import { errorMessage, mutate } from "~/lib/naru";
 
 interface ReportDialogProps {
   open: boolean;
@@ -36,23 +36,17 @@ export function ReportDialog({
 
     setIsSubmitting(true);
     try {
-      const response = await client.app.posts[":post_id"].report.$post({
-        param: { post_id: postId },
-        json: { reason: reason.trim(), profile_id: profileId },
+      await mutate("posts:report", {
+        post_id: postId,
+        reason: reason.trim(),
+        profile_id: profileId,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(getErrorMessage(errorData, "신고 접수에 실패했습니다"));
-      }
 
       toast.success("신고가 접수되었습니다");
       setReason("");
       onOpenChange(false);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "신고 접수에 실패했습니다",
-      );
+      toast.error(errorMessage(error, "신고 접수에 실패했습니다"));
     } finally {
       setIsSubmitting(false);
     }

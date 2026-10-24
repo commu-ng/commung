@@ -137,7 +137,7 @@ export function useImageUpload(
       }
 
       if (file.size > MAX_FILE_SIZE) {
-        toast.error("이미지 크기는 10MB 이하여야 합니다");
+        toast.error("이미지 크기는 25MB 이하여야 합니다");
         continue;
       }
 

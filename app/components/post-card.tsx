@@ -7,7 +7,7 @@ import { ReportDialog } from "~/components/ReportDialog";
 import { useAuth } from "~/hooks/useAuth";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
 import { useMarkdownWithMentions } from "~/hooks/useMarkdownWithMentions";
-import { client } from "~/lib/api-client";
+import { errorMessage, mutate } from "~/lib/naru";
 import type { Post, PostCardProps } from "~/types/post";
 import { MessageSender } from "./message-sender";
 import { PostEditor } from "./PostEditor";
@@ -133,10 +133,10 @@ export const PostCard = memo(function PostCard({
   // currentInstance fetched above to be available before useState
 
   const now = new Date();
-  const communityEnded = currentInstance
+  const communityEnded = currentInstance?.ends_at
     ? now > new Date(currentInstance.ends_at)
     : false;
-  const communityNotStarted = currentInstance
+  const communityNotStarted = currentInstance?.starts_at
     ? now < new Date(currentInstance.starts_at)
     : false;
   const canInteract = !communityEnded && !communityNotStarted;
@@ -150,19 +150,14 @@ export const PostCard = memo(function PostCard({
     }
 
     try {
-      const response = await client.app.posts[":post_id"].$delete({
-        query: { profile_id: profileIdToUse },
-        param: { post_id: post.id },
+      await mutate("posts:remove", {
+        post_id: post.id,
+        profile_id: profileIdToUse,
       });
-      if (response.ok) {
-        toast.success("게시물이 성공적으로 삭제되었습니다");
-        onDelete?.();
-      } else {
-        throw new Error("게시물 삭제에 실패했습니다");
-      }
+      toast.success("게시물이 성공적으로 삭제되었습니다");
+      onDelete?.();
     } catch (error) {
-      console.error("Error deleting post:", error);
-      toast.error("게시물 삭제에 실패했습니다");
+      toast.error(errorMessage(error, "게시물 삭제에 실패했습니다"));
     }
   }, [currentProfileId, post.id, onDelete]);
 
@@ -176,38 +171,15 @@ export const PostCard = memo(function PostCard({
       if (!currentProfileId) return;
 
       try {
-        const response = await client.app.posts[":post_id"].reactions.$post({
-          param: { post_id: post.id },
-          json: {
-            profile_id: currentProfileId,
-            emoji: emoji,
-          },
+        await mutate("posts:react", {
+          post_id: post.id,
+          profile_id: currentProfileId,
+          emoji,
         });
-
-        if (response.ok) {
-          // Trigger a refresh of the post data
-          (onRefresh || onDelete)?.();
-        } else {
-          // Handle API error response
-          try {
-            const errorData = await response.json();
-            const errorMessage =
-              errorData && typeof errorData === "object"
-                ? "error" in errorData &&
-                  typeof errorData.error === "object" &&
-                  errorData.error?.message
-                  ? errorData.error.message
-                  : "error" in errorData && typeof errorData.error === "string"
-                    ? errorData.error
-                    : undefined
-                : undefined;
-            toast.error(errorMessage || "반응을 추가할 수 없습니다");
-          } catch {
-            toast.error("반응을 추가할 수 없습니다");
-          }
-        }
-      } catch (_err) {
-        toast.error("반응 추가 중 오류가 발생했습니다");
+        // Trigger a refresh of the post data
+        (onRefresh || onDelete)?.();
+      } catch (error) {
+        toast.error(errorMessage(error, "반응을 추가할 수 없습니다"));
       }
     },
     [currentProfileId, post.id, onRefresh, onDelete],
@@ -218,38 +190,15 @@ export const PostCard = memo(function PostCard({
       if (!currentProfileId) return;
 
       try {
-        const response = await client.app.posts[":post_id"].reactions.$delete({
-          param: { post_id: post.id },
-          query: {
-            profile_id: currentProfileId,
-            emoji: emoji,
-          },
+        await mutate("posts:unreact", {
+          post_id: post.id,
+          profile_id: currentProfileId,
+          emoji,
         });
-
-        if (response.ok) {
-          // Trigger a refresh of the post data
-          (onRefresh || onDelete)?.();
-        } else {
-          // Handle API error response
-          try {
-            const errorData = await response.json();
-            const errorMessage =
-              errorData && typeof errorData === "object"
-                ? "error" in errorData &&
-                  typeof errorData.error === "object" &&
-                  errorData.error?.message
-                  ? errorData.error.message
-                  : "error" in errorData && typeof errorData.error === "string"
-                    ? errorData.error
-                    : undefined
-                : undefined;
-            toast.error(errorMessage || "반응을 제거할 수 없습니다");
-          } catch {
-            toast.error("반응을 제거할 수 없습니다");
-          }
-        }
-      } catch (_err) {
-        toast.error("반응 제거 중 오류가 발생했습니다");
+        // Trigger a refresh of the post data
+        (onRefresh || onDelete)?.();
+      } catch (error) {
+        toast.error(errorMessage(error, "반응을 제거할 수 없습니다"));
       }
     },
     [currentProfileId, post.id, onRefresh, onDelete],

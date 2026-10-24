@@ -6,7 +6,7 @@ import { BoardPostForm } from "~/components/board-post-form";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import { useAuth } from "~/hooks/useAuth";
-import { client } from "~/lib/api-client";
+import { query, reasonOf } from "~/lib/naru";
 
 interface CommunityBoard {
   id: string;
@@ -66,19 +66,14 @@ export default function BoardPosts() {
     if (!slug) return;
 
     try {
-      const response = await client.app.boards[":slug"].$get({
-        param: { slug },
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setBoard(result.data);
-      } else {
-        setError("게시판을 찾을 수 없습니다");
-      }
+      setBoard(await query<CommunityBoard>("boards:board", { slug }));
     } catch (err) {
       console.error("Failed to fetch board:", err);
-      setError("게시판을 불러오는 데 실패했습니다");
+      setError(
+        reasonOf(err) === "board_not_found"
+          ? "게시판을 찾을 수 없습니다"
+          : "게시판을 불러오는 데 실패했습니다",
+      );
     }
   }, [slug]);
 
@@ -93,27 +88,22 @@ export default function BoardPosts() {
           setIsLoading(true);
         }
 
-        const response = await client.app.boards[":slug"].posts.$get({
-          param: { slug },
-          query: {
-            profile_id: currentProfile.id,
-            limit: "20",
-            ...(loadMore && cursor ? { cursor } : {}),
-          },
+        const result = await query<{
+          data: BoardPost[];
+          pagination: { next_cursor: string | null; has_more: boolean };
+        }>("boards:posts", {
+          slug,
+          profile_id: currentProfile.id,
+          limit: 20,
+          ...(loadMore && cursor ? { cursor } : {}),
         });
-
-        if (response.ok) {
-          const result = await response.json();
-          if (loadMore) {
-            setPosts((prev) => [...prev, ...result.data]);
-          } else {
-            setPosts(result.data);
-          }
-          setHasMore(result.pagination.has_more);
-          setCursor(result.pagination.next_cursor);
+        if (loadMore) {
+          setPosts((prev) => [...prev, ...result.data]);
         } else {
-          setError("게시글을 불러오는 데 실패했습니다");
+          setPosts(result.data);
         }
+        setHasMore(result.pagination.has_more);
+        setCursor(result.pagination.next_cursor);
       } catch (err) {
         console.error("Failed to fetch posts:", err);
         setError("게시글을 불러오는 데 실패했습니다");

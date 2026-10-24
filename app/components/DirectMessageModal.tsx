@@ -3,7 +3,7 @@ import { useId, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { PostPreview } from "~/components/PostPreview";
-import { client } from "~/lib/api-client";
+import { errorMessage, mutate } from "~/lib/naru";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -53,38 +53,20 @@ export function DirectMessageModal({
     try {
       const messageContent = `${postLink}\n\n${message.trim()}`;
 
-      const response = await client.app.messages.$post({
-        query: { profile_id: currentProfileId },
-        json: {
-          receiver_id: receiverId,
-          content: messageContent,
-          image_ids: [],
-        },
+      await mutate("messages:send", {
+        profile_id: currentProfileId,
+        receiver_id: receiverId,
+        content: messageContent,
+        image_ids: [],
       });
-
-      if (response.ok) {
-        toast.success("메시지가 전송되었습니다");
-        onClose();
-        setMessage("");
-        // Navigate to the conversation
-        navigate(`/messages/${postAuthor.username}`);
-      } else {
-        const errorData = await response.json();
-        const errorMessage =
-          errorData && typeof errorData === "object"
-            ? "error" in errorData &&
-              typeof errorData.error === "object" &&
-              errorData.error?.message
-              ? errorData.error.message
-              : "error" in errorData && typeof errorData.error === "string"
-                ? errorData.error
-                : undefined
-            : undefined;
-        toast.error(errorMessage || "메시지 전송에 실패했습니다");
-      }
+      toast.success("메시지가 전송되었습니다");
+      onClose();
+      setMessage("");
+      // Navigate to the conversation
+      navigate(`/messages/${postAuthor.username}`);
     } catch (error) {
       console.error("Error sending message:", error);
-      toast.error("메시지 전송 중 오류가 발생했습니다");
+      toast.error(errorMessage(error, "메시지 전송에 실패했습니다"));
     } finally {
       setIsSending(false);
     }

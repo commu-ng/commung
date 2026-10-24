@@ -13,8 +13,8 @@ import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import { Textarea } from "~/components/ui/textarea";
 import { useAuth } from "~/hooks/useAuth";
-import { client } from "~/lib/api-client";
 import { getReadOnlyMarkdownInstance } from "~/lib/markdown-utils";
+import { errorMessage, mutate, query, reasonOf } from "~/lib/naru";
 
 interface ProfilePicture {
   id: string;
@@ -86,19 +86,14 @@ export default function BoardPostDetail() {
 
     try {
       setIsLoading(true);
-      const response = await client.app.boards[":slug"].posts[":postId"].$get({
-        param: { slug, postId },
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setPost(result.data);
-      } else {
-        setError("게시글을 찾을 수 없습니다");
-      }
+      setPost(await query<BoardPost>("boards:post", { slug, post_id: postId }));
     } catch (err) {
       console.error("Failed to fetch post:", err);
-      setError("게시글을 불러오는 데 실패했습니다");
+      setError(
+        reasonOf(err) === "post_not_found"
+          ? "게시글을 찾을 수 없습니다"
+          : "게시글을 불러오는 데 실패했습니다",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -108,17 +103,12 @@ export default function BoardPostDetail() {
     if (!slug || !postId || !currentProfile) return;
 
     try {
-      const response = await client.app.boards[":slug"].posts[
-        ":postId"
-      ].replies.$get({
-        param: { slug, postId },
-        query: { profile_id: currentProfile.id },
+      const result = await query<{ data: Reply[] }>("boards:replies", {
+        slug,
+        post_id: postId,
+        profile_id: currentProfile.id,
       });
-
-      if (response.ok) {
-        const result = await response.json();
-        setReplies(result.data as unknown as Reply[]);
-      }
+      setReplies(result.data);
     } catch (err) {
       console.error("Failed to fetch replies:", err);
     }
@@ -145,28 +135,20 @@ export default function BoardPostDetail() {
 
     try {
       setIsSubmitting(true);
-      const response = await client.app.boards[":slug"].posts[
-        ":postId"
-      ].replies.$post({
-        param: { slug, postId },
-        json: {
-          profile_id: currentProfile.id,
-          content: replyContent.trim(),
-          in_reply_to_id: replyToId || undefined,
-        },
+      await mutate("boards:createReply", {
+        slug,
+        post_id: postId,
+        profile_id: currentProfile.id,
+        content: replyContent.trim(),
+        in_reply_to_id: replyToId || undefined,
       });
-
-      if (response.ok) {
-        setReplyContent("");
-        setReplyToId(null);
-        fetchReplies();
-        toast.success("댓글이 등록되었습니다");
-      } else {
-        toast.error("댓글 등록에 실패했습니다");
-      }
+      setReplyContent("");
+      setReplyToId(null);
+      fetchReplies();
+      toast.success("댓글이 등록되었습니다");
     } catch (err) {
       console.error("Failed to submit reply:", err);
-      toast.error("댓글 등록에 실패했습니다");
+      toast.error(errorMessage(err, "댓글 등록에 실패했습니다"));
     } finally {
       setIsSubmitting(false);
     }
@@ -178,22 +160,16 @@ export default function BoardPostDetail() {
     if (!confirm("정말 이 게시글을 삭제하시겠습니까?")) return;
 
     try {
-      const response = await client.app.boards[":slug"].posts[
-        ":postId"
-      ].$delete({
-        param: { slug, postId },
-        query: { profile_id: currentProfile.id },
+      await mutate("boards:deletePost", {
+        slug,
+        post_id: postId,
+        profile_id: currentProfile.id,
       });
-
-      if (response.ok) {
-        toast.success("게시글이 삭제되었습니다");
-        navigate(`/boards/${slug}`);
-      } else {
-        toast.error("게시글 삭제에 실패했습니다");
-      }
+      toast.success("게시글이 삭제되었습니다");
+      navigate(`/boards/${slug}`);
     } catch (err) {
       console.error("Failed to delete post:", err);
-      toast.error("게시글 삭제에 실패했습니다");
+      toast.error(errorMessage(err, "게시글 삭제에 실패했습니다"));
     }
   };
 
@@ -203,22 +179,17 @@ export default function BoardPostDetail() {
     if (!confirm("정말 이 댓글을 삭제하시겠습니까?")) return;
 
     try {
-      const response = await client.app.boards[":slug"].posts[
-        ":postId"
-      ].replies[":replyId"].$delete({
-        param: { slug, postId, replyId },
-        query: { profile_id: currentProfile.id },
+      await mutate("boards:deleteReply", {
+        slug,
+        post_id: postId,
+        reply_id: replyId,
+        profile_id: currentProfile.id,
       });
-
-      if (response.ok) {
-        toast.success("댓글이 삭제되었습니다");
-        fetchReplies();
-      } else {
-        toast.error("댓글 삭제에 실패했습니다");
-      }
+      toast.success("댓글이 삭제되었습니다");
+      fetchReplies();
     } catch (err) {
       console.error("Failed to delete reply:", err);
-      toast.error("댓글 삭제에 실패했습니다");
+      toast.error(errorMessage(err, "댓글 삭제에 실패했습니다"));
     }
   };
 

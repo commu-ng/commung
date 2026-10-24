@@ -9,9 +9,9 @@ import {
   type ScheduledPostsListRef,
 } from "~/components/scheduled-posts-list";
 import { EmptyState } from "~/components/shared/EmptyState";
-import { useUnreadCount } from "~/contexts/UnreadCountContext";
 import { useAuth } from "~/hooks/useAuth";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
+import { subscribe } from "~/lib/naru";
 
 export default function Home() {
   const postListRef = useRef<PostListRef>(null);
@@ -25,7 +25,6 @@ export default function Home() {
     currentProfile,
   } = useAuth();
   const { currentInstance } = useCurrentInstance();
-  const { isHeaderVisible } = useUnreadCount();
 
   const handlePostSuccess = () => {
     postListRef.current?.refresh();
@@ -49,19 +48,25 @@ export default function Home() {
     }
   }, [location.state]);
 
-  // Poll for new posts every 60 seconds (only when header is visible)
+  // Reload the timeline when it changes (a new post, a reply, a deletion),
+  // instead of commung's polling every minute while the header showed.
   useEffect(() => {
     if (!isAuthenticated || !belongsToCurrentInstance) return;
-
-    // Only poll when header is visible in viewport
-    if (!isHeaderVisible) return;
-
-    const interval = setInterval(() => {
-      postListRef.current?.refresh();
-    }, 60000); // 60 seconds
-
-    return () => clearInterval(interval);
-  }, [isAuthenticated, belongsToCurrentInstance, isHeaderVisible]);
+    let last: string | null = null;
+    return subscribe<{
+      top_id: string | null;
+      top_bumped_at: string | null;
+      last_id: string | null;
+      count: number;
+    }>("posts:latest", null, (head) => {
+      const key = JSON.stringify(head);
+      if (last !== null && key !== last) {
+        postListRef.current?.refresh();
+        scheduledPostsRef.current?.refresh();
+      }
+      last = key;
+    });
+  }, [isAuthenticated, belongsToCurrentInstance]);
 
   if (!isAuthenticated && !isLoading) {
     return (
@@ -79,9 +84,7 @@ export default function Home() {
   }
 
   if (!belongsToCurrentInstance && !isLoading) {
-    const applyUrl = currentInstance?.slug
-      ? `${consoleUrl}/communities/${currentInstance.slug}/apply`
-      : consoleUrl;
+    const applyUrl = consoleUrl;
 
     return (
       <div className="flex items-center justify-center min-h-[80vh]">

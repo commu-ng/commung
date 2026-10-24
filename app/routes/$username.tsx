@@ -6,7 +6,7 @@ import {
   MessageCircle,
   User,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { PostCard } from "~/components/post-card";
 import { ProfileAvatar } from "~/components/profile-avatar";
@@ -21,10 +21,11 @@ import {
   EmptyMedia,
 } from "~/components/ui/empty";
 import { useAuth } from "~/hooks/useAuth";
-import { client } from "~/lib/api-client";
+import { useCurrentInstance } from "~/hooks/useCurrentInstance";
+import { query, reasonOf } from "~/lib/naru";
 import { getGradientForUser } from "~/lib/gradient-utils";
 import { getReadOnlyMarkdownInstance } from "~/lib/markdown-utils";
-import type { Post } from "~/types/post";
+import type { Page, Post } from "~/types/post";
 import type { Profile } from "~/types/profile";
 
 export default function ProfileProfile() {
@@ -32,7 +33,7 @@ export default function ProfileProfile() {
   const navigate = useNavigate();
   const { user, currentProfile } = useAuth();
 
-  const [isCommunityOwner, _setIsCommunityOwner] = useState(false);
+  const { isOwner: isCommunityOwner } = useCurrentInstance();
   const POSTS_PER_PAGE = 20;
   const md = getReadOnlyMarkdownInstance();
 
@@ -62,19 +63,18 @@ export default function ProfileProfile() {
         throw new Error("Username is required");
       }
 
-      const response = await client.app.profiles[":username"].$get({
-        param: { username: actualUsername },
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("사용자를 찾을 수 없습니다");
-        }
-        throw new Error("사용자 정보를 불러오는 데 실패했습니다");
+      try {
+        return await query<Profile>("profiles:get", {
+          username: actualUsername,
+          ...(currentProfile?.id && { profile_id: currentProfile.id }),
+        });
+      } catch (error) {
+        throw new Error(
+          reasonOf(error) === "not_found"
+            ? "사용자를 찾을 수 없습니다"
+            : "사용자 정보를 불러오는 데 실패했습니다",
+        );
       }
-
-      const result = await response.json();
-      return result.data;
     },
     enabled: !!actualUsername,
   });
@@ -88,44 +88,31 @@ export default function ProfileProfile() {
     isLoading: isPostsLoading,
     isError: isPostsError,
   } = useInfiniteQuery({
-    queryKey: ["profile-posts", actualUsername],
-    queryFn: async ({ pageParam = 0 }): Promise<Post[]> => {
+    queryKey: ["profile-posts", actualUsername, currentProfile?.id],
+    queryFn: async ({
+      pageParam,
+    }: {
+      pageParam: string | undefined;
+    }): Promise<Page<Post>> => {
       if (!actualUsername) {
-        return [];
+        return { data: [], pagination: { next_cursor: null, has_more: false } };
       }
-
-      const response = await client.app.profiles[":username"].posts.$get({
-        param: { username: actualUsername },
-        query: {
-          limit: POSTS_PER_PAGE.toString(),
-          cursor: pageParam ? pageParam.toString() : undefined,
-        },
+      return query<Page<Post>>("posts:byProfile", {
+        username: actualUsername,
+        limit: POSTS_PER_PAGE,
+        ...(pageParam && { cursor: pageParam }),
+        ...(currentProfile?.id && { profile_id: currentProfile.id }),
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch posts: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (!result.data || !Array.isArray(result.data)) {
-        throw new Error("예상치 못한 응답 형식");
-      }
-
-      return result.data;
     },
-    getNextPageParam: (lastPage, allPages) => {
-      const totalLoaded = allPages.reduce(
-        (total, page) => total + page.length,
-        0,
-      );
-      return lastPage.length < POSTS_PER_PAGE ? undefined : totalLoaded;
-    },
-    initialPageParam: 0,
+    getNextPageParam: (lastPage) =>
+      lastPage.pagination.has_more
+        ? (lastPage.pagination.next_cursor ?? undefined)
+        : undefined,
+    initialPageParam: undefined as string | undefined,
     enabled: !!actualUsername,
   });
 
-  const posts = postsData?.pages.flat() ?? [];
+  const posts = postsData?.pages.flatMap((page) => page.data) ?? [];
 
   // Infinite scroll trigger
   const loadMore = useCallback(() => {
@@ -255,17 +242,18 @@ export default function ProfileProfile() {
                       에 가입
                     </span>
                   </div>
-                  {user && profile.username !== user.login_name && (
-                    <div className="mt-4">
-                      <Link
-                        to={`/messages/${profile.username}`}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-card text-primary rounded-lg hover:bg-primary/15 hover:text-primary transition-all duration-200 text-sm font-medium shadow-marsh"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                        메시지 보내기
-                      </Link>
-                    </div>
-                  )}
+                  {user &&
+                    !user.profiles.some((own) => own.id === profile.id) && (
+                      <div className="mt-4">
+                        <Link
+                          to={`/messages/${profile.username}`}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-card text-primary rounded-lg hover:bg-primary/15 hover:text-primary transition-all duration-200 text-sm font-medium shadow-marsh"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                          메시지 보내기
+                        </Link>
+                      </div>
+                    )}
                 </div>
               </div>
             </div>

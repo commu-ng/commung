@@ -1,7 +1,7 @@
 import { MessageSquare, Trash2 } from "lucide-react";
 import { Link } from "react-router";
 import { toast } from "sonner";
-import { client } from "~/lib/api-client";
+import { errorMessage, mutate } from "~/lib/naru";
 import { ProfileAvatar } from "./profile-avatar";
 import { Button } from "./ui/button";
 
@@ -70,22 +70,16 @@ export function BoardPostCard({
     if (!confirm("정말 이 게시글을 삭제하시겠습니까?")) return;
 
     try {
-      const response = await client.app.boards[":slug"].posts[
-        ":postId"
-      ].$delete({
-        param: { slug: boardSlug, postId: post.id },
-        query: { profile_id: currentProfileId },
+      await mutate("boards:deletePost", {
+        slug: boardSlug,
+        post_id: post.id,
+        profile_id: currentProfileId,
       });
-
-      if (response.ok) {
-        toast.success("게시글이 삭제되었습니다");
-        onDelete?.();
-      } else {
-        toast.error("게시글 삭제에 실패했습니다");
-      }
+      toast.success("게시글이 삭제되었습니다");
+      onDelete?.();
     } catch (err) {
       console.error("Failed to delete post:", err);
-      toast.error("게시글 삭제에 실패했습니다");
+      toast.error(errorMessage(err, "게시글 삭제에 실패했습니다"));
     }
   };
 

@@ -1,10 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
 import { Search, UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { ProfileAvatar } from "~/components/profile-avatar";
 import { ProfileCardSkeleton } from "~/components/skeletons/ProfileCardSkeleton";
-import { client } from "~/lib/api-client";
+import { useCommunityProfilesQuery } from "~/hooks/useCommunityProfiles";
+import { errorMessage } from "~/lib/naru";
 
 export function meta() {
   return [
@@ -16,22 +16,7 @@ export function meta() {
 export default function Profiles() {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["profiles"],
-    queryFn: async () => {
-      const response = await client.app.profiles.$get({
-        query: {},
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch profiles: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      return result.data;
-    },
-  });
+  const { data, isLoading, isError, error } = useCommunityProfilesQuery();
 
   const allProfiles = Array.isArray(data) ? data : [];
 
@@ -76,9 +61,7 @@ export default function Profiles() {
             <Users className="h-8 w-8 text-destructive" />
           </div>
           <h1 className="text-xl font-semibold text-foreground mb-2">
-            {error instanceof Error
-              ? error.message
-              : "멤버 목록을 불러오는 데 실패했습니다"}
+            {errorMessage(error, "멤버 목록을 불러오는 데 실패했습니다")}
           </h1>
           <Link
             to="/"

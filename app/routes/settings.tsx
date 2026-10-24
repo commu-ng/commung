@@ -2,6 +2,7 @@ import {
   FileText,
   Palette,
   Settings as SettingsIcon,
+  ShieldCheck,
   User,
   Users,
 } from "lucide-react";
@@ -70,6 +71,13 @@ export default function Settings() {
       icon: Palette,
       href: "/settings/community",
       requiresOwner: true,
+    },
+    {
+      title: "커뮤 관리",
+      description: "가입 신청, 멤버, 커뮤 설정과 운영 도구",
+      icon: ShieldCheck,
+      href: "/admin",
+      requiresModeratorOrOwner: true,
     },
     {
       title: "계정",

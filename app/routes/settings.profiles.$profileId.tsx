@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Users } from "lucide-react";
 import { Link, useParams } from "react-router";
 import { ProfileAvatar } from "~/components/profile-avatar";
@@ -6,28 +5,15 @@ import { ProfileShareManager } from "~/components/profile-share-manager";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import { useAuth } from "~/hooks/useAuth";
-import { client } from "~/lib/api-client";
+import { useCurrentInstance } from "~/hooks/useCurrentInstance";
 import { getGradientForUser } from "~/lib/gradient-utils";
 
 export default function ProfileSharingSettings() {
   const { profileId } = useParams();
   const { user, availableProfiles, isLoading: authLoading } = useAuth();
 
-  // Get current user's role in this community
-  const { data: instanceData } = useQuery({
-    queryKey: ["instance"],
-    queryFn: async () => {
-      const response = await client.app.me.instance.$get();
-      if (response.ok) {
-        const result = await response.json();
-        return result.data;
-      }
-      return null;
-    },
-    enabled: !!user,
-  });
-
-  const isCommunityOwner = instanceData?.role === "owner";
+  // Only the community owner shares profiles.
+  const { isOwner: isCommunityOwner } = useCurrentInstance();
 
   if (authLoading) {
     return (

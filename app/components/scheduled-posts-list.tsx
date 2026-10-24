@@ -3,7 +3,8 @@ import { Clock } from "lucide-react";
 import { forwardRef, useCallback, useEffect, useImperativeHandle } from "react";
 import { useAuth } from "~/hooks/useAuth";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
-import { client } from "~/lib/api-client";
+import { query } from "~/lib/naru";
+import type { Page, Post } from "~/types/post";
 import { PostCard } from "./post-card";
 import { LoadingState } from "./shared/LoadingState";
 
@@ -30,27 +31,16 @@ export const ScheduledPostsList = forwardRef<ScheduledPostsListRef>(
       queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
         if (!currentProfile?.id) {
           return {
-            data: [],
+            data: [] as Post[],
             pagination: { next_cursor: null, has_more: false, total_count: 0 },
           };
         }
 
-        const response = await client.app["scheduled-posts"].$get({
-          query: {
-            profile_id: currentProfile.id,
-            limit: POSTS_PER_PAGE.toString(),
-            ...(pageParam && { cursor: pageParam }),
-          },
+        return query<Page<Post>>("posts:scheduled", {
+          profile_id: currentProfile.id,
+          limit: POSTS_PER_PAGE,
+          ...(pageParam && { cursor: pageParam }),
         });
-
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch scheduled posts: ${response.status}`,
-          );
-        }
-
-        const result = await response.json();
-        return result;
       },
       getNextPageParam: (lastPage) => {
         return lastPage.pagination.has_more

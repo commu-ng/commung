@@ -1,8 +1,8 @@
 import {
   Bell,
   Bookmark,
-  ExternalLink,
   Home,
+  LogOut,
   LayoutList,
   MessagesSquare,
   Megaphone,
@@ -10,6 +10,7 @@ import {
   PenSquare,
   Search,
   Settings,
+  ShieldCheck,
   User,
   UserCheck,
 } from "lucide-react";
@@ -19,10 +20,10 @@ import { ProfileSwitcher } from "~/components/profile-switcher";
 import { ThemeToggle } from "~/components/ThemeToggle";
 import { Button } from "~/components/ui/button";
 import { useAuth } from "~/hooks/useAuth";
+import { useCurrentInstance } from "~/hooks/useCurrentInstance";
 
 interface SidebarNavProps {
   communityName: string;
-  consoleUrl: string;
   unreadCount: number;
   unreadMessageCount: number;
   collapsed?: boolean;
@@ -30,13 +31,13 @@ interface SidebarNavProps {
 
 export function SidebarNav({
   communityName,
-  consoleUrl,
   unreadCount,
   unreadMessageCount,
   collapsed = false,
 }: SidebarNavProps) {
   const location = useLocation();
-  const { currentProfile } = useAuth();
+  const { currentProfile, logout } = useAuth();
+  const { isModerator } = useCurrentInstance();
 
   const getNavLinkClasses = (path: string) => {
     const isActive =
@@ -88,6 +89,9 @@ export function SidebarNav({
         ]
       : []),
     { to: "/settings", icon: Settings, label: "설정" },
+    ...(isModerator
+      ? [{ to: "/admin", icon: ShieldCheck, label: "커뮤 관리" }]
+      : []),
   ];
 
   return (
@@ -169,16 +173,15 @@ export function SidebarNav({
       >
         <ThemeToggle />
         {!collapsed && (
-          <a
-            target="_blank"
-            href={consoleUrl}
+          <button
+            type="button"
+            onClick={() => logout()}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-full transition-colors"
-            title="콘솔로 이동"
-            rel="noreferrer"
+            title="로그아웃"
           >
-            <ExternalLink className="h-3.5 w-3.5" />
-            <span>콘솔</span>
-          </a>
+            <LogOut className="h-3.5 w-3.5" />
+            <span>로그아웃</span>
+          </button>
         )}
       </div>
     </aside>

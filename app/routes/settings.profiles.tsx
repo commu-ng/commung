@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, Plus, Star, Trash2, Users, Users2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
@@ -15,7 +14,8 @@ import {
 } from "~/components/ui/empty";
 import { Spinner } from "~/components/ui/spinner";
 import { useAuth } from "~/hooks/useAuth";
-import { client, getErrorMessage } from "~/lib/api-client";
+import { useCurrentInstance } from "~/hooks/useCurrentInstance";
+import { errorMessage, mutate, query } from "~/lib/naru";
 
 export default function ProfilesManagement() {
   const {
@@ -27,22 +27,14 @@ export default function ProfilesManagement() {
   } = useAuth();
 
   // Get current user's role in this community
-  const { data: instanceData } = useQuery({
-    queryKey: ["instance"],
-    queryFn: async () => {
-      const response = await client.app.me.instance.$get();
-      if (response.ok) {
-        const result = await response.json();
-        return result.data;
-      }
-      return null;
-    },
-    enabled: !!user,
-  });
+  const {
+    currentInstance: instanceData,
+    isOwner,
+    isModerator,
+  } = useCurrentInstance();
 
-  const isCommunityOwner = instanceData?.role === "owner";
-  const isModeratorOrOwner =
-    instanceData?.role === "owner" || instanceData?.role === "moderator";
+  const isCommunityOwner = isOwner;
+  const isModeratorOrOwner = isModerator;
 
   const [showCreateProfileModal, setShowCreateProfileModal] = useState(false);
   const [deletingProfileId, setDeletingProfileId] = useState<string | null>(
@@ -53,15 +45,10 @@ export default function ProfilesManagement() {
     setDeletingProfileId(profileId);
     try {
       // First, get the post count for this profile
-      const postCountResponse = await client.app.profiles["post-count"].$get({
-        query: { profile_id: profileId },
-      });
-
-      let postCount = 0;
-      if (postCountResponse.ok) {
-        const result = await postCountResponse.json();
-        postCount = result.data.post_count;
-      }
+      const { post_count: postCount } = await query<{ post_count: number }>(
+        "profiles:postCount",
+        { profile_id: profileId },
+      );
 
       // If profile has posts, ask for confirmation
       if (postCount > 0) {
@@ -74,20 +61,12 @@ export default function ProfilesManagement() {
         }
       }
 
-      const response = await client.app.profiles.$delete({
-        query: { profile_id: profileId },
-      });
-
-      if (response.ok) {
-        // Refresh profiles to get the latest data
-        refreshProfiles();
-        toast.success("프로필이 삭제되었습니다");
-      } else {
-        const errorData = await response.json();
-        toast.error(getErrorMessage(errorData, "프로필 삭제에 실패했습니다"));
-      }
-    } catch (_error) {
-      toast.error("프로필 삭제에 실패했습니다");
+      await mutate("profiles:delete", { profile_id: profileId });
+      // Refresh profiles to get the latest data
+      refreshProfiles();
+      toast.success("프로필이 삭제되었습니다");
+    } catch (error) {
+      toast.error(errorMessage(error, "프로필 삭제에 실패했습니다"));
     } finally {
       setDeletingProfileId(null);
     }
@@ -95,21 +74,11 @@ export default function ProfilesManagement() {
 
   const handleSetPrimaryProfile = async (profileId: string) => {
     try {
-      const response = await client.app.profiles["set-primary"].$post({
-        query: { profile_id: profileId },
-      });
-
-      if (response.ok) {
-        refreshProfiles();
-        toast.success("메인 프로필이 설정되었습니다");
-      } else {
-        const errorData = await response.json();
-        toast.error(
-          getErrorMessage(errorData, "메인 프로필 설정에 실패했습니다"),
-        );
-      }
-    } catch (_error) {
-      toast.error("메인 프로필 설정에 실패했습니다");
+      await mutate("profiles:setPrimary", { profile_id: profileId });
+      refreshProfiles();
+      toast.success("메인 프로필이 설정되었습니다");
+    } catch (error) {
+      toast.error(errorMessage(error, "메인 프로필 설정에 실패했습니다"));
     }
   };
 

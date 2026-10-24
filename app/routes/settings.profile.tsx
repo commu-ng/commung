@@ -20,8 +20,13 @@ import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
 import { Textarea } from "~/components/ui/textarea";
 import { useAuth } from "~/hooks/useAuth";
-import { client } from "~/lib/api-client";
-import { env } from "~/lib/env";
+import { SESSION_KEY } from "~/hooks/useSession";
+import { errorMessage, mutate } from "~/lib/naru";
+import {
+  ALLOWED_IMAGE_TYPES,
+  MAX_IMAGE_FILE_SIZE,
+  uploadImage,
+} from "~/lib/upload-image";
 import { getGradientForUser } from "~/lib/gradient-utils";
 
 import type { Profile } from "~/types/profile";
@@ -106,21 +111,13 @@ export default function ProfileSettings() {
     const file = files[0];
     if (!file) return;
 
-    const allowedTypes = [
-      "image/jpeg",
-      "image/jpg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       toast.error("이미지 파일만 업로드 가능합니다 (JPG, PNG, GIF, WebP)");
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("이미지 크기는 10MB 이하여야 합니다");
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      toast.error("이미지 크기는 25MB 이하여야 합니다");
       return;
     }
 
@@ -141,36 +138,21 @@ export default function ProfileSettings() {
         throw new Error("No current profile");
       }
 
-      const formData = new FormData();
-      formData.append("file", file);
-
-      // Use the dedicated profile picture upload endpoint
-      const sessionToken = localStorage.getItem("session_token");
-      const headers: Record<string, string> = {};
-      if (sessionToken) {
-        headers.Authorization = `Bearer ${sessionToken}`;
-      }
-
-      const uploadResponse = await fetch(
-        `${env.apiBaseUrl}/app/profile-picture?profile_id=${currentProfile.id}`,
-        {
-          method: "POST",
-          body: formData,
-          headers,
-        },
-      );
-
-      if (!uploadResponse.ok) {
-        throw new Error("업로드에 실패했습니다");
-      }
-
-      const uploadData = await uploadResponse.json();
+      // Upload to Naru Media, then make it the profile's picture.
+      const image = await uploadImage(file);
+      const uploadData = await mutate<{ url: string }>("profiles:setPicture", {
+        profile_id: currentProfile.id,
+        image_id: image.id,
+      });
       // The profile picture is now set directly
       setProfilePicturePreview(uploadData.url);
+      setProfile((prev) =>
+        prev ? { ...prev, profile_picture_url: uploadData.url } : prev,
+      );
+      queryClient.invalidateQueries({ queryKey: SESSION_KEY });
       toast.success("프로필 사진이 업로드되었습니다");
     } catch (error) {
-      console.error("Failed to upload profile picture:", error);
-      toast.error("프로필 사진 업로드에 실패했습니다");
+      toast.error(errorMessage(error, "프로필 사진 업로드에 실패했습니다"));
       setProfilePicturePreview(profile?.profile_picture_url || null);
     } finally {
       setIsUploadingProfilePicture(false);
@@ -183,41 +165,23 @@ export default function ProfileSettings() {
 
     setIsSaving(true);
     try {
-      const response = await client.app.me.profiles.$put({
-        query: { profile_id: currentProfile.id },
-        json: {
-          name: newName.trim(),
-          username: newUsername.trim(),
-          bio: newBio.trim() || undefined,
-        },
+      const updatedProfile = await mutate<Profile>("profiles:update", {
+        profile_id: currentProfile.id,
+        name: newName.trim(),
+        username: newUsername.trim(),
+        bio: newBio.trim() || null,
       });
+      // Merge with existing profile to preserve missing properties
+      const fullUpdatedProfile = { ...profile, ...updatedProfile };
+      setProfile(fullUpdatedProfile);
+      setProfilePicturePreview(updatedProfile.profile_picture_url || null);
 
-      if (response.ok) {
-        const result = await response.json();
-        const updatedProfile = result.data;
-        // Merge with existing profile to preserve missing properties
-        const fullUpdatedProfile = { ...profile, ...updatedProfile };
-        setProfile(fullUpdatedProfile);
-        setProfilePicturePreview(updatedProfile.profile_picture_url || null);
+      // The session holds the member's profiles.
+      queryClient.invalidateQueries({ queryKey: SESSION_KEY });
 
-        // Update both current profile and available profiles cache with the updated data
-        queryClient.setQueryData(["auth", "currentProfile"], updatedProfile);
-
-        // Update the profile in the available profiles list
-        const currentProfiles =
-          queryClient.getQueryData<Profile[]>(["auth", "myProfiles"]) || [];
-        const updatedProfiles = currentProfiles.map((profile) =>
-          profile.id === updatedProfile.id ? updatedProfile : profile,
-        );
-        queryClient.setQueryData(["auth", "myProfiles"], updatedProfiles);
-
-        toast.success("프로필이 성공적으로 업데이트되었습니다!");
-      } else {
-        throw new Error("프로필 업데이트에 실패했습니다");
-      }
+      toast.success("프로필이 성공적으로 업데이트되었습니다!");
     } catch (error) {
-      console.error("Failed to update profile:", error);
-      toast.error("프로필 업데이트에 실패했습니다");
+      toast.error(errorMessage(error, "프로필 업데이트에 실패했습니다"));
     } finally {
       setIsSaving(false);
     }
@@ -240,29 +204,15 @@ export default function ProfileSettings() {
     setOnlineStatusVisible(visible);
 
     try {
-      const response = await client.app.profiles["online-status-settings"].$put(
-        {
-          json: {
-            profile_id: currentProfile.id,
-            visible,
-          },
-        },
+      await mutate("profiles:updateOnlineStatusSettings", {
+        profile_id: currentProfile.id,
+        visible,
+      });
+      queryClient.invalidateQueries({ queryKey: SESSION_KEY });
+      toast.success(
+        visible ? "온라인 상태가 표시됩니다" : "온라인 상태가 숨겨집니다",
       );
-
-      if (response.ok) {
-        // Update the profile cache
-        queryClient.setQueryData(["auth", "currentProfile"], {
-          ...currentProfile,
-          onlineStatusVisible: visible,
-        });
-        toast.success(
-          visible ? "온라인 상태가 표시됩니다" : "온라인 상태가 숨겨집니다",
-        );
-      } else {
-        throw new Error("온라인 상태 업데이트에 실패했습니다");
-      }
-    } catch (error) {
-      console.error("Failed to update online status visibility:", error);
+    } catch {
       // Revert on error
       setOnlineStatusVisible(!visible);
       toast.error("온라인 상태 설정 변경에 실패했습니다");
@@ -396,14 +346,14 @@ export default function ProfileSettings() {
                       사진 업로드
                     </Button>
                     <p className="text-xs text-muted-foreground">
-                      JPG, PNG, GIF, WebP (최대 10MB)
+                      JPG, PNG, GIF, WebP (최대 25MB)
                     </p>
                   </div>
                 </div>
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                  accept={ALLOWED_IMAGE_TYPES.join(",")}
                   onChange={handleProfilePictureChange}
                   className="hidden"
                 />

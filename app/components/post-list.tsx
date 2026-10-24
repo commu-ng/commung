@@ -9,7 +9,8 @@ import {
 } from "react";
 import { useAuth } from "~/hooks/useAuth";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
-import { client } from "~/lib/api-client";
+import { query } from "~/lib/naru";
+import type { Page, Post } from "~/types/post";
 import { PostCard } from "./post-card";
 import { EmptyState } from "./shared/EmptyState";
 import { LoadingState } from "./shared/LoadingState";
@@ -42,19 +43,11 @@ export const PostList = forwardRef<PostListRef>((_props, ref) => {
   } = useInfiniteQuery({
     queryKey: ["posts", currentProfile?.id],
     queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
-      const response = await client.app.posts.$get({
-        query: {
-          limit: POSTS_PER_PAGE.toString(),
-          ...(pageParam && { cursor: pageParam }),
-          ...(currentProfile?.id && { profile_id: currentProfile.id }),
-        },
+      return query<Page<Post>>("posts:list", {
+        limit: POSTS_PER_PAGE,
+        ...(pageParam && { cursor: pageParam }),
+        ...(currentProfile?.id && { profile_id: currentProfile.id }),
       });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch posts: ${response.status}`);
-      }
-      const result = await response.json();
-
-      return result;
     },
     getNextPageParam: (lastPage) => {
       // Use cursor from API response

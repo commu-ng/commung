@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { client } from "~/lib/api-client";
+import { useQuery } from "@tanstack/react-query";
+import { query } from "~/lib/naru";
 
 export interface CommunityProfile {
   id: string;
@@ -8,45 +8,30 @@ export interface CommunityProfile {
   bio: string | null;
   profile_picture_url: string | null;
   created_at: string;
+  updated_at: string;
   is_primary: boolean;
   user_group_key: string;
   user_role: "owner" | "moderator" | "member";
 }
 
+export const COMMUNITY_PROFILES_KEY = ["profiles"] as const;
+
+/** Every active profile in the community (`profiles:list`), for signed-in members. */
+export function useCommunityProfilesQuery(enabled = true) {
+  return useQuery({
+    queryKey: COMMUNITY_PROFILES_KEY,
+    queryFn: () => query<CommunityProfile[]>("profiles:list"),
+    staleTime: 30000,
+    enabled,
+  });
+}
+
 export function useCommunityProfiles() {
-  const [profiles, setProfiles] = useState<CommunityProfile[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const fetchProfiles = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await client.app.profiles.$get({
-        query: {},
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        // API returns { data: [...] } wrapper
-        setProfiles(Array.isArray(result?.data) ? result.data : []);
-      } else {
-        console.error("Failed to fetch community profiles");
-        setProfiles([]);
-      }
-    } catch (error) {
-      console.error("Error fetching community profiles:", error);
-      setProfiles([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchProfiles();
-  }, [fetchProfiles]);
+  const { data, isLoading, refetch } = useCommunityProfilesQuery();
 
   return {
-    profiles,
-    loading,
-    refetch: fetchProfiles,
+    profiles: data ?? [],
+    loading: isLoading,
+    refetch,
   };
 }
