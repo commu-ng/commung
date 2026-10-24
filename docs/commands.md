@@ -68,7 +68,7 @@ WebSocket) cannot import a URL, so save the SDK beside the program first:
 ```js
 import { createNaru } from "./naru.mjs";
 
-const naru = createNaru({ site: "neo-commung" });
+const naru = createNaru({ site: "commung" });
 const token = process.env.BOT_TOKEN;
 const answered = new Set();
 

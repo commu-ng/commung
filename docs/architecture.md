@@ -21,7 +21,7 @@ storage (R2), push notifications and hosting.
 to `dist/_naru/` (TypeScript to JavaScript, file by file, imports kept).
 `pnpm test` compiles `naru/` alone and runs the tests. Try it locally with
 naru-dev, from a Naru checkout's `control-plane/`:
-`pnpm naru-dev <this checkout>/dist --site neo-commung`.
+`pnpm naru-dev <this checkout>/dist --site commung`.
 
 ## The site's code (`naru/`)
 
@@ -107,8 +107,8 @@ Korean messages; pages show `error.message` (`errorMessage()` in
 Pushes to `main` of `naru-pub/commung` deploy the site from GitHub
 Actions (`.github/workflows/test.yml`): after the lint, typecheck and tests
 pass, the deploy job builds `dist/` and runs `scripts/deploy-naru.mjs dist
-neo-commung`. That script signs its requests with the run's OIDC token,
+commung`. That script signs its requests with the run's OIDC token,
 uploads the files Naru asks for, finalizes, and waits until Naru activates
 the release of `_naru/` (failing the job if Naru refuses it, as when a
-migration fails). The Naru site `neo-commung` needs a GitHub Actions deploy
+migration fails). The Naru site `commung` needs a GitHub Actions deploy
 target for `naru-pub/commung` and `refs/heads/main` (Naru's `/github` page).

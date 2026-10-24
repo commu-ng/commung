@@ -28,12 +28,12 @@ pnpm build       # dist/: what Naru publishes
 ```
 
 Try it on a local Naru from a Naru checkout's `control-plane/`:
-`pnpm naru-dev <this checkout>/dist --site neo-commung`. The end-to-end
+`pnpm naru-dev <this checkout>/dist --site commung`. The end-to-end
 smoke test runs the built site there with Chromium:
 `NARU_DEV=<naru checkout>/naru-dev PLAYWRIGHT_MODULE=<playwright>/index.mjs node tests/e2e.mjs`.
 
 Pushes to `main` of `naru-pub/commung` deploy to the Naru site
-`neo-commung` from GitHub Actions.
+`commung` from GitHub Actions.
 
 ## License
 

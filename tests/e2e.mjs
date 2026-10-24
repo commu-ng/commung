@@ -16,7 +16,7 @@ const { startNaru } = await import(
 );
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || "playwright");
 
-const SITE = "neo-commung";
+const SITE = "commung";
 const naru = await startNaru({
   site: fileURLToPath(new URL("../dist/", import.meta.url)),
   name: SITE,
