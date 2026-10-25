@@ -161,6 +161,47 @@ h3 {
   color: var(--accent-ink);
 }
 
+.hero-shots {
+  position: relative;
+  margin-top: 40px;
+  padding-right: 56px;
+}
+
+.hero-shots img,
+.tour img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgb(80 50 30 / 0.12);
+}
+
+.hero-shots .phone {
+  position: absolute;
+  right: 0;
+  bottom: -24px;
+  width: 22%;
+  border-radius: 22px;
+  border-width: 4px;
+  border-color: var(--ink);
+}
+
+.tour {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.tour figure {
+  margin: 0;
+}
+
+.tour figcaption {
+  margin-top: 10px;
+  font-weight: 700;
+}
+
 .features {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -252,6 +293,16 @@ h3 {
 }
 
 @media (max-width: 520px) {
+  .hero-shots {
+    padding-right: 32px;
+  }
+
+  .hero-shots .phone {
+    width: 30%;
+    border-radius: 14px;
+    border-width: 3px;
+  }
+
   .steps li {
     padding: 64px 18px 18px;
   }
