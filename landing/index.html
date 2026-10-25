@@ -47,20 +47,26 @@
           <a class="button" href="https://naru.pub/signup">나루 가입하기</a>
         </div>
         <div class="hero-shots">
-          <img
-            class="desktop"
-            src="screenshots/timeline.jpg"
-            width="980"
-            height="800"
-            alt="커뮹의 타임라인. 왼쪽에 메뉴가, 오른쪽에 글쓰기 창과 답글, 반응이 달린 글이 보여요."
-          />
-          <img
-            class="phone"
-            src="screenshots/timeline-mobile.jpg"
-            width="390"
-            height="844"
-            alt="휴대폰에서 본 커뮹의 타임라인"
-          />
+          <picture>
+            <source srcset="screenshots/timeline-dark.jpg" media="(prefers-color-scheme: dark)" />
+            <img
+              class="desktop"
+              src="screenshots/timeline.jpg"
+              width="980"
+              height="800"
+              alt="커뮹의 타임라인. 왼쪽에 메뉴가, 오른쪽에 글쓰기 창과 답글, 반응이 달린 글이 보여요."
+            />
+          </picture>
+          <picture>
+            <source srcset="screenshots/timeline-mobile-dark.jpg" media="(prefers-color-scheme: dark)" />
+            <img
+              class="phone"
+              src="screenshots/timeline-mobile.jpg"
+              width="390"
+              height="844"
+              alt="휴대폰에서 본 커뮹의 타임라인"
+            />
+          </picture>
         </div>
       </section>
 
@@ -68,19 +74,31 @@
         <h2 id="tour-title">둘러보기</h2>
         <div class="tour">
           <figure>
-            <img src="screenshots/chat.jpg" width="980" height="800" loading="lazy" alt="세 명이 대화하는 그룹 채팅방" />
+            <picture>
+              <source srcset="screenshots/chat-dark.jpg" media="(prefers-color-scheme: dark)" />
+              <img src="screenshots/chat.jpg" width="980" height="800" loading="lazy" alt="세 명이 대화하는 그룹 채팅방" />
+            </picture>
             <figcaption>그룹 채팅</figcaption>
           </figure>
           <figure>
-            <img src="screenshots/boards.jpg" width="980" height="800" loading="lazy" alt="동아리 모집 게시판의 글 목록" />
+            <picture>
+              <source srcset="screenshots/boards-dark.jpg" media="(prefers-color-scheme: dark)" />
+              <img src="screenshots/boards.jpg" width="980" height="800" loading="lazy" alt="동아리 모집 게시판의 글 목록" />
+            </picture>
             <figcaption>게시판</figcaption>
           </figure>
           <figure>
-            <img src="screenshots/shop.jpg" width="980" height="800" loading="lazy" alt="별조각 화폐로 아이템을 사는 상점" />
+            <picture>
+              <source srcset="screenshots/shop-dark.jpg" media="(prefers-color-scheme: dark)" />
+              <img src="screenshots/shop.jpg" width="980" height="800" loading="lazy" alt="별조각 화폐로 아이템을 사는 상점" />
+            </picture>
             <figcaption>상점</figcaption>
           </figure>
           <figure>
-            <img src="screenshots/admin.jpg" width="980" height="800" loading="lazy" alt="운영자가 가입 지원서를 승인하는 화면" />
+            <picture>
+              <source srcset="screenshots/admin-dark.jpg" media="(prefers-color-scheme: dark)" />
+              <img src="screenshots/admin.jpg" width="980" height="800" loading="lazy" alt="운영자가 가입 지원서를 승인하는 화면" />
+            </picture>
             <figcaption>지원서 검토</figcaption>
           </figure>
         </div>

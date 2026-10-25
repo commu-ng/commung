@@ -1,6 +1,7 @@
 // Screenshots of the built site (dist/) for the landing page: a local Naru
 // (naru-dev) with a made-up community, written through the site's own
-// mutations, and Chromium photographing its pages into landing/screenshots/,
+// mutations, and Chromium photographing its pages into landing/screenshots/
+// (each light and, as name-dark.jpg, dark),
 // and the 커뮹! template's preview on Naru's board into docs/ (1280×960, the
 // size of Naru's own previews), which the workflow publishes with the
 // template.
@@ -202,7 +203,7 @@ try {
     await mutate("shop:adminGrant", { kind: "currency", profile_id: person.profile, currency_id: currency.id, amount: 200, reason: "입학 축하" }, boss);
 
   // Photographs.
-  async function shoot(who, path, file, { mobile = false, preview = false, wait, full = false } = {}) {
+  async function shoot(who, path, file, { mobile = false, preview = false, dark = false, wait, full = false } = {}) {
     const context = await browser.newContext({
       ...(mobile
         ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }
@@ -211,7 +212,7 @@ try {
           : { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 }),
       locale: "ko-KR",
       timezoneId: "Asia/Seoul",
-      colorScheme: "light",
+      colorScheme: dark ? "dark" : "light",
     });
     if (who) await naru.signIn(context, who);
     const page = await context.newPage();
@@ -223,7 +224,9 @@ try {
     // Desktop shots keep the app's column, without the page's empty sides.
     const clip = mobile || preview ? undefined : { x: 150, y: 0, width: 980, height: 800 };
     await page.screenshot({
-      path: preview ? join(root, "docs", file) : join(out, file),
+      path: preview
+        ? join(root, "docs", file)
+        : join(out, dark ? file.replace(/\.jpg$/, "-dark.jpg") : file),
       fullPage: full,
       clip,
       type: "jpeg",
@@ -232,13 +235,15 @@ try {
     console.log("shot", file);
     await context.close();
   }
-  await shoot("luna", "/", "timeline.jpg", { wait: "별자리 관측" });
-  await shoot("luna", `/group-chats/${chat.id}`, "chat.jpg", { wait: "유성우" });
-  await shoot("luna", "/boards/club", "boards.jpg", { wait: "퀴디치" });
-  await shoot("luna", "/shop", "shop.jpg", { wait: "빗자루" });
-  await shoot("boss", "/admin/applications", "admin.jpg", { wait: "하루" });
-  await shoot("luna", "/", "timeline-mobile.jpg", { mobile: true, wait: "별자리 관측" });
-  await shoot("luna", `/group-chats/${chat.id}`, "chat-mobile.jpg", { mobile: true, wait: "유성우" });
+  for (const dark of [false, true]) {
+    await shoot("luna", "/", "timeline.jpg", { wait: "별자리 관측", dark });
+    await shoot("luna", `/group-chats/${chat.id}`, "chat.jpg", { wait: "유성우", dark });
+    await shoot("luna", "/boards/club", "boards.jpg", { wait: "퀴디치", dark });
+    await shoot("luna", "/shop", "shop.jpg", { wait: "빗자루", dark });
+    await shoot("boss", "/admin/applications", "admin.jpg", { wait: "하루", dark });
+    await shoot("luna", "/", "timeline-mobile.jpg", { mobile: true, wait: "별자리 관측", dark });
+    await shoot("luna", `/group-chats/${chat.id}`, "chat-mobile.jpg", { mobile: true, wait: "유성우", dark });
+  }
   await shoot("luna", "/", "template-preview.jpg", { preview: true, wait: "별자리 관측" });
 } finally {
   await browser.close();
