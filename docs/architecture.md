@@ -104,19 +104,19 @@ Korean messages; pages show `error.message` (`errorMessage()` in
 
 ## Deploying
 
-Pushes to the `naru` branch of `commu-ng/web` deploy the site from GitHub
-Actions (`.github/workflows/test.yml`): after the lint, typecheck and tests
-pass, the deploy job builds `dist/` and runs `scripts/deploy-naru.mjs dist
-commung`. That script signs its requests with the run's OIDC token,
-uploads the files Naru asks for, finalizes, and waits until Naru activates
-the release of `_naru/` (failing the job if Naru refuses it, as when a
-migration fails). The Naru site `commung` needs a GitHub Actions deploy
-target for `commu-ng/web` and `refs/heads/naru` (Naru's `/github` page).
+Pushes to the `naru` branch of `commu-ng/web` deploy from GitHub Actions
+(`.github/workflows/test.yml`). After the lint, typecheck and tests pass,
+the deploy job builds `dist/` (this app) and:
 
-The same build is published as the 커뮹! template's next version on Naru's
-board (the deploy action's `template-owner: commung`): the template whose
-post, by the Naru account `commung`, names `commu-ng/web`, `naru` and `dist`
-as its GitHub source. Until that post exists the step does nothing. Sites
-that installed the template are offered the update on naru.pub/templates, or
-take it automatically if they chose to; a version that adds migrations
-always waits for its owner.
+1. publishes it as the 커뮹! template's next version on Naru's board (the
+   deploy action's `template-owner: commung`): the template whose post, by
+   the Naru account `commung`, names `commu-ng/web`, `naru` and `dist` as its
+   GitHub source. Until that post exists the step does nothing. Sites that
+   installed the template are offered the update on naru.pub/templates, or
+   take it automatically if they chose to; a version that adds migrations
+   always waits for its owner.
+2. deploys `landing/` (static: the landing page and installation guide) to
+   the Naru site `commung` with `scripts/deploy-naru.mjs landing commung`,
+   which signs its requests with the run's OIDC token. The site needs a
+   GitHub Actions deploy target for `commu-ng/web` and `refs/heads/naru`
+   (Naru's `/github` page).

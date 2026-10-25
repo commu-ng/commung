@@ -43,12 +43,13 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      - run: node scripts/deploy-naru.mjs dist commung
-      # The same build is the 커뮹! template's next version, offered to every
-      # site that installed it: the template whose GitHub source on its post
-      # is commu-ng/web, naru, dist, posted by the Naru account commung.
-      # Until that post exists, this step does nothing and succeeds.
+      # The community app (dist/) is the 커뮹! template's next version,
+      # offered to every site that installed it: the template whose GitHub
+      # source on its post is commu-ng/web, naru, dist, posted by the Naru
+      # account commung. Until that post exists, this step does nothing.
       - uses: naru-pub/naru/actions/deploy@main
         with:
           dir: dist
           template-owner: commung
+      # commung.naru.pub itself is the landing page and installation guide.
+      - run: node scripts/deploy-naru.mjs landing commung
