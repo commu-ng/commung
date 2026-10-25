@@ -27,12 +27,12 @@ jobs:
 
   deploy:
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/naru'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       # Naru's GitHub CI deploy checks this run's OIDC token against the
-      # site's GitHub Actions target (naru-pub/commung, refs/heads/main).
+      # site's GitHub Actions target (commu-ng/web, refs/heads/naru).
       id-token: write
     steps:
       - uses: actions/checkout@v7
@@ -45,11 +45,10 @@ jobs:
       - run: pnpm build
       - run: node scripts/deploy-naru.mjs dist commung
       # The same build is the 커뮹! template's next version, offered to every
-      # site that installed it. NARU_TEMPLATE_ID (a repository variable) is
-      # the template's ID, from its edit page on naru.pub; the template's
-      # GitHub source must be naru-pub/commung, main.
-      - if: vars.NARU_TEMPLATE_ID != ''
-        uses: naru-pub/naru/actions/deploy@main
+      # site that installed it: the template whose GitHub source on its post
+      # is commu-ng/web, naru, dist, posted by the Naru account commung.
+      # Until that post exists, this step does nothing and succeeds.
+      - uses: naru-pub/naru/actions/deploy@main
         with:
           dir: dist
-          template: ${{ vars.NARU_TEMPLATE_ID }}
+          template-owner: commung

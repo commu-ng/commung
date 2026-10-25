@@ -104,18 +104,19 @@ Korean messages; pages show `error.message` (`errorMessage()` in
 
 ## Deploying
 
-Pushes to `main` of `naru-pub/commung` deploy the site from GitHub
+Pushes to the `naru` branch of `commu-ng/web` deploy the site from GitHub
 Actions (`.github/workflows/test.yml`): after the lint, typecheck and tests
 pass, the deploy job builds `dist/` and runs `scripts/deploy-naru.mjs dist
 commung`. That script signs its requests with the run's OIDC token,
 uploads the files Naru asks for, finalizes, and waits until Naru activates
 the release of `_naru/` (failing the job if Naru refuses it, as when a
 migration fails). The Naru site `commung` needs a GitHub Actions deploy
-target for `naru-pub/commung` and `refs/heads/main` (Naru's `/github` page).
+target for `commu-ng/web` and `refs/heads/naru` (Naru's `/github` page).
 
 The same build is published as the 커뮹! template's next version on Naru's
-board, when the repository variable `NARU_TEMPLATE_ID` holds the template's
-ID (its edit page on naru.pub, whose GitHub source must be
-`naru-pub/commung`, `main`). Sites that installed the template are offered the
-update on naru.pub/templates, or take it automatically if they chose to; a
-version that adds migrations always waits for its owner.
+board (the deploy action's `template-owner: commung`): the template whose
+post, by the Naru account `commung`, names `commu-ng/web`, `naru` and `dist`
+as its GitHub source. Until that post exists the step does nothing. Sites
+that installed the template are offered the update on naru.pub/templates, or
+take it automatically if they chose to; a version that adds migrations
+always waits for its owner.

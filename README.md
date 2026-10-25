@@ -32,7 +32,7 @@ Try it on a local Naru from a Naru checkout's `control-plane/`:
 smoke test runs the built site there with Chromium:
 `NARU_DEV=<naru checkout>/naru-dev PLAYWRIGHT_MODULE=<playwright>/index.mjs node tests/e2e.mjs`.
 
-Pushes to `main` of `naru-pub/commung` deploy to the Naru site
+Pushes to the `naru` branch of `commu-ng/web` deploy to the Naru site
 `commung` from GitHub Actions.
 
 ## License
