@@ -47,7 +47,7 @@ jobs:
       # offered to every site that installed it: the template whose GitHub
       # source on its post is commu-ng/web, naru, dist, posted by the Naru
       # account commung. Until that post exists, this step does nothing.
-      - uses: naru-pub/naru/actions/deploy@main
+      - uses: naru-pub/actions/deploy@v1
         with:
           dir: dist
           template-owner: commung
