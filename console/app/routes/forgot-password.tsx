@@ -111,15 +111,6 @@ export default function ForgotPassword() {
                 로그인으로 돌아가기
               </Link>
             </div>
-            <div className="text-muted-foreground">
-              계정이 없으신가요?{" "}
-              <Link
-                to="/signup"
-                className="text-primary hover:underline font-medium"
-              >
-                회원가입
-              </Link>
-            </div>
           </div>
         </CardContent>
       </Card>

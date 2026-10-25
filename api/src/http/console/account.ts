@@ -10,7 +10,6 @@ import {
   passwordResetRequestSchema,
   passwordResetSchema,
   userLoginSchema,
-  userSignupSchema,
 } from "../../schemas";
 import * as authService from "../../services/auth.service";
 import * as emailService from "../../services/email.service";
@@ -134,20 +133,7 @@ export const consoleAccountRouter = new Hono()
     // Return user data with session token (for mobile clients)
     return c.json({ data: { ...user, session_token: session.token } });
   })
-  .post("/signup", zValidator("json", userSignupSchema), async (c) => {
-    const { login_name: loginName, password } = c.req.valid("json");
-    const { session, user } = await authService.signupUser(loginName, password);
 
-    // Set session cookie
-    setCookie(c, "session_token", session.token, {
-      maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
-      httpOnly: true,
-      sameSite: "Lax",
-    });
-
-    // Return user data with session token (for mobile clients)
-    return c.json({ data: { ...user, session_token: session.token } }, 201);
-  })
   .delete("/users/me", authMiddleware, async (c) => {
     const user = c.get("user");
     const isMasquerading = c.get("isMasquerading");

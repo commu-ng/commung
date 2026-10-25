@@ -156,15 +156,6 @@ export default function Login() {
                 비밀번호를 잊으셨나요?
               </Link>
             </div>
-            <div className="text-muted-foreground">
-              계정이 없으신가요?{" "}
-              <Link
-                to={`/signup${searchParams.get("next") ? `?next=${encodeURIComponent(searchParams.get("next") || "")}` : ""}`}
-                className="text-primary hover:underline font-medium"
-              >
-                회원가입
-              </Link>
-            </div>
           </div>
         </CardContent>
       </Card>

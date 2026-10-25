@@ -246,9 +246,6 @@ export default function AdminBoards() {
             <Button asChild>
               <Link to="/login">로그인</Link>
             </Button>
-            <Button variant="outline" asChild>
-              <Link to="/signup">회원가입</Link>
-            </Button>
           </div>
         </div>
       </div>

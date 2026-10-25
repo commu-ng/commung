@@ -14,7 +14,7 @@ interface AuthShellProps {
 }
 
 /**
- * Centered, friendly auth shell used by login/signup/forgot/reset/verify/etc.
+ * Centered, friendly auth shell used by login/forgot/reset/verify/etc.
  * Pairs a soft hero with the form card.
  */
 export function AuthShell({

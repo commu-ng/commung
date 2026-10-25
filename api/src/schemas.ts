@@ -54,11 +54,6 @@ export const communityRoleUpdateRequestSchema = z.object({
   role: z.string(),
 });
 
-export const userSignupSchema = z.object({
-  login_name: loginNameSchema,
-  password: z.string().min(8, "Password must be at least 8 characters long"),
-});
-
 export const userLoginSchema = z.object({
   login_name: z.string().min(1, "Login name cannot be empty"),
   password: z.string().min(1, "Password cannot be empty"),

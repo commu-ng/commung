@@ -610,11 +610,6 @@ export default function CommunityApply({ params }: Route.ComponentProps) {
                 로그인
               </Button>
             </Link>
-            <Link to="/signup">
-              <Button variant="outline" className="w-full">
-                계정 만들기
-              </Button>
-            </Link>
           </CardContent>
         </Card>
       );

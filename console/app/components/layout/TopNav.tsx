@@ -12,7 +12,6 @@ import {
   Sparkles,
   UserCog,
   UserIcon,
-  UserPlus,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
@@ -82,7 +81,12 @@ export function TopNav() {
 
   const navItems: NavItem[] = [
     { to: "/", label: "홈", icon: Home },
-    { to: "/communities", label: "커뮤 둘러보기", icon: Search },
+    {
+      to: "/communities",
+      label: "커뮤 둘러보기",
+      icon: Search,
+      authOnly: true,
+    },
     {
       to: "/communities/mine",
       label: "내 커뮤",
@@ -173,29 +177,17 @@ export function TopNav() {
       );
     }
     return (
-      <>
-        <Button
-          asChild
-          variant="outline"
-          size={mobile ? "default" : "sm"}
-          className={mobile ? "w-full" : ""}
-        >
-          <Link to="/login" onClick={() => setOpen(false)}>
-            <LogIn className="h-4 w-4" />
-            로그인
-          </Link>
-        </Button>
-        <Button
-          asChild
-          size={mobile ? "default" : "sm"}
-          className={mobile ? "w-full" : ""}
-        >
-          <Link to="/signup" onClick={() => setOpen(false)}>
-            <UserPlus className="h-4 w-4" />
-            회원가입
-          </Link>
-        </Button>
-      </>
+      <Button
+        asChild
+        variant="outline"
+        size={mobile ? "default" : "sm"}
+        className={mobile ? "w-full" : ""}
+      >
+        <Link to="/login" onClick={() => setOpen(false)}>
+          <LogIn className="h-4 w-4" />
+          로그인
+        </Link>
+      </Button>
     );
   };
 
