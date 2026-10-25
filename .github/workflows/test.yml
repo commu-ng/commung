@@ -51,5 +51,8 @@ jobs:
         with:
           dir: dist
           template-owner: commung
+          # Naru's own preview would be the sign-in page: the template's
+          # files alone have no community to show (scripts/screenshots.mjs).
+          preview: docs/template-preview.jpg
       # commung.naru.pub itself is the landing page and installation guide.
       - run: node scripts/deploy-naru.mjs landing commung

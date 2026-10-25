@@ -1,6 +1,9 @@
 // Screenshots of the built site (dist/) for the landing page: a local Naru
 // (naru-dev) with a made-up community, written through the site's own
-// mutations, and Chromium photographing its pages into landing/screenshots/.
+// mutations, and Chromium photographing its pages into landing/screenshots/,
+// and the 커뮹! template's preview on Naru's board into docs/ (1280×960, the
+// size of Naru's own previews), which the workflow publishes with the
+// template.
 //
 //   pnpm build
 //   NARU_DEV=~/Git/naru-pub/naru-dev PLAYWRIGHT_MODULE=…/playwright/index.mjs \
@@ -199,11 +202,13 @@ try {
     await mutate("shop:adminGrant", { kind: "currency", profile_id: person.profile, currency_id: currency.id, amount: 200, reason: "입학 축하" }, boss);
 
   // Photographs.
-  async function shoot(who, path, file, { mobile = false, wait, full = false } = {}) {
+  async function shoot(who, path, file, { mobile = false, preview = false, wait, full = false } = {}) {
     const context = await browser.newContext({
       ...(mobile
         ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }
-        : { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 }),
+        : preview
+          ? { viewport: { width: 1280, height: 960 } }
+          : { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 }),
       locale: "ko-KR",
       timezoneId: "Asia/Seoul",
       colorScheme: "light",
@@ -216,8 +221,14 @@ try {
     await page.evaluate(() => document.fonts.ready);
     await page.waitForTimeout(800);
     // Desktop shots keep the app's column, without the page's empty sides.
-    const clip = mobile ? undefined : { x: 150, y: 0, width: 980, height: 800 };
-    await page.screenshot({ path: join(out, file), fullPage: full, clip, type: "jpeg", quality: 85 });
+    const clip = mobile || preview ? undefined : { x: 150, y: 0, width: 980, height: 800 };
+    await page.screenshot({
+      path: preview ? join(root, "docs", file) : join(out, file),
+      fullPage: full,
+      clip,
+      type: "jpeg",
+      quality: preview ? 90 : 85,
+    });
     console.log("shot", file);
     await context.close();
   }
@@ -228,6 +239,7 @@ try {
   await shoot("boss", "/admin/applications", "admin.jpg", { wait: "하루" });
   await shoot("luna", "/", "timeline-mobile.jpg", { mobile: true, wait: "별자리 관측" });
   await shoot("luna", `/group-chats/${chat.id}`, "chat-mobile.jpg", { mobile: true, wait: "유성우" });
+  await shoot("luna", "/", "template-preview.jpg", { preview: true, wait: "별자리 관측" });
 } finally {
   await browser.close();
   await naru.stop();
