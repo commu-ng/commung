@@ -1,25 +1,29 @@
 :root {
-  --ground: #fff7ec;
-  --card: #ffffff;
-  --ink: #2f2b2b;
-  --muted: #6b5f58;
-  --line: #ecd9c4;
-  --accent: #b83a34;
-  --accent-ink: #ffffff;
-  --soft: #ffe9c2;
+  /* commung's own palette (app/app.css): slate blue on a near-white. */
+  --ground: oklch(0.985 0.004 255);
+  --card: oklch(0.995 0.003 255);
+  --ink: oklch(0.27 0.02 255);
+  --muted: oklch(0.55 0.02 255);
+  --line: oklch(0.92 0.005 255);
+  --accent: oklch(0.52 0.06 255);
+  --accent-ink: oklch(0.99 0.003 255);
+  --soft: oklch(0.94 0.008 255);
+  --shadow: 0 2px 4px oklch(0.78 0.015 255 / 0.08),
+    0 24px 48px -16px oklch(0.55 0.03 255 / 0.22);
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --ground: #1b1716;
-    --card: #241f1d;
-    --ink: #f3ece6;
-    --muted: #c4b6ab;
-    --line: #3d3431;
-    --accent: #f08a7e;
-    --accent-ink: #1b1716;
-    --soft: #3a2d20;
+    --ground: oklch(0.205 0.02 255);
+    --card: oklch(0.255 0.02 255);
+    --ink: oklch(0.96 0.005 255);
+    --muted: oklch(0.74 0.015 255);
+    --line: oklch(1 0 0 / 12%);
+    --accent: oklch(0.78 0.06 255);
+    --accent-ink: oklch(0.22 0.02 255);
+    --soft: oklch(0.33 0.03 255);
+    --shadow: 0 2px 4px oklch(0 0 0 / 0.2), 0 24px 48px -16px oklch(0 0 0 / 0.5);
     color-scheme: dark;
   }
 }
@@ -32,7 +36,8 @@ body {
   margin: 0;
   background: var(--ground);
   color: var(--ink);
-  font-family: "Noto Sans KR", system-ui, sans-serif;
+  font-family: "Quicksand", "Pretendard Variable", "Noto Sans KR", system-ui,
+    sans-serif;
   font-size: 16px;
   line-height: 1.7;
   word-break: keep-all;
@@ -174,7 +179,7 @@ h3 {
   height: auto;
   border: 1px solid var(--line);
   border-radius: 14px;
-  box-shadow: 0 12px 32px rgb(80 50 30 / 0.12);
+  box-shadow: var(--shadow);
 }
 
 .hero-shots .phone {
