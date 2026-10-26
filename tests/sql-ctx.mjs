@@ -11,9 +11,8 @@
 // (text, values) forms, booleans bound as 1 and 0, { rows, changes };
 // queries only read; a mutation is one transaction, kept only if it
 // returns; ctx.fail's coded error; ctx.notify (site.notifications, kept
-// only if the mutation returns); roles, and Naru's views of them and of
-// uploads (_naru_member_roles, _naru_uploads; tables here, which a test
-// fills with site.setRoles and site.upload); ctx.media.types; guest
+// only if the mutation returns); Naru's view of uploads (_naru_uploads, a
+// table here, which a test fills with site.upload); ctx.media.types; guest
 // passwords (hashed here as a plain marker, not a real hash); a
 // statement's limits (100 bound values, 1,000 rows) and a call's 100
 // operations, each ctx.sql statement and Math.random() counted as Naru counts
@@ -85,10 +84,8 @@ export const MEDIA_TYPES = Object.freeze([
   "text/plain",
 ]);
 
-/** Naru's views site SQL reads, kept here as plain tables. */
+/** Naru's view site SQL reads, kept here as a plain table. */
 const NARU_VIEWS = `
-  CREATE TABLE _naru_member_roles (member TEXT NOT NULL, role TEXT NOT NULL,
-    PRIMARY KEY (member, role));
   CREATE TABLE _naru_uploads (id TEXT PRIMARY KEY, url TEXT NOT NULL UNIQUE,
     member TEXT, name TEXT NOT NULL, type TEXT NOT NULL, size INTEGER NOT NULL,
     created_at INTEGER NOT NULL);`;
@@ -199,13 +196,6 @@ export async function testSite({
     pending = names.length - first;
   }
   const db = database(sql.slice(0, sql.length - pending));
-  const rolesOf = (member) =>
-    db
-      .prepare(
-        "SELECT role FROM _naru_member_roles WHERE member = ? ORDER BY role",
-      )
-      .all(member)
-      .map((row) => row.role);
   const site = {
     db,
     now,
@@ -222,16 +212,6 @@ export async function testSite({
         .map((row) => ({ ...row })),
     /** Runs a statement directly, as a test's setup. */
     run: (text, ...values) => db.prepare(text).run(...values.map(bind)),
-    setRoles(member, list) {
-      db.prepare("DELETE FROM _naru_member_roles WHERE member = ?").run(member);
-      for (const role of new Set(list))
-        db.prepare("INSERT INTO _naru_member_roles VALUES (?, ?)").run(
-          member,
-          role,
-        );
-    },
-    /** A member's roles, as Naru keeps them. */
-    roles: rolesOf,
     /**
      * What mutations sent with ctx.notify, kept as Naru keeps its outbox:
      * only from a mutation that returned. { members, title, body, path }.
@@ -319,13 +299,7 @@ export async function testSite({
         : {}),
     };
     return Object.freeze({
-      member:
-        member === null
-          ? null
-          : Object.freeze({
-              id: member,
-              roles: Object.freeze(rolesOf(member)),
-            }),
+      member: member === null ? null : Object.freeze({ id: member }),
       owner: member === null && owner === true,
       visitor: member === null && owner !== true,
       now: site.now,
@@ -333,17 +307,10 @@ export async function testSite({
         throw new NaruFail(code, message, details);
       },
       sql,
-      async rolesOf(ids) {
-        return Object.fromEntries(ids.map((id) => [id, rolesOf(id)]));
-      },
       media: Object.freeze({ types: MEDIA_TYPES }),
       passwords,
       ...(kind === "mutation"
         ? {
-            async setRoles(memberId, list) {
-              site.setRoles(memberId, list);
-              return null;
-            },
             async notify(members, { title, body = "", path = "/", ...rest }) {
               if (
                 Object.keys(rest).length ||
