@@ -1,14 +1,21 @@
 import DOMPurify from "dompurify";
-import { useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 import { useCurrentInstance } from "~/hooks/useCurrentInstance";
 
 /**
  * The front gate: the community's picture and the owner's HTML, shown to a
- * visitor who is not a member yet, above the sign-in or apply button
- * (home.tsx). The HTML is sanitized here, as it is shown: formatting,
- * links and pictures stay; scripts, event handlers, forms and frames go.
+ * visitor who is not a member yet, with the sign-in or apply button below
+ * (home.tsx); `fallback` when the owner set neither. The HTML is sanitized
+ * here, as it is shown: formatting, links and pictures stay; scripts, event
+ * handlers, forms and frames go.
  */
-export function FrontGate() {
+export function FrontGate({
+  action,
+  fallback,
+}: {
+  action: ReactNode;
+  fallback: ReactNode;
+}) {
   const { gateHtml, gateImageUrl, instanceName } = useCurrentInstance();
   const html = useMemo(
     () =>
@@ -20,9 +27,9 @@ export function FrontGate() {
         : "",
     [gateHtml],
   );
-  if (!html && !gateImageUrl) return null;
+  if (!html && !gateImageUrl) return fallback;
   return (
-    <div className="mb-8 space-y-4 text-center">
+    <div className="space-y-4 text-center">
       {gateImageUrl && (
         <img
           src={gateImageUrl}
@@ -37,6 +44,7 @@ export function FrontGate() {
           dangerouslySetInnerHTML={{ __html: html }}
         />
       )}
+      <div className="flex justify-center pt-4">{action}</div>
     </div>
   );
 }
