@@ -59,6 +59,15 @@ naru-dev, from a Naru checkout's `control-plane/`:
   once it is up (`app/components/community-theme-injector.tsx`). Naru keeps
   `_owner/` out of every template and update, and `community:setLook` and
   the community settings page set both.
+- The front gate is what a visitor who is not a member yet sees on the
+  home, above the sign-in or apply button (`components/front-gate.tsx`):
+  `settings.gate_image_id`, a registered image as the banner is, and
+  `settings.gate_html`, the owner's HTML, set on the admin settings form
+  (`community:update`) and read by anyone (`me:instance`). It is stored as
+  written and sanitized with DOMPurify as the page shows it: the
+  community's owner may not be the site's, and a script there would run for
+  every visitor. Owners who need scripts have `/_owner/script.js`, which
+  only the site's owner can upload.
 
 **Who calls.** Anyone may call any query or mutation; each decides from
 `ctx.member` what the caller may see and do:

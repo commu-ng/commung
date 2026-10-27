@@ -11,6 +11,8 @@ interface PublicInstance {
   theme_key_color: string | null;
   custom_css: string | null;
   owner_files: boolean;
+  gate_html: string | null;
+  gate_image_url: string | null;
   is_set_up: boolean;
 }
 
@@ -44,6 +46,9 @@ export function useCurrentInstance() {
     customCss: instance?.custom_css ?? null,
     ownerFiles: instance?.owner_files ?? false,
     lookLoaded: instance !== null,
+    // The front gate (components/front-gate.tsx).
+    gateHtml: instance?.gate_html ?? null,
+    gateImageUrl: instance?.gate_image_url ?? null,
     isLoading: session.isLoading || publicInstance.isLoading,
     refetch: session.refetch,
   };

@@ -1,6 +1,7 @@
 import { Users } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router";
+import { FrontGate } from "~/components/front-gate";
 import { LoginButton } from "~/components/LoginButton";
 import { MessageSender } from "~/components/message-sender";
 import { PostList, type PostListRef } from "~/components/post-list";
@@ -72,6 +73,7 @@ export default function Home() {
     return (
       <div className="flex items-center justify-center min-h-[80vh]">
         <div className="max-w-md mx-auto px-4">
+          <FrontGate />
           <EmptyState
             icon={Users}
             title="로그인이 필요합니다"
@@ -89,6 +91,7 @@ export default function Home() {
     return (
       <div className="flex items-center justify-center min-h-[80vh]">
         <div className="max-w-md mx-auto px-4">
+          <FrontGate />
           <EmptyState
             icon={Users}
             title="가입 신청이 필요합니다"
