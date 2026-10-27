@@ -17,6 +17,8 @@ export interface Settings {
   theme_key_color: string | null;
   banner_image_id: string | null;
   banner_image_url: string | null;
+  custom_css: string | null;
+  owner_files: number;
   created_at: number;
   updated_at: number;
   [key: string]: SqlValue;
@@ -43,6 +45,10 @@ export function publicInstance(ctx: Ctx, settings: Settings | null) {
     description: settings?.description ?? null,
     banner_image_url: settings?.banner_image_url ?? null,
     theme_key_color: settings?.theme_key_color ?? null,
+    // The site owner's own look (lookHead, routes.ts): 사용자 CSS, and whether
+    // the page loads /_owner/style.css and /_owner/script.js.
+    custom_css: settings?.custom_css ?? null,
+    owner_files: bool(settings?.owner_files),
     is_set_up: settings !== null,
   };
 }

@@ -49,7 +49,16 @@ naru-dev, from a Naru checkout's `control-plane/`:
   programs subscribe to `bot:mentions` for the rest. How to write either:
   [commands.md](commands.md).
 - `routes.json`/`routes.ts` answer every page address with `index.html`
-  (the SPA); `assets/` and the other files are served as they are.
+  (the SPA); `assets/`, `_owner/` and the other files are served as they
+  are. The route writes the community's look into the page's `<head>`
+  (`modules/look.ts`), so a page opens in it before its scripts load: the
+  theme colour's CSS (`modules/theme.ts`, which the page's preview uses
+  too), the site's `/_owner/style.css` when the owner turned
+  `settings.owner_files` on, and 사용자 CSS (`settings.custom_css`), last.
+  The page keeps them as the settings change and loads `/_owner/script.js`
+  once it is up (`app/components/community-theme-injector.tsx`). Naru keeps
+  `_owner/` out of every template and update, and `community:setLook` and
+  the community settings page set both.
 
 **Who calls.** Anyone may call any query or mutation; each decides from
 `ctx.member` what the caller may see and do:

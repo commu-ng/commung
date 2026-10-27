@@ -295,3 +295,76 @@ test("staff read post reports with the post's author", async () => {
   assert.equal(report.post.author.username, "bob");
   assert.equal(report.post.content, "나쁜 글");
 });
+
+test("the site owner's look: 사용자 CSS and the _owner/ switch, in every page's head", async () => {
+  // Before the community is set up, a page is index.html as it is.
+  const empty = await testSite();
+  assert.deepEqual(await empty.route("/"), { file: "index.html" });
+
+  const { site } = await community();
+  assert.equal(
+    await refusal(site.mutate("community:setLook", { custom_css: "a {}" }, as("m-alice"))),
+    "not_owner",
+  );
+  for (const bad of [{ custom_css: 1 }, { owner_files: "yes" }, { custom_css: "a".repeat(50001) }])
+    assert.ok(await refusal(site.mutate("community:setLook", bad, as("m-owner"))));
+
+  const css = "a { color: red; } /* </style><script>x()</script> */";
+  assert.deepEqual(
+    await site.mutate("community:setLook", { custom_css: css, owner_files: true }, as("m-owner")),
+    { custom_css: css, owner_files: true },
+  );
+  await site.mutate("community:setTheme", { theme_key_color: "#6b7fb8" }, as("m-owner"));
+  const instance = await site.query("me:instance", null, VISITOR);
+  assert.equal(instance.custom_css, css);
+  assert.equal(instance.owner_files, true);
+  // The settings form leaves the look as it is.
+  await site.mutate("community:update", { name: "새 이름" }, as("m-owner"));
+  assert.equal((await site.query("me:instance", null, VISITOR)).custom_css, css);
+
+  const { buildThemeCss } = await import("../dist/_naru/modules/theme.js");
+  for (const path of ["/", "/home", "/@someone"]) {
+    const { file, head } = await site.route(path);
+    assert.equal(file, "index.html");
+    // The theme as the page makes it, then the owner's file, then 사용자 CSS,
+    // whose "</" cannot end its element.
+    assert.equal(
+      head,
+      [
+        `<style id="community-theme">${buildThemeCss("#6b7fb8").replace(/<\//g, "<\\/")}</style>`,
+        '<link rel="stylesheet" id="owner-file" href="/_owner/style.css" />',
+        `<style id="community-owner-css">${css.replace(/<\//g, "<\\/")}</style>`,
+      ].join("\n"),
+    );
+    assert.doesNotMatch(head, /<\/style><script>/);
+  }
+
+  // The files themselves are the site's, not the app's page.
+  for (const path of ["/_owner/style.css", "/_owner/script.js"])
+    assert.equal(await site.route(path), null, path);
+
+  // Cleared: the theme alone. Left out, a field keeps its value.
+  await site.mutate("community:setLook", { custom_css: "" }, as("m-owner"));
+  assert.match((await site.route("/")).head, /owner-file/);
+  await site.mutate("community:setLook", { owner_files: false }, as("m-owner"));
+  assert.equal(
+    (await site.route("/")).head,
+    `<style id="community-theme">${buildThemeCss("#6b7fb8")}</style>`,
+  );
+});
+
+test("0009 keeps a community's settings, and checks a colour without GLOB", async () => {
+  // A community from before the owner's look.
+  const { site } = await community({ pending: "0009" });
+  site.run("UPDATE settings SET theme_key_color = '#aabbcc', banner_image_id = 'b-1' WHERE id = 1");
+  const [before] = site.rows("SELECT * FROM settings");
+  site.migrate();
+  const [after] = site.rows("SELECT * FROM settings");
+  assert.deepEqual(after, { ...before, custom_css: null, owner_files: 0 });
+  // The same colours as 0001's pattern, without one (Naru's SQLite refuses
+  // a GLOB pattern that long).
+  for (const ok of ["#AABBCC", "#012def", null])
+    site.run("UPDATE settings SET theme_key_color = ? WHERE id = 1", ok);
+  for (const bad of ["#12345g", "aabbcc", "#abc", "#aabbccd", "#aabbc "])
+    assert.throws(() => site.run("UPDATE settings SET theme_key_color = ? WHERE id = 1", bad), bad);
+});
